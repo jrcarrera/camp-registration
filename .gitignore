@@ -5,9 +5,13 @@
 
 # Dependencies and build output
 node_modules/
+.next/
 dist/
 build/
 coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
 
 # Local tooling
 .idea/

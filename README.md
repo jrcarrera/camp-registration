@@ -4,7 +4,8 @@ An open-source platform for camp registration and camp operations.
 
 ## Status
 
-This project is in the initial planning and architecture phase.
+The project has an initial local-first application foundation. Product workflows
+are not implemented yet.
 
 ## Planned Scope
 
@@ -15,6 +16,52 @@ This project is in the initial planning and architecture phase.
 - Parent portal and administrative dashboard
 - Rosters, health records, attendance, and communications
 
+## Local Development
+
+Requirements:
+
+- Docker Desktop with Docker Compose
+- Node.js 24 and pnpm 10 for host-based development
+
+Start the complete local stack:
+
+```bash
+docker compose up --build
+```
+
+The local services are:
+
+- Web application: <http://localhost:3000>
+- API and OpenAPI UI: <http://localhost:3001/docs>
+- Mailpit email inbox: <http://localhost:8025>
+- MinIO console: <http://localhost:9001>
+- PostgreSQL: `localhost:5432`
+
+For faster host-based application development, start the supporting services
+with `pnpm infra:up`, then run `pnpm dev`.
+
+## Quality Checks
+
+```bash
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:e2e
+pnpm build
+```
+
+The optional k6 harness requires a local k6 installation and runs with
+`pnpm test:load`. It currently exercises API health only; registration spike
+coverage will be added with the registration workflow.
+
+## Architecture
+
+- [Foundation stack decision](docs/adr/0001-foundation-stack.md)
+- [Terraform deployment boundary](infra/terraform/README.md)
+- [Contributor guidance](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+
 ## Project Management
 
 Public feature requests, bugs, and contributor tasks will be tracked with GitHub
@@ -23,8 +70,8 @@ this public repository.
 
 ## Contributing
 
-Contributor documentation will be added once the initial architecture and
-development workflow are established.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Contributions use the Developer
+Certificate of Origin sign-off recorded in [DCO](DCO).
 
 ## License
 

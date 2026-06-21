@@ -1,0 +1,152 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "description": "API for camp registration and camp operations.",
+    "title": "Camp Registration API",
+    "version": "0.0.0"
+  },
+  "components": {
+    "schemas": {}
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "description": "Liveness check for the API process.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "service",
+                    "status",
+                    "version"
+                  ],
+                  "properties": {
+                    "service": {
+                      "type": "string",
+                      "enum": [
+                        "camp-registration-api"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "version": {
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "description": "Readiness check for required API dependencies.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "database",
+                    "service",
+                    "status"
+                  ],
+                  "properties": {
+                    "database": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "connected"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "not_configured"
+                          ]
+                        }
+                      ]
+                    },
+                    "service": {
+                      "type": "string",
+                      "enum": [
+                        "camp-registration-api"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ready"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "database",
+                    "service",
+                    "status"
+                  ],
+                  "properties": {
+                    "database": {
+                      "type": "string",
+                      "enum": [
+                        "unavailable"
+                      ]
+                    },
+                    "service": {
+                      "type": "string",
+                      "enum": [
+                        "camp-registration-api"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "not_ready"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Local development",
+      "url": "http://localhost:3001"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+name: camp-registration
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: camp_registration
+      POSTGRES_PASSWORD: camp
+      POSTGRES_USER: camp
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U camp -d camp_registration']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_PASSWORD: camp-local-secret
+      MINIO_ROOT_USER: camp-local
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+
+  mailpit:
+    image: axllent/mailpit:v1.27.8
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: 3001
+      DATABASE_URL: postgresql://camp:camp@postgres:5432/camp_registration
+      NODE_ENV: development
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:3001/ready']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    ports:
+      - '3001:3001'
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:3001
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      HOSTNAME: 0.0.0.0
+      NODE_ENV: development
+      PORT: 3000
+    ports:
+      - '3000:3000'
+
+volumes:
+  minio_data:
+  postgres_data:
