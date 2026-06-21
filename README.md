@@ -28,5 +28,9 @@ development workflow are established.
 
 ## License
 
-The open-source license has not yet been selected. Do not redistribute or rely
-on this repository as licensed software until a `LICENSE` file is added.
+The project is licensed under the Apache License 2.0 (`Apache-2.0`). See
+`LICENSE`.
+
+The software license does not grant rights to project names, logos, or other
+branding. A separate trademark policy will be added after a distinctive project
+brand is selected.
