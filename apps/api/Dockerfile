@@ -13,7 +13,8 @@ COPY packages/testing/package.json ./packages/testing/package.json
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm --filter @camp-registration/contracts build \
+RUN pnpm --filter @camp-registration/auth build \
+    && pnpm --filter @camp-registration/contracts build \
     && pnpm --filter @camp-registration/database build \
     && pnpm --filter @camp-registration/api build
 

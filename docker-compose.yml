@@ -15,6 +15,7 @@ services:
     ports:
       - '5432:5432'
     volumes:
+      - ./infra/local/postgres:/docker-entrypoint-initdb.d:ro
       - postgres_data:/var/lib/postgresql/data
 
   minio:
@@ -35,17 +36,32 @@ services:
       - '1025:1025'
       - '8025:8025'
 
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command:
+      ['sh', '-c', 'node packages/database/dist/migrate.js && node packages/database/dist/seed.js']
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MIGRATION_DATABASE_URL: postgresql://camp:camp@postgres:5432/camp_registration
+
   api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       API_HOST: 0.0.0.0
       API_PORT: 3001
-      DATABASE_URL: postgresql://camp:camp@postgres:5432/camp_registration
+      DATABASE_URL: postgresql://camp_app:camp-app-local@postgres:5432/camp_registration
+      LOCAL_ACTOR_ID: local-camp-admin
+      LOCAL_AUTH_ENABLED: 'true'
+      LOCAL_ORGANIZATION_ID: a60b272f-b028-4f1a-b666-3ef3cffd9827
       NODE_ENV: development
     healthcheck:
       test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:3001/ready']
@@ -65,6 +81,7 @@ services:
       api:
         condition: service_healthy
     environment:
+      API_INTERNAL_BASE_URL: http://api:3001
       HOSTNAME: 0.0.0.0
       NODE_ENV: development
       PORT: 3000

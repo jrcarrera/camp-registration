@@ -38,7 +38,9 @@ The local services are:
 - PostgreSQL: `localhost:5432`
 
 For faster host-based application development, start the supporting services
-with `pnpm infra:up`, then run `pnpm dev`.
+with `pnpm infra:up`, run `pnpm db:migrate` and `pnpm db:seed`, then run
+`pnpm dev`. The root `.env` must provide the runtime and migration database URLs
+shown in `.env.example`.
 
 ## Quality Checks
 
@@ -57,6 +59,7 @@ coverage will be added with the registration workflow.
 
 ## Architecture
 
+- [Architecture decision index](docs/adr/README.md)
 - [Foundation stack decision](docs/adr/0001-foundation-stack.md)
 - [Terraform deployment boundary](infra/terraform/README.md)
 - [Contributor guidance](CONTRIBUTING.md)

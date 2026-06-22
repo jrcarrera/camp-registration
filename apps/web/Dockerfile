@@ -16,7 +16,8 @@ COPY packages/testing/package.json ./packages/testing/package.json
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm --filter @camp-registration/web build
+RUN pnpm --filter @camp-registration/contracts build \
+    && pnpm --filter @camp-registration/web build
 
 FROM node:24-alpine AS runtime
 

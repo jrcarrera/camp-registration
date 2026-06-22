@@ -1,6 +1,7 @@
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import type { RequestIdentity } from '@camp-registration/auth';
 import {
   HealthResponseSchema,
   ReadinessResponseSchema,
@@ -9,16 +10,25 @@ import {
   type ReadinessResponse,
   type UnavailableResponse,
 } from '@camp-registration/contracts';
-import type { DatabaseClient } from '@camp-registration/database';
+import { CatalogStore, type DatabaseClient } from '@camp-registration/database';
 import Fastify, { type FastifyBaseLogger, type FastifyInstance } from 'fastify';
 
+import { registerCatalogRoutes } from './catalog/routes.js';
+import { CatalogService, type CatalogServiceApi } from './catalog/service.js';
+
 export interface BuildAppOptions {
+  catalogService?: CatalogServiceApi;
   database?: DatabaseClient;
+  identity?: RequestIdentity;
   logger?: boolean | FastifyBaseLogger;
+  organizationId?: string;
 }
 
 export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyInstance> {
-  const app = Fastify({ logger: options.logger ?? false }).withTypeProvider<TypeBoxTypeProvider>();
+  const app = Fastify({
+    logger: options.logger ?? false,
+    requestIdHeader: 'x-request-id',
+  }).withTypeProvider<TypeBoxTypeProvider>();
 
   await app.register(swagger, {
     openapi: {
@@ -33,6 +43,17 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(swaggerUi, {
     routePrefix: '/docs',
   });
+
+  const catalogService =
+    options.catalogService ??
+    (options.database && options.identity && options.organizationId
+      ? new CatalogService(
+          new CatalogStore(options.database),
+          options.identity,
+          options.organizationId,
+        )
+      : undefined);
+  registerCatalogRoutes(app, catalogService);
 
   app.get<{ Reply: HealthResponse }>(
     '/health',

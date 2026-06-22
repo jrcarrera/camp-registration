@@ -41,6 +41,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@camp-registration/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@camp-registration/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -62,6 +65,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@camp-registration/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       lucide-react:
         specifier: 1.21.0
         version: 1.21.0(react@19.2.7)

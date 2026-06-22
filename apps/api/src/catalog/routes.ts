@@ -1,0 +1,230 @@
+import {
+  CatalogContextSchema,
+  ProblemResponseSchema,
+  ProgramCreateSchema,
+  ProgramFixtureSchema,
+  SessionCreateSchema,
+  SessionDetailSchema,
+  SessionListResponseSchema,
+  SessionParamsSchema,
+  SessionUpdateSchema,
+  type CatalogContext,
+  type ProgramCreate,
+  type ProgramFixture,
+  type ProblemResponse,
+  type SessionDetail,
+  type SessionCreate,
+  type SessionListResponse,
+  type SessionParams,
+  type SessionUpdate,
+} from '@camp-registration/contracts';
+import type { FastifyInstance, FastifyReply } from 'fastify';
+
+import {
+  CatalogAuthorizationError,
+  CatalogCapacityError,
+  CatalogConflictError,
+  CatalogDuplicateError,
+  CatalogNotFoundError,
+  CatalogReferenceError,
+  CatalogValidationError,
+  type CatalogServiceApi,
+} from './service.js';
+
+function sendProblem(reply: FastifyReply, error: unknown) {
+  if (error instanceof CatalogValidationError) {
+    return reply.code(400).send({
+      code: error.message.startsWith('Program') ? 'invalid_program' : 'invalid_session',
+      field_errors: error.fieldErrors,
+      message: error.message,
+    });
+  }
+  if (error instanceof CatalogAuthorizationError) {
+    return reply.code(403).send({ code: 'forbidden', message: error.message });
+  }
+  if (error instanceof CatalogNotFoundError) {
+    return reply.code(404).send({ code: 'not_found', message: error.message });
+  }
+  if (error instanceof CatalogConflictError) {
+    return reply.code(409).send({ code: 'version_conflict', message: error.message });
+  }
+  if (error instanceof CatalogDuplicateError) {
+    return reply.code(409).send({ code: 'duplicate_code', message: error.message });
+  }
+  if (error instanceof CatalogReferenceError) {
+    const code = error.message.startsWith('Season') ? 'invalid_season' : 'invalid_program';
+    return reply.code(400).send({ code, message: error.message });
+  }
+  if (error instanceof CatalogCapacityError) {
+    return reply.code(409).send({ code: 'capacity_conflict', message: error.message });
+  }
+  throw error;
+}
+
+const errorResponses = {
+  400: ProblemResponseSchema,
+  403: ProblemResponseSchema,
+  404: ProblemResponseSchema,
+  409: ProblemResponseSchema,
+  503: ProblemResponseSchema,
+};
+
+export function registerCatalogRoutes(
+  app: FastifyInstance,
+  service: CatalogServiceApi | undefined,
+): void {
+  app.get<{ Reply: CatalogContext | ProblemResponse }>(
+    '/v1/catalog',
+    {
+      schema: {
+        description: 'Catalog organization, season, and program options.',
+        response: { 200: CatalogContextSchema, ...errorResponses },
+        tags: ['catalog'],
+      },
+    },
+    async (_request, reply) => {
+      if (!service) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        return await service.getContext();
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.get<{ Reply: SessionListResponse | ProblemResponse }>(
+    '/v1/sessions',
+    {
+      schema: {
+        description: 'Sessions visible to the active organization.',
+        response: { 200: SessionListResponseSchema, ...errorResponses },
+        tags: ['sessions'],
+      },
+    },
+    async (_request, reply) => {
+      if (!service) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        return { sessions: await service.listSessions() };
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{ Body: ProgramCreate; Reply: ProgramFixture | ProblemResponse }>(
+    '/v1/programs',
+    {
+      schema: {
+        body: ProgramCreateSchema,
+        description: 'Create a program for the active organization.',
+        response: { 201: ProgramFixtureSchema, ...errorResponses },
+        tags: ['programs'],
+      },
+    },
+    async (request, reply) => {
+      if (!service) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        const program = await service.createProgram(request.body, request.id);
+        return reply.code(201).send(program);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{ Body: SessionCreate; Reply: SessionDetail | ProblemResponse }>(
+    '/v1/sessions',
+    {
+      schema: {
+        body: SessionCreateSchema,
+        description: 'Create a session for the active organization.',
+        response: { 201: SessionDetailSchema, ...errorResponses },
+        tags: ['sessions'],
+      },
+    },
+    async (request, reply) => {
+      if (!service) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        const session = await service.createSession(request.body, request.id);
+        return reply.code(201).send(session);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.get<{ Params: SessionParams; Reply: SessionDetail | ProblemResponse }>(
+    '/v1/sessions/:sessionId',
+    {
+      schema: {
+        description: 'Session details for editing.',
+        params: SessionParamsSchema,
+        response: { 200: SessionDetailSchema, ...errorResponses },
+        tags: ['sessions'],
+      },
+    },
+    async (request, reply) => {
+      if (!service) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        return await service.getSession(request.params.sessionId);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.patch<{
+    Body: SessionUpdate;
+    Params: SessionParams;
+    Reply: SessionDetail | ProblemResponse;
+  }>(
+    '/v1/sessions/:sessionId',
+    {
+      schema: {
+        body: SessionUpdateSchema,
+        description: 'Update editable session configuration.',
+        params: SessionParamsSchema,
+        response: { 200: SessionDetailSchema, ...errorResponses },
+        tags: ['sessions'],
+      },
+    },
+    async (request, reply) => {
+      if (!service) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        return await service.updateSession(request.params.sessionId, request.body, request.id);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+}

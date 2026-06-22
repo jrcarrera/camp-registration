@@ -7,14 +7,15 @@
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsx watch src/server.ts",
     "openapi:write": "tsx src/openapi.ts",
-    "predev": "pnpm --filter @camp-registration/contracts build && pnpm --filter @camp-registration/database build",
-    "preopenapi:write": "pnpm --filter @camp-registration/contracts build && pnpm --filter @camp-registration/database build",
-    "pretest": "pnpm --filter @camp-registration/contracts build && pnpm --filter @camp-registration/database build",
+    "predev": "pnpm --filter @camp-registration/auth build && pnpm --filter @camp-registration/contracts build && pnpm --filter @camp-registration/database build",
+    "preopenapi:write": "pnpm --filter @camp-registration/auth build && pnpm --filter @camp-registration/contracts build && pnpm --filter @camp-registration/database build",
+    "pretest": "pnpm --filter @camp-registration/auth build && pnpm --filter @camp-registration/contracts build && pnpm --filter @camp-registration/database build",
     "start": "node dist/server.js",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@camp-registration/auth": "workspace:*",
     "@camp-registration/contracts": "workspace:*",
     "@camp-registration/database": "workspace:*",
     "@fastify/swagger": "9.7.0",
