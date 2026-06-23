@@ -1,0 +1,42 @@
+{
+  "name": "camp-registration",
+  "version": "0.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.26.2",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=10 <11"
+  },
+  "scripts": {
+    "build": "pnpm -r --if-present run build",
+    "db:migrate": "pnpm --filter @camp-registration/database migrate",
+    "db:seed": "pnpm --filter @camp-registration/database seed",
+    "dev": "pnpm --parallel --filter @camp-registration/api --filter @camp-registration/web run dev",
+    "dev:local": "docker compose up --build",
+    "infra:down": "docker compose down",
+    "infra:up": "docker compose up -d postgres minio mailpit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "openapi:generate": "pnpm --filter @camp-registration/api run openapi:write && openapi-typescript packages/contracts/openapi/openapi.json -o packages/contracts/src/generated.ts",
+    "packages:build": "pnpm --filter './packages/*' --if-present run build",
+    "test": "pnpm -r --if-present run test",
+    "test:e2e": "playwright test",
+    "test:e2e:server": "docker compose up -d --wait postgres && MIGRATION_DATABASE_URL=postgresql://camp:camp@127.0.0.1:5432/camp_registration pnpm db:migrate && MIGRATION_DATABASE_URL=postgresql://camp:camp@127.0.0.1:5432/camp_registration pnpm db:seed && DATABASE_URL=postgresql://camp_app:camp-app-local@127.0.0.1:5432/camp_registration LOCAL_AUTH_ENABLED=true LOCAL_ACTOR_ID=e2e-camp-admin LOCAL_ORGANIZATION_ID=a60b272f-b028-4f1a-b666-3ef3cffd9827 API_INTERNAL_BASE_URL=http://127.0.0.1:3001 pnpm dev",
+    "test:load": "k6 run tests/load/health-smoke.js",
+    "typecheck": "pnpm packages:build && pnpm -r --if-present run typecheck"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.2",
+    "@playwright/test": "1.61.0",
+    "@types/node": "24.13.2",
+    "eslint": "9.39.2",
+    "openapi-typescript": "7.13.0",
+    "prettier": "3.8.4",
+    "tsx": "4.22.4",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.61.1",
+    "vitest": "4.1.9"
+  }
+}
