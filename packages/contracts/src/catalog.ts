@@ -158,6 +158,7 @@ export const SessionListResponseSchema = Type.Object(
 export const SessionUpdateSchema = Type.Object(
   {
     version: Type.Integer({ minimum: 1 }),
+    season_id: UuidSchema,
     program_id: UuidSchema,
     name: Type.String({ minLength: 1, maxLength: 160 }),
     starts_on: LocalDateSchema,

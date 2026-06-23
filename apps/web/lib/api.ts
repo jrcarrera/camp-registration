@@ -1,5 +1,7 @@
 import type {
   CatalogContext,
+  FamilyDetail,
+  FamilyListResponse,
   ProblemResponse,
   SessionDetail,
   SessionListResponse,
@@ -35,4 +37,12 @@ export async function getSessions(): Promise<SessionListResponse> {
 
 export async function getSession(sessionId: string): Promise<SessionDetail> {
   return getJson(`/v1/sessions/${encodeURIComponent(sessionId)}`);
+}
+
+export async function getFamilies(): Promise<FamilyListResponse> {
+  return getJson('/v1/families');
+}
+
+export async function getFamily(familyId: string): Promise<FamilyDetail> {
+  return getJson(`/v1/families/${encodeURIComponent(familyId)}`);
 }

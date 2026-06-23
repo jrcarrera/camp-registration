@@ -50,10 +50,23 @@ describe('catalog store', () => {
     const store = new CatalogStore(runtimeDatabase);
     const original = await store.getSession(organizationId, '28933fbb-470e-4ad6-9a74-600efe4232e3');
     expect(original).not.toBeNull();
+    const movedSeason = await store.createSeason(
+      {
+        actorId: 'integration-admin',
+        organizationId,
+        requestId: 'catalog-season-move-setup',
+      },
+      {
+        id: 'dfdc71f9-2045-4f67-937e-40b719692315',
+        name: 'Summer 2029',
+        year: 2029,
+      },
+    );
 
     const update = editable(original as SessionDetailRecord);
     update.name = 'Day Camp Opening Week';
     update.capacity = 118;
+    update.season_id = movedSeason.id;
 
     const saved = await store.updateSession({
       actorId: 'integration-admin',
@@ -94,7 +107,7 @@ describe('catalog store', () => {
     expect(audit.rows[0]).toMatchObject({
       action: 'session.updated',
       actor_id: 'integration-admin',
-      details: { changed_fields: ['name', 'capacity'] },
+      details: { changed_fields: ['season_id', 'name', 'capacity'] },
     });
   });
 
@@ -188,6 +201,7 @@ function editable(session: SessionDetailRecord) {
     program_id: session.program_id,
     registration_closes_at: session.registration_closes_at,
     registration_opens_at: session.registration_opens_at,
+    season_id: session.season_id,
     starts_on: session.starts_on,
     status: session.status,
     version: session.version,
