@@ -474,6 +474,10 @@ tbody tr + tr td {
   padding-top: 22px;
 }
 
+.familiesManagement {
+  padding-top: 22px;
+}
+
 .headerActions {
   display: flex;
   align-items: flex-end;
@@ -611,9 +615,9 @@ tbody tr + tr td {
 }
 
 .formField input,
-.formField select {
+.formField select,
+.formField textarea {
   width: 100%;
-  height: 40px;
   padding: 0 10px;
   border: 1px solid #b9c3be;
   border-radius: 5px;
@@ -624,8 +628,20 @@ tbody tr + tr td {
   font-weight: 500;
 }
 
+.formField input,
+.formField select {
+  height: 40px;
+}
+
+.formField textarea {
+  min-height: 92px;
+  padding-block: 10px;
+  resize: vertical;
+}
+
 .formField input:focus,
-.formField select:focus {
+.formField select:focus,
+.formField textarea:focus {
   border-color: #146b4d;
   box-shadow: 0 0 0 3px rgba(20, 107, 77, 0.12);
 }
@@ -777,6 +793,98 @@ tbody tr + tr td {
   background: #edf2ef;
 }
 
+.familyDetail {
+  padding-bottom: 70px;
+}
+
+.familyInlineForm {
+  min-width: 0;
+}
+
+.recordStack {
+  display: grid;
+  gap: 16px;
+}
+
+.recordPanel {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #d5dcd8;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.recordPanelNew {
+  border-style: dashed;
+  background: #fbfcfb;
+}
+
+.recordPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e4e9e6;
+}
+
+.recordPanelHeader strong,
+.recordPanelHeader span {
+  overflow-wrap: anywhere;
+}
+
+.recordPanelHeader strong {
+  color: #26332d;
+  font-size: 14px;
+}
+
+.recordPanelHeader span {
+  color: #66736d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.toggleGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.checkField {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid #d4ddd8;
+  border-radius: 5px;
+  background: #f8faf9;
+  color: #35423c;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.checkField input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #146b4d;
+}
+
+.inlineActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.formErrorText {
+  color: #a33b2a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 @media (max-width: 900px) {
   .appShell {
     grid-template-columns: 76px minmax(0, 1fr);
@@ -820,6 +928,10 @@ tbody tr + tr td {
 
   .fieldGridThree {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .toggleGrid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1041,5 +1153,14 @@ tbody tr + tr td {
   .editorActions > div {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inlineActions {
+    justify-content: stretch;
+  }
+
+  .inlineActions .buttonPrimary,
+  .inlineActions .buttonSecondary {
+    width: 100%;
   }
 }

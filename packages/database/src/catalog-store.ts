@@ -52,6 +52,7 @@ export interface SessionDetailRecord extends SessionSummaryRecord {
 
 export interface UpdateSessionRecord {
   version: number;
+  season_id: string;
   program_id: string;
   name: string;
   starts_on: string;
@@ -464,20 +465,31 @@ export class CatalogStore {
         throw new CatalogConflictError('Session was updated by another request');
       }
 
-      const program = await client.query(
-        `SELECT 1 FROM programs WHERE organization_id = $1 AND id = $2`,
-        [context.organizationId, context.update.program_id],
+      const references = await client.query<{ season_exists: boolean; program_exists: boolean }>(
+        `SELECT
+           EXISTS (SELECT 1 FROM seasons WHERE organization_id = $1 AND id = $2) AS season_exists,
+           EXISTS (SELECT 1 FROM programs WHERE organization_id = $1 AND id = $3) AS program_exists`,
+        [context.organizationId, context.update.season_id, context.update.program_id],
       );
-      if (program.rowCount !== 1) {
+      if (!references.rows[0]?.season_exists) {
+        throw new CatalogReferenceError('Season does not belong to this organization');
+      }
+      if (!references.rows[0]?.program_exists) {
         throw new CatalogReferenceError('Program does not belong to this organization');
       }
 
       const requiredCapacity = currentRow.registered_count + currentRow.active_hold_count;
+      if (context.update.season_id !== currentRow.season_id && requiredCapacity > 0) {
+        throw new CatalogCapacityError(
+          'Sessions with registrations or active holds cannot be moved between seasons',
+        );
+      }
       if (context.update.capacity < requiredCapacity) {
         throw new CatalogCapacityError('Capacity cannot be below registrations and active holds');
       }
 
       const editableFields = [
+        'season_id',
         'program_id',
         'name',
         'starts_on',
@@ -500,26 +512,28 @@ export class CatalogStore {
 
       await client.query(
         `UPDATE sessions
-         SET program_id = $3,
-             name = $4,
-             starts_on = $5,
-             ends_on = $6,
-             registration_opens_at = $7,
-             registration_closes_at = $8,
-             capacity = $9,
-             minimum_age = $10,
-             maximum_age = $11,
-             age_as_of = $12,
-             price_cents = $13,
-             deposit_cents = $14,
-             waitlist_enabled = $15,
-             status = $16,
+         SET season_id = $3,
+             program_id = $4,
+             name = $5,
+             starts_on = $6,
+             ends_on = $7,
+             registration_opens_at = $8,
+             registration_closes_at = $9,
+             capacity = $10,
+             minimum_age = $11,
+             maximum_age = $12,
+             age_as_of = $13,
+             price_cents = $14,
+             deposit_cents = $15,
+             waitlist_enabled = $16,
+             status = $17,
              version = version + 1,
              updated_at = transaction_timestamp()
          WHERE organization_id = $1 AND id = $2`,
         [
           context.organizationId,
           context.sessionId,
+          context.update.season_id,
           context.update.program_id,
           context.update.name,
           context.update.starts_on,

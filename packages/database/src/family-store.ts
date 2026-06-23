@@ -1,0 +1,775 @@
+import type { PoolClient } from 'pg';
+
+import type { DatabaseClient } from './client.js';
+
+export interface FamilySummaryRecord {
+  id: string;
+  organization_id: string;
+  family_name: string;
+  adult_count: number;
+  camper_count: number;
+  contact_count: number;
+  version: number;
+  updated_at: string;
+}
+
+export interface AdultRecord {
+  id: string;
+  organization_id: string;
+  family_id: string;
+  identity_subject: string | null;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  account_owner: boolean;
+  can_manage_family: boolean;
+  can_register: boolean;
+  can_make_payments: boolean;
+  version: number;
+  updated_at: string;
+}
+
+export interface CamperRecord {
+  id: string;
+  organization_id: string;
+  family_id: string;
+  first_name: string;
+  last_name: string;
+  birth_date: string;
+  preferred_name: string | null;
+  pronouns: string | null;
+  gender: string | null;
+  school_grade: string | null;
+  school_name: string | null;
+  cabin_preference: string | null;
+  accessibility_needs: string | null;
+  version: number;
+  updated_at: string;
+}
+
+export interface ContactRecord {
+  id: string;
+  organization_id: string;
+  family_id: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  relationship: string;
+  emergency_contact: boolean;
+  authorized_pickup: boolean;
+  receives_operational_communication: boolean;
+  emergency_priority: number | null;
+  version: number;
+  updated_at: string;
+}
+
+export interface FamilyDetailRecord extends FamilySummaryRecord {
+  adults: AdultRecord[];
+  campers: CamperRecord[];
+  contacts: ContactRecord[];
+}
+
+export interface FamilyWriteContext {
+  actorId: string;
+  organizationId: string;
+  requestId: string;
+}
+
+export interface CreateFamilyRecord {
+  id: string;
+  family_name: string;
+}
+
+export interface UpdateFamilyRecord {
+  family_name: string;
+  version: number;
+}
+
+export interface CreateAdultRecord {
+  id: string;
+  family_id: string;
+  identity_subject: string | null;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  email_normalized: string | null;
+  phone: string | null;
+  account_owner: boolean;
+  can_manage_family: boolean;
+  can_register: boolean;
+  can_make_payments: boolean;
+}
+
+export interface UpdateAdultRecord extends Omit<
+  CreateAdultRecord,
+  'family_id' | 'id' | 'identity_subject'
+> {
+  version: number;
+}
+
+export interface CreateCamperRecord {
+  id: string;
+  family_id: string;
+  first_name: string;
+  last_name: string;
+  birth_date: string;
+  preferred_name: string | null;
+  pronouns: string | null;
+  gender: string | null;
+  school_grade: string | null;
+  school_name: string | null;
+  cabin_preference: string | null;
+  accessibility_needs: string | null;
+}
+
+export interface UpdateCamperRecord extends Omit<CreateCamperRecord, 'family_id' | 'id'> {
+  version: number;
+}
+
+export interface CreateContactRecord {
+  id: string;
+  family_id: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  relationship: string;
+  emergency_contact: boolean;
+  authorized_pickup: boolean;
+  receives_operational_communication: boolean;
+  emergency_priority: number | null;
+}
+
+export interface UpdateContactRecord extends Omit<CreateContactRecord, 'family_id' | 'id'> {
+  version: number;
+}
+
+export class FamilyNotFoundError extends Error {}
+export class FamilyConflictError extends Error {}
+export class FamilyDuplicateError extends Error {}
+
+interface Timestamped {
+  updated_at: Date | string;
+}
+
+type FamilySummaryRow = Omit<FamilySummaryRecord, 'updated_at'> & Timestamped;
+type AdultRow = Omit<AdultRecord, 'updated_at'> & Timestamped;
+type CamperRow = Omit<CamperRecord, 'updated_at'> & Timestamped;
+type ContactRow = Omit<ContactRecord, 'updated_at'> & Timestamped;
+
+const familySummarySelect = `
+  SELECT
+    f.id,
+    f.organization_id,
+    f.family_name,
+    f.version,
+    f.updated_at,
+    COALESCE(adults.adult_count, 0)::integer AS adult_count,
+    COALESCE(campers.camper_count, 0)::integer AS camper_count,
+    COALESCE(contacts.contact_count, 0)::integer AS contact_count
+  FROM families f
+  LEFT JOIN LATERAL (
+    SELECT count(*)::integer AS adult_count
+    FROM adults a
+    WHERE a.organization_id = f.organization_id
+      AND a.family_id = f.id
+      AND a.archived_at IS NULL
+  ) adults ON true
+  LEFT JOIN LATERAL (
+    SELECT count(*)::integer AS camper_count
+    FROM campers c
+    WHERE c.organization_id = f.organization_id
+      AND c.family_id = f.id
+      AND c.archived_at IS NULL
+  ) campers ON true
+  LEFT JOIN LATERAL (
+    SELECT count(*)::integer AS contact_count
+    FROM contacts c
+    WHERE c.organization_id = f.organization_id
+      AND c.family_id = f.id
+      AND c.archived_at IS NULL
+  ) contacts ON true
+`;
+
+function timestamp(value: Date | string): string {
+  return value instanceof Date ? value.toISOString().replace('.000Z', 'Z') : value;
+}
+
+function mapFamilySummary(row: FamilySummaryRow): FamilySummaryRecord {
+  return { ...row, updated_at: timestamp(row.updated_at) };
+}
+
+function mapAdult(row: AdultRow): AdultRecord {
+  return { ...row, updated_at: timestamp(row.updated_at) };
+}
+
+function mapCamper(row: CamperRow): CamperRecord {
+  return { ...row, updated_at: timestamp(row.updated_at) };
+}
+
+function mapContact(row: ContactRow): ContactRecord {
+  return { ...row, updated_at: timestamp(row.updated_at) };
+}
+
+function changedFields(current: object, update: object, fields: readonly string[]): string[] {
+  const currentValues = current as Record<string, unknown>;
+  const updateValues = update as Record<string, unknown>;
+  return fields.filter((field) => currentValues[field] !== updateValues[field]).map(String);
+}
+
+export class FamilyStore {
+  constructor(private readonly database: DatabaseClient) {}
+
+  private async withTenant<T>(
+    organizationId: string,
+    operation: (client: PoolClient) => Promise<T>,
+  ): Promise<T> {
+    const client = await this.database.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SELECT set_config('app.organization_id', $1, true)`, [organizationId]);
+      const result = await operation(client);
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async listFamilies(organizationId: string): Promise<FamilySummaryRecord[]> {
+    return this.withTenant(organizationId, async (client) => {
+      const result = await client.query<FamilySummaryRow>(
+        `${familySummarySelect}
+         WHERE f.organization_id = $1 AND f.archived_at IS NULL
+         ORDER BY lower(f.family_name), f.id`,
+        [organizationId],
+      );
+      return result.rows.map(mapFamilySummary);
+    });
+  }
+
+  async getFamily(organizationId: string, familyId: string): Promise<FamilyDetailRecord | null> {
+    return this.withTenant(organizationId, (client) =>
+      this.getFamilyInTenant(client, organizationId, familyId),
+    );
+  }
+
+  async createFamily(
+    context: FamilyWriteContext,
+    family: CreateFamilyRecord,
+  ): Promise<FamilyDetailRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      await client.query(
+        `INSERT INTO families (id, organization_id, family_name)
+         VALUES ($1, $2, $3)`,
+        [family.id, context.organizationId, family.family_name],
+      );
+      await this.insertAudit(client, context, 'family.created', 'family', family.id, {});
+      return this.requireFamilyInTenant(client, context.organizationId, family.id);
+    });
+  }
+
+  async updateFamily(
+    context: FamilyWriteContext & { familyId: string; update: UpdateFamilyRecord },
+  ): Promise<FamilyDetailRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const currentResult = await client.query<FamilySummaryRow>(
+        `${familySummarySelect}
+         WHERE f.organization_id = $1 AND f.id = $2 AND f.archived_at IS NULL
+         FOR UPDATE OF f`,
+        [context.organizationId, context.familyId],
+      );
+      const current = currentResult.rows[0] ? mapFamilySummary(currentResult.rows[0]) : null;
+      if (!current) throw new FamilyNotFoundError('Family not found');
+      if (current.version !== context.update.version) {
+        throw new FamilyConflictError('Family was updated by another request');
+      }
+
+      await client.query(
+        `UPDATE families
+         SET family_name = $3,
+             version = version + 1,
+             updated_at = transaction_timestamp()
+         WHERE organization_id = $1 AND id = $2`,
+        [context.organizationId, context.familyId, context.update.family_name],
+      );
+      await this.insertAudit(client, context, 'family.updated', 'family', context.familyId, {
+        changed_fields: changedFields(current, context.update, ['family_name']),
+      });
+      return this.requireFamilyInTenant(client, context.organizationId, context.familyId);
+    });
+  }
+
+  async createAdult(
+    context: FamilyWriteContext,
+    adult: CreateAdultRecord,
+  ): Promise<FamilyDetailRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      await this.ensureFamilyExists(client, context.organizationId, adult.family_id);
+      try {
+        await client.query(
+          `INSERT INTO adults (
+             id, organization_id, family_id, identity_subject, first_name, last_name,
+             email, email_normalized, phone, account_owner, can_manage_family,
+             can_register, can_make_payments
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+          [
+            adult.id,
+            context.organizationId,
+            adult.family_id,
+            adult.identity_subject,
+            adult.first_name,
+            adult.last_name,
+            adult.email,
+            adult.email_normalized,
+            adult.phone,
+            adult.account_owner,
+            adult.can_manage_family,
+            adult.can_register,
+            adult.can_make_payments,
+          ],
+        );
+      } catch (error) {
+        this.mapUniqueViolation(error);
+      }
+      await this.insertAudit(client, context, 'adult.created', 'adult', adult.id, {
+        account_owner: adult.account_owner,
+      });
+      return this.requireFamilyInTenant(client, context.organizationId, adult.family_id);
+    });
+  }
+
+  async updateAdult(
+    context: FamilyWriteContext & { adultId: string; familyId: string; update: UpdateAdultRecord },
+  ): Promise<FamilyDetailRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const current = await this.getAdultForUpdate(
+        client,
+        context.organizationId,
+        context.familyId,
+        context.adultId,
+      );
+      if (current.version !== context.update.version) {
+        throw new FamilyConflictError('Adult was updated by another request');
+      }
+
+      try {
+        await client.query(
+          `UPDATE adults
+           SET first_name = $4,
+               last_name = $5,
+               email = $6,
+               email_normalized = $7,
+               phone = $8,
+               account_owner = $9,
+               can_manage_family = $10,
+               can_register = $11,
+               can_make_payments = $12,
+               version = version + 1,
+               updated_at = transaction_timestamp()
+           WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
+          [
+            context.organizationId,
+            context.familyId,
+            context.adultId,
+            context.update.first_name,
+            context.update.last_name,
+            context.update.email,
+            context.update.email_normalized,
+            context.update.phone,
+            context.update.account_owner,
+            context.update.can_manage_family,
+            context.update.can_register,
+            context.update.can_make_payments,
+          ],
+        );
+      } catch (error) {
+        this.mapUniqueViolation(error);
+      }
+
+      const fields = [
+        'first_name',
+        'last_name',
+        'email',
+        'phone',
+        'account_owner',
+        'can_manage_family',
+        'can_register',
+        'can_make_payments',
+      ] as const;
+      await this.insertAudit(client, context, 'adult.updated', 'adult', context.adultId, {
+        changed_fields: changedFields(current, context.update, fields),
+      });
+      return this.requireFamilyInTenant(client, context.organizationId, context.familyId);
+    });
+  }
+
+  async createCamper(
+    context: FamilyWriteContext,
+    camper: CreateCamperRecord,
+  ): Promise<FamilyDetailRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      await this.ensureFamilyExists(client, context.organizationId, camper.family_id);
+      await client.query(
+        `INSERT INTO campers (
+           id, organization_id, family_id, first_name, last_name, birth_date,
+           preferred_name, pronouns, gender, school_grade, school_name,
+           cabin_preference, accessibility_needs
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+        [
+          camper.id,
+          context.organizationId,
+          camper.family_id,
+          camper.first_name,
+          camper.last_name,
+          camper.birth_date,
+          camper.preferred_name,
+          camper.pronouns,
+          camper.gender,
+          camper.school_grade,
+          camper.school_name,
+          camper.cabin_preference,
+          camper.accessibility_needs,
+        ],
+      );
+      await this.insertAudit(client, context, 'camper.created', 'camper', camper.id, {});
+      return this.requireFamilyInTenant(client, context.organizationId, camper.family_id);
+    });
+  }
+
+  async updateCamper(
+    context: FamilyWriteContext & {
+      camperId: string;
+      familyId: string;
+      update: UpdateCamperRecord;
+    },
+  ): Promise<FamilyDetailRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const current = await this.getCamperForUpdate(
+        client,
+        context.organizationId,
+        context.familyId,
+        context.camperId,
+      );
+      if (current.version !== context.update.version) {
+        throw new FamilyConflictError('Camper was updated by another request');
+      }
+
+      await client.query(
+        `UPDATE campers
+         SET first_name = $4,
+             last_name = $5,
+             birth_date = $6,
+             preferred_name = $7,
+             pronouns = $8,
+             gender = $9,
+             school_grade = $10,
+             school_name = $11,
+             cabin_preference = $12,
+             accessibility_needs = $13,
+             version = version + 1,
+             updated_at = transaction_timestamp()
+         WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
+        [
+          context.organizationId,
+          context.familyId,
+          context.camperId,
+          context.update.first_name,
+          context.update.last_name,
+          context.update.birth_date,
+          context.update.preferred_name,
+          context.update.pronouns,
+          context.update.gender,
+          context.update.school_grade,
+          context.update.school_name,
+          context.update.cabin_preference,
+          context.update.accessibility_needs,
+        ],
+      );
+      const fields = [
+        'first_name',
+        'last_name',
+        'birth_date',
+        'preferred_name',
+        'pronouns',
+        'gender',
+        'school_grade',
+        'school_name',
+        'cabin_preference',
+        'accessibility_needs',
+      ] as const;
+      await this.insertAudit(client, context, 'camper.updated', 'camper', context.camperId, {
+        changed_fields: changedFields(current, context.update, fields),
+      });
+      return this.requireFamilyInTenant(client, context.organizationId, context.familyId);
+    });
+  }
+
+  async createContact(
+    context: FamilyWriteContext,
+    contact: CreateContactRecord,
+  ): Promise<FamilyDetailRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      await this.ensureFamilyExists(client, context.organizationId, contact.family_id);
+      await client.query(
+        `INSERT INTO contacts (
+           id, organization_id, family_id, first_name, last_name, phone,
+           relationship, emergency_contact, authorized_pickup,
+           receives_operational_communication, emergency_priority
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [
+          contact.id,
+          context.organizationId,
+          contact.family_id,
+          contact.first_name,
+          contact.last_name,
+          contact.phone,
+          contact.relationship,
+          contact.emergency_contact,
+          contact.authorized_pickup,
+          contact.receives_operational_communication,
+          contact.emergency_priority,
+        ],
+      );
+      await this.insertAudit(client, context, 'contact.created', 'contact', contact.id, {
+        authorized_pickup: contact.authorized_pickup,
+        emergency_contact: contact.emergency_contact,
+      });
+      return this.requireFamilyInTenant(client, context.organizationId, contact.family_id);
+    });
+  }
+
+  async updateContact(
+    context: FamilyWriteContext & {
+      contactId: string;
+      familyId: string;
+      update: UpdateContactRecord;
+    },
+  ): Promise<FamilyDetailRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const current = await this.getContactForUpdate(
+        client,
+        context.organizationId,
+        context.familyId,
+        context.contactId,
+      );
+      if (current.version !== context.update.version) {
+        throw new FamilyConflictError('Contact was updated by another request');
+      }
+
+      await client.query(
+        `UPDATE contacts
+         SET first_name = $4,
+             last_name = $5,
+             phone = $6,
+             relationship = $7,
+             emergency_contact = $8,
+             authorized_pickup = $9,
+             receives_operational_communication = $10,
+             emergency_priority = $11,
+             version = version + 1,
+             updated_at = transaction_timestamp()
+         WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
+        [
+          context.organizationId,
+          context.familyId,
+          context.contactId,
+          context.update.first_name,
+          context.update.last_name,
+          context.update.phone,
+          context.update.relationship,
+          context.update.emergency_contact,
+          context.update.authorized_pickup,
+          context.update.receives_operational_communication,
+          context.update.emergency_priority,
+        ],
+      );
+      const fields = [
+        'first_name',
+        'last_name',
+        'phone',
+        'relationship',
+        'emergency_contact',
+        'authorized_pickup',
+        'receives_operational_communication',
+        'emergency_priority',
+      ] as const;
+      await this.insertAudit(client, context, 'contact.updated', 'contact', context.contactId, {
+        changed_fields: changedFields(current, context.update, fields),
+      });
+      return this.requireFamilyInTenant(client, context.organizationId, context.familyId);
+    });
+  }
+
+  private async getFamilyInTenant(
+    client: PoolClient,
+    organizationId: string,
+    familyId: string,
+  ): Promise<FamilyDetailRecord | null> {
+    const family = await client.query<FamilySummaryRow>(
+      `${familySummarySelect}
+       WHERE f.organization_id = $1 AND f.id = $2 AND f.archived_at IS NULL`,
+      [organizationId, familyId],
+    );
+    const summary = family.rows[0] ? mapFamilySummary(family.rows[0]) : null;
+    if (!summary) return null;
+
+    const adults = await client.query<AdultRow>(
+      `SELECT id, organization_id, family_id, identity_subject, first_name, last_name,
+              email, phone, account_owner, can_manage_family, can_register,
+              can_make_payments, version, updated_at
+       FROM adults
+       WHERE organization_id = $1 AND family_id = $2 AND archived_at IS NULL
+       ORDER BY account_owner DESC, lower(last_name), lower(first_name), id`,
+      [organizationId, familyId],
+    );
+    const campers = await client.query<CamperRow>(
+      `SELECT id, organization_id, family_id, first_name, last_name, birth_date::text,
+              preferred_name, pronouns, gender, school_grade, school_name,
+              cabin_preference, accessibility_needs, version, updated_at
+       FROM campers
+       WHERE organization_id = $1 AND family_id = $2 AND archived_at IS NULL
+       ORDER BY lower(last_name), lower(first_name), birth_date, id`,
+      [organizationId, familyId],
+    );
+    const contacts = await client.query<ContactRow>(
+      `SELECT id, organization_id, family_id, first_name, last_name, phone,
+              relationship, emergency_contact, authorized_pickup,
+              receives_operational_communication, emergency_priority, version, updated_at
+       FROM contacts
+       WHERE organization_id = $1 AND family_id = $2 AND archived_at IS NULL
+       ORDER BY emergency_priority NULLS LAST, lower(last_name), lower(first_name), id`,
+      [organizationId, familyId],
+    );
+
+    return {
+      ...summary,
+      adults: adults.rows.map(mapAdult),
+      campers: campers.rows.map(mapCamper),
+      contacts: contacts.rows.map(mapContact),
+    };
+  }
+
+  private async requireFamilyInTenant(
+    client: PoolClient,
+    organizationId: string,
+    familyId: string,
+  ): Promise<FamilyDetailRecord> {
+    const family = await this.getFamilyInTenant(client, organizationId, familyId);
+    if (!family) throw new FamilyNotFoundError('Family not found');
+    return family;
+  }
+
+  private async ensureFamilyExists(
+    client: PoolClient,
+    organizationId: string,
+    familyId: string,
+  ): Promise<void> {
+    const result = await client.query(
+      `SELECT id
+       FROM families
+       WHERE organization_id = $1 AND id = $2 AND archived_at IS NULL`,
+      [organizationId, familyId],
+    );
+    if (!result.rows[0]) throw new FamilyNotFoundError('Family not found');
+  }
+
+  private async getAdultForUpdate(
+    client: PoolClient,
+    organizationId: string,
+    familyId: string,
+    adultId: string,
+  ): Promise<AdultRecord> {
+    const result = await client.query<AdultRow>(
+      `SELECT id, organization_id, family_id, identity_subject, first_name, last_name,
+              email, phone, account_owner, can_manage_family, can_register,
+              can_make_payments, version, updated_at
+       FROM adults
+       WHERE organization_id = $1 AND family_id = $2 AND id = $3 AND archived_at IS NULL
+       FOR UPDATE`,
+      [organizationId, familyId, adultId],
+    );
+    if (!result.rows[0]) throw new FamilyNotFoundError('Adult not found');
+    return mapAdult(result.rows[0]);
+  }
+
+  private async getCamperForUpdate(
+    client: PoolClient,
+    organizationId: string,
+    familyId: string,
+    camperId: string,
+  ): Promise<CamperRecord> {
+    const result = await client.query<CamperRow>(
+      `SELECT id, organization_id, family_id, first_name, last_name, birth_date::text,
+              preferred_name, pronouns, gender, school_grade, school_name,
+              cabin_preference, accessibility_needs, version, updated_at
+       FROM campers
+       WHERE organization_id = $1 AND family_id = $2 AND id = $3 AND archived_at IS NULL
+       FOR UPDATE`,
+      [organizationId, familyId, camperId],
+    );
+    if (!result.rows[0]) throw new FamilyNotFoundError('Camper not found');
+    return mapCamper(result.rows[0]);
+  }
+
+  private async getContactForUpdate(
+    client: PoolClient,
+    organizationId: string,
+    familyId: string,
+    contactId: string,
+  ): Promise<ContactRecord> {
+    const result = await client.query<ContactRow>(
+      `SELECT id, organization_id, family_id, first_name, last_name, phone,
+              relationship, emergency_contact, authorized_pickup,
+              receives_operational_communication, emergency_priority, version, updated_at
+       FROM contacts
+       WHERE organization_id = $1 AND family_id = $2 AND id = $3 AND archived_at IS NULL
+       FOR UPDATE`,
+      [organizationId, familyId, contactId],
+    );
+    if (!result.rows[0]) throw new FamilyNotFoundError('Contact not found');
+    return mapContact(result.rows[0]);
+  }
+
+  private async insertAudit(
+    client: PoolClient,
+    context: FamilyWriteContext,
+    action: string,
+    targetType: string,
+    targetId: string,
+    details: Record<string, unknown>,
+  ): Promise<void> {
+    await client.query(
+      `INSERT INTO audit_events (
+         organization_id, actor_id, action, target_type, target_id, outcome,
+         request_id, details
+       ) VALUES ($1, $2, $3, $4, $5, 'success', $6, $7::jsonb)`,
+      [
+        context.organizationId,
+        context.actorId,
+        action,
+        targetType,
+        targetId,
+        context.requestId,
+        JSON.stringify(details),
+      ],
+    );
+  }
+
+  private mapUniqueViolation(error: unknown): never {
+    const pgError = error as { code?: string; constraint?: string };
+    if (pgError.code === '23505') {
+      if (pgError.constraint === 'adults_one_owner_per_family_idx') {
+        throw new FamilyDuplicateError('This family already has an account owner');
+      }
+      if (pgError.constraint === 'adults_family_email_normalized_idx') {
+        throw new FamilyDuplicateError('This adult email is already used in the family');
+      }
+      throw new FamilyDuplicateError('Family record already exists');
+    }
+    throw error;
+  }
+}

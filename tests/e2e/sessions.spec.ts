@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+const summer2027SeasonId = 'd5d8a8b7-c4ff-43be-a849-60cbd5914c85';
+
 test('renders the API-backed dashboard and session catalog', async ({ page }) => {
   await page.goto('/');
 
@@ -12,6 +14,7 @@ test('renders the API-backed dashboard and session catalog', async ({ page }) =>
 
   await page.getByRole('link', { exact: true, name: 'Sessions' }).click();
   await expect(page).toHaveURL('/sessions');
+  await page.goto(`/sessions?seasonId=${summer2027SeasonId}`);
   await expect(page.locator('.listSummary')).toContainText('scheduled weeks');
   expect(await page.locator('.sessionsTable tbody tr').count()).toBeGreaterThanOrEqual(9);
 });
@@ -33,17 +36,17 @@ test('opens API-backed catalog creation forms', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Create program' })).toBeVisible();
   await expect(page.getByLabel('Program code', { exact: true })).toBeVisible();
 
-  await page.goto('/sessions/new');
+  await page.goto(`/sessions/new?seasonId=${summer2027SeasonId}`);
   await expect(page.getByRole('heading', { level: 1, name: 'Create session' })).toBeVisible();
   await expect(page.getByLabel('Session code', { exact: true })).toBeVisible();
   await expect(page.getByRole('combobox', { exact: true, name: 'Season' })).toHaveValue(
-    'd5d8a8b7-c4ff-43be-a849-60cbd5914c85',
+    summer2027SeasonId,
   );
   await expect(page.getByRole('button', { exact: true, name: 'Create session' })).toBeDisabled();
 });
 
 test('keeps session management within the mobile viewport', async ({ page }) => {
-  await page.goto('/sessions');
+  await page.goto(`/sessions?seasonId=${summer2027SeasonId}`);
 
   const layout = await page.evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,
@@ -63,8 +66,10 @@ test('edits and restores a camp week', async ({ page }, testInfo) => {
 
   await page.goto('/sessions/28933fbb-470e-4ad6-9a74-600efe4232e3');
   const name = page.getByLabel('Session name', { exact: true });
+  const season = page.getByRole('combobox', { exact: true, name: 'Season' });
   const save = page.getByRole('button', { exact: true, name: 'Save changes' });
   const originalName = await name.inputValue();
+  await expect(season).toHaveValue('d5d8a8b7-c4ff-43be-a849-60cbd5914c85');
 
   try {
     await name.fill(`${originalName} - E2E`);
@@ -84,7 +89,7 @@ test('updates scheduled inventory when a status changes', async ({ page }, testI
   test.skip(testInfo.project.name !== 'desktop-chromium', 'One project owns the persisted edit.');
 
   const sessionUrl = '/sessions/7defa0f5-582e-4c25-a750-f29ba243f618';
-  await page.goto('/sessions');
+  await page.goto(`/sessions?seasonId=${summer2027SeasonId}`);
   const initialSummary = await summaryValues(page);
   await page.goto(sessionUrl);
   const status = page.getByRole('combobox', { exact: true, name: 'Status' });
@@ -95,7 +100,7 @@ test('updates scheduled inventory when a status changes', async ({ page }, testI
     await status.selectOption('CANCELLED');
     await save.click();
     await expect(page.getByText('Session changes saved.')).toBeVisible();
-    await page.locator('main').getByRole('link', { exact: true, name: 'Sessions' }).click();
+    await page.goto(`/sessions?seasonId=${summer2027SeasonId}`);
     await expect(page.locator('.listSummary strong')).toHaveText(
       `${initialSummary.weeks - 1} scheduled weeks`,
     );

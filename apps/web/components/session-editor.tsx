@@ -169,6 +169,7 @@ export function SessionEditor({
       form.registration_opens_local,
       session.organization_timezone,
     ),
+    season_id: form.season_id,
     starts_on: form.starts_on,
     status: form.status,
     version: form.version,
@@ -300,21 +301,19 @@ export function SessionEditor({
               ))}
             </select>
           </Field>
-          {mode === 'create' && (
-            <Field label="Season" error={fieldErrors.season_id}>
-              <select
-                name="season_id"
-                value={form.season_id}
-                onChange={(event) => set('season_id', event.target.value)}
-              >
-                {seasons.map((season) => (
-                  <option key={season.id} value={season.id}>
-                    {season.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          )}
+          <Field label="Season" error={fieldErrors.season_id}>
+            <select
+              name="season_id"
+              value={form.season_id}
+              onChange={(event) => set('season_id', event.target.value)}
+            >
+              {seasons.map((season) => (
+                <option key={season.id} value={season.id}>
+                  {season.name}
+                </option>
+              ))}
+            </select>
+          </Field>
           <Field label="Status" error={fieldErrors.status}>
             <select
               name="status"

@@ -17,9 +17,9 @@ import type { ReactNode } from 'react';
 const navigation = [
   { href: '/', icon: ClipboardList, label: 'Overview' },
   { href: '/sessions', icon: CalendarDays, label: 'Sessions' },
+  { href: '/families', icon: Users, label: 'Families' },
   { href: '/seasons', icon: CalendarRange, label: 'Seasons' },
   { href: '/programs', icon: Library, label: 'Programs' },
-  { href: '/#campers', icon: Users, label: 'Campers' },
   { href: '/#health', icon: HeartPulse, label: 'Health' },
 ];
 

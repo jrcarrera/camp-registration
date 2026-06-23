@@ -10,15 +10,18 @@ import {
   type ReadinessResponse,
   type UnavailableResponse,
 } from '@camp-registration/contracts';
-import { CatalogStore, type DatabaseClient } from '@camp-registration/database';
+import { CatalogStore, FamilyStore, type DatabaseClient } from '@camp-registration/database';
 import Fastify, { type FastifyBaseLogger, type FastifyInstance } from 'fastify';
 
 import { registerCatalogRoutes } from './catalog/routes.js';
 import { CatalogService, type CatalogServiceApi } from './catalog/service.js';
+import { registerFamilyRoutes } from './families/routes.js';
+import { FamilyService, type FamilyServiceApi } from './families/service.js';
 
 export interface BuildAppOptions {
   catalogService?: CatalogServiceApi;
   database?: DatabaseClient;
+  familyService?: FamilyServiceApi;
   identity?: RequestIdentity;
   logger?: boolean | FastifyBaseLogger;
   organizationId?: string;
@@ -54,6 +57,17 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         )
       : undefined);
   registerCatalogRoutes(app, catalogService);
+
+  const familyService =
+    options.familyService ??
+    (options.database && options.identity && options.organizationId
+      ? new FamilyService(
+          new FamilyStore(options.database),
+          options.identity,
+          options.organizationId,
+        )
+      : undefined);
+  registerFamilyRoutes(app, familyService);
 
   app.get<{ Reply: HealthResponse }>(
     '/health',

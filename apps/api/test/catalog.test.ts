@@ -93,6 +93,7 @@ const update: SessionUpdate = {
   program_id: programId,
   registration_closes_at: '2027-06-04T05:00:00Z',
   registration_opens_at: '2027-01-15T15:00:00Z',
+  season_id: seasonId,
   starts_on: '2027-06-07',
   status: 'PUBLISHED',
   version: 1,

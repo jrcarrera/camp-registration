@@ -815,6 +815,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         version: number;
+                        season_id: string;
                         program_id: string;
                         name: string;
                         starts_on: string;
@@ -867,6 +868,1725 @@ export interface paths {
                             deposit_cents: number;
                             waitlist_enabled: boolean;
                             organization_timezone: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/v1/families": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Families visible to the active organization. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            families: {
+                                id: string;
+                                organization_id: string;
+                                family_name: string;
+                                adult_count: number;
+                                camper_count: number;
+                                contact_count: number;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** @description Create a family record for the active organization. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        family_name: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            organization_id: string;
+                            family_name: string;
+                            adult_count: number;
+                            camper_count: number;
+                            contact_count: number;
+                            version: number;
+                            updated_at: string;
+                            adults: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                identity_subject: string | null;
+                                first_name: string;
+                                last_name: string;
+                                email: string | null;
+                                phone: string | null;
+                                account_owner: boolean;
+                                can_manage_family: boolean;
+                                can_register: boolean;
+                                can_make_payments: boolean;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            campers: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                birth_date: string;
+                                preferred_name: string | null;
+                                pronouns: string | null;
+                                gender: string | null;
+                                school_grade: string | null;
+                                school_name: string | null;
+                                cabin_preference: string | null;
+                                accessibility_needs: string | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            contacts: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                phone: string;
+                                relationship: string;
+                                emergency_contact: boolean;
+                                authorized_pickup: boolean;
+                                receives_operational_communication: boolean;
+                                emergency_priority: number | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/families/{familyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Family detail with adults, campers, and contacts. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    familyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            organization_id: string;
+                            family_name: string;
+                            adult_count: number;
+                            camper_count: number;
+                            contact_count: number;
+                            version: number;
+                            updated_at: string;
+                            adults: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                identity_subject: string | null;
+                                first_name: string;
+                                last_name: string;
+                                email: string | null;
+                                phone: string | null;
+                                account_owner: boolean;
+                                can_manage_family: boolean;
+                                can_register: boolean;
+                                can_make_payments: boolean;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            campers: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                birth_date: string;
+                                preferred_name: string | null;
+                                pronouns: string | null;
+                                gender: string | null;
+                                school_grade: string | null;
+                                school_name: string | null;
+                                cabin_preference: string | null;
+                                accessibility_needs: string | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            contacts: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                phone: string;
+                                relationship: string;
+                                emergency_contact: boolean;
+                                authorized_pickup: boolean;
+                                receives_operational_communication: boolean;
+                                emergency_priority: number | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Update family-level details. */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    familyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        family_name: string;
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            organization_id: string;
+                            family_name: string;
+                            adult_count: number;
+                            camper_count: number;
+                            contact_count: number;
+                            version: number;
+                            updated_at: string;
+                            adults: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                identity_subject: string | null;
+                                first_name: string;
+                                last_name: string;
+                                email: string | null;
+                                phone: string | null;
+                                account_owner: boolean;
+                                can_manage_family: boolean;
+                                can_register: boolean;
+                                can_make_payments: boolean;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            campers: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                birth_date: string;
+                                preferred_name: string | null;
+                                pronouns: string | null;
+                                gender: string | null;
+                                school_grade: string | null;
+                                school_name: string | null;
+                                cabin_preference: string | null;
+                                accessibility_needs: string | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            contacts: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                phone: string;
+                                relationship: string;
+                                emergency_contact: boolean;
+                                authorized_pickup: boolean;
+                                receives_operational_communication: boolean;
+                                emergency_priority: number | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/v1/families/{familyId}/adults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Add an adult to a family. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    familyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        first_name: string;
+                        last_name: string;
+                        email?: string | null;
+                        phone?: string | null;
+                        account_owner: boolean;
+                        can_manage_family: boolean;
+                        can_register: boolean;
+                        can_make_payments: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            organization_id: string;
+                            family_name: string;
+                            adult_count: number;
+                            camper_count: number;
+                            contact_count: number;
+                            version: number;
+                            updated_at: string;
+                            adults: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                identity_subject: string | null;
+                                first_name: string;
+                                last_name: string;
+                                email: string | null;
+                                phone: string | null;
+                                account_owner: boolean;
+                                can_manage_family: boolean;
+                                can_register: boolean;
+                                can_make_payments: boolean;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            campers: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                birth_date: string;
+                                preferred_name: string | null;
+                                pronouns: string | null;
+                                gender: string | null;
+                                school_grade: string | null;
+                                school_name: string | null;
+                                cabin_preference: string | null;
+                                accessibility_needs: string | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            contacts: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                phone: string;
+                                relationship: string;
+                                emergency_contact: boolean;
+                                authorized_pickup: boolean;
+                                receives_operational_communication: boolean;
+                                emergency_priority: number | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/families/{familyId}/adults/{adultId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Update an adult in a family. */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    adultId: string;
+                    familyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        first_name: string;
+                        last_name: string;
+                        email?: string | null;
+                        phone?: string | null;
+                        account_owner: boolean;
+                        can_manage_family: boolean;
+                        can_register: boolean;
+                        can_make_payments: boolean;
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            organization_id: string;
+                            family_name: string;
+                            adult_count: number;
+                            camper_count: number;
+                            contact_count: number;
+                            version: number;
+                            updated_at: string;
+                            adults: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                identity_subject: string | null;
+                                first_name: string;
+                                last_name: string;
+                                email: string | null;
+                                phone: string | null;
+                                account_owner: boolean;
+                                can_manage_family: boolean;
+                                can_register: boolean;
+                                can_make_payments: boolean;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            campers: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                birth_date: string;
+                                preferred_name: string | null;
+                                pronouns: string | null;
+                                gender: string | null;
+                                school_grade: string | null;
+                                school_name: string | null;
+                                cabin_preference: string | null;
+                                accessibility_needs: string | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            contacts: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                phone: string;
+                                relationship: string;
+                                emergency_contact: boolean;
+                                authorized_pickup: boolean;
+                                receives_operational_communication: boolean;
+                                emergency_priority: number | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/v1/families/{familyId}/campers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Add a camper to a family. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    familyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        first_name: string;
+                        last_name: string;
+                        birth_date: string;
+                        preferred_name?: string | null;
+                        pronouns?: string | null;
+                        gender?: string | null;
+                        school_grade?: string | null;
+                        school_name?: string | null;
+                        cabin_preference?: string | null;
+                        accessibility_needs?: string | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            organization_id: string;
+                            family_name: string;
+                            adult_count: number;
+                            camper_count: number;
+                            contact_count: number;
+                            version: number;
+                            updated_at: string;
+                            adults: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                identity_subject: string | null;
+                                first_name: string;
+                                last_name: string;
+                                email: string | null;
+                                phone: string | null;
+                                account_owner: boolean;
+                                can_manage_family: boolean;
+                                can_register: boolean;
+                                can_make_payments: boolean;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            campers: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                birth_date: string;
+                                preferred_name: string | null;
+                                pronouns: string | null;
+                                gender: string | null;
+                                school_grade: string | null;
+                                school_name: string | null;
+                                cabin_preference: string | null;
+                                accessibility_needs: string | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            contacts: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                phone: string;
+                                relationship: string;
+                                emergency_contact: boolean;
+                                authorized_pickup: boolean;
+                                receives_operational_communication: boolean;
+                                emergency_priority: number | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/families/{familyId}/campers/{camperId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Update a camper in a family. */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    camperId: string;
+                    familyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        first_name: string;
+                        last_name: string;
+                        birth_date: string;
+                        preferred_name?: string | null;
+                        pronouns?: string | null;
+                        gender?: string | null;
+                        school_grade?: string | null;
+                        school_name?: string | null;
+                        cabin_preference?: string | null;
+                        accessibility_needs?: string | null;
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            organization_id: string;
+                            family_name: string;
+                            adult_count: number;
+                            camper_count: number;
+                            contact_count: number;
+                            version: number;
+                            updated_at: string;
+                            adults: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                identity_subject: string | null;
+                                first_name: string;
+                                last_name: string;
+                                email: string | null;
+                                phone: string | null;
+                                account_owner: boolean;
+                                can_manage_family: boolean;
+                                can_register: boolean;
+                                can_make_payments: boolean;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            campers: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                birth_date: string;
+                                preferred_name: string | null;
+                                pronouns: string | null;
+                                gender: string | null;
+                                school_grade: string | null;
+                                school_name: string | null;
+                                cabin_preference: string | null;
+                                accessibility_needs: string | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            contacts: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                phone: string;
+                                relationship: string;
+                                emergency_contact: boolean;
+                                authorized_pickup: boolean;
+                                receives_operational_communication: boolean;
+                                emergency_priority: number | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/v1/families/{familyId}/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Add a contact to a family. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    familyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        first_name: string;
+                        last_name: string;
+                        phone: string;
+                        relationship: string;
+                        emergency_contact: boolean;
+                        authorized_pickup: boolean;
+                        receives_operational_communication: boolean;
+                        emergency_priority?: number | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            organization_id: string;
+                            family_name: string;
+                            adult_count: number;
+                            camper_count: number;
+                            contact_count: number;
+                            version: number;
+                            updated_at: string;
+                            adults: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                identity_subject: string | null;
+                                first_name: string;
+                                last_name: string;
+                                email: string | null;
+                                phone: string | null;
+                                account_owner: boolean;
+                                can_manage_family: boolean;
+                                can_register: boolean;
+                                can_make_payments: boolean;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            campers: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                birth_date: string;
+                                preferred_name: string | null;
+                                pronouns: string | null;
+                                gender: string | null;
+                                school_grade: string | null;
+                                school_name: string | null;
+                                cabin_preference: string | null;
+                                accessibility_needs: string | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            contacts: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                phone: string;
+                                relationship: string;
+                                emergency_contact: boolean;
+                                authorized_pickup: boolean;
+                                receives_operational_communication: boolean;
+                                emergency_priority: number | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/families/{familyId}/contacts/{contactId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Update a contact in a family. */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    contactId: string;
+                    familyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        first_name: string;
+                        last_name: string;
+                        phone: string;
+                        relationship: string;
+                        emergency_contact: boolean;
+                        authorized_pickup: boolean;
+                        receives_operational_communication: boolean;
+                        emergency_priority?: number | null;
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            organization_id: string;
+                            family_name: string;
+                            adult_count: number;
+                            camper_count: number;
+                            contact_count: number;
+                            version: number;
+                            updated_at: string;
+                            adults: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                identity_subject: string | null;
+                                first_name: string;
+                                last_name: string;
+                                email: string | null;
+                                phone: string | null;
+                                account_owner: boolean;
+                                can_manage_family: boolean;
+                                can_register: boolean;
+                                can_make_payments: boolean;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            campers: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                birth_date: string;
+                                preferred_name: string | null;
+                                pronouns: string | null;
+                                gender: string | null;
+                                school_grade: string | null;
+                                school_name: string | null;
+                                cabin_preference: string | null;
+                                accessibility_needs: string | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
+                            contacts: {
+                                id: string;
+                                organization_id: string;
+                                family_id: string;
+                                first_name: string;
+                                last_name: string;
+                                phone: string;
+                                relationship: string;
+                                emergency_contact: boolean;
+                                authorized_pickup: boolean;
+                                receives_operational_communication: boolean;
+                                emergency_priority: number | null;
+                                version: number;
+                                updated_at: string;
+                            }[];
                         };
                     };
                 };
