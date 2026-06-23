@@ -16,6 +16,7 @@ export default async function SessionEditorPage({
 
   try {
     const [catalog, session] = await Promise.all([getCatalog(), getSession(sessionId)]);
+    const sessionSeason = catalog.seasons.find((season) => season.id === session.season_id);
     return (
       <>
         <Link className="backLink" href="/sessions">
@@ -27,14 +28,14 @@ export default async function SessionEditorPage({
             <p className="contextLabel">{session.code}</p>
             <h1>{session.name}</h1>
             <p className="pageDescription">
-              Edit week configuration for {catalog.seasons[0]?.name}.
+              Edit week configuration for {sessionSeason?.name ?? 'the selected season'}.
             </p>
           </div>
           <span className={`statusBadge status${session.status.toLowerCase()}`}>
             {session.status.charAt(0) + session.status.slice(1).toLowerCase()}
           </span>
         </header>
-        <SessionEditor programs={catalog.programs} session={session} />
+        <SessionEditor programs={catalog.programs} seasons={catalog.seasons} session={session} />
       </>
     );
   } catch (error) {

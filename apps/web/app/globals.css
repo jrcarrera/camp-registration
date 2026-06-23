@@ -470,6 +470,10 @@ tbody tr + tr td {
   padding-top: 22px;
 }
 
+.seasonsManagement {
+  padding-top: 22px;
+}
+
 .headerActions {
   display: flex;
   align-items: flex-end;
@@ -969,6 +973,10 @@ tbody tr + tr td {
     font-size: 10px;
     font-weight: 800;
     text-transform: uppercase;
+  }
+
+  .programsTable .rowAction {
+    display: none;
   }
 
   .sessionsTable tr {

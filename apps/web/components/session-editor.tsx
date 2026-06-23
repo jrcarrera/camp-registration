@@ -24,6 +24,7 @@ interface FormState {
   program_id: string;
   registration_closes_local: string;
   registration_opens_local: string;
+  season_id: string;
   starts_on: string;
   status: SessionUpdate['status'];
   version: number;
@@ -91,6 +92,7 @@ function fromSession(session: SessionDetail): FormState {
       session.registration_opens_at,
       session.organization_timezone,
     ),
+    season_id: session.season_id,
     starts_on: session.starts_on,
     status: session.status,
     version: session.version,
@@ -105,10 +107,12 @@ function moneyToCents(value: string): number {
 export function SessionEditor({
   mode = 'edit',
   programs,
+  seasons,
   session,
 }: {
   mode?: 'create' | 'edit';
   programs: CatalogContext['programs'];
+  seasons: CatalogContext['seasons'];
   session: SessionDetail;
 }) {
   const router = useRouter();
@@ -186,7 +190,7 @@ export function SessionEditor({
       program_id: update.program_id,
       registration_closes_at: update.registration_closes_at,
       registration_opens_at: update.registration_opens_at,
-      season_id: session.season_id,
+      season_id: form.season_id,
       starts_on: update.starts_on,
       status: update.status,
       waitlist_enabled: update.waitlist_enabled,
@@ -296,6 +300,21 @@ export function SessionEditor({
               ))}
             </select>
           </Field>
+          {mode === 'create' && (
+            <Field label="Season" error={fieldErrors.season_id}>
+              <select
+                name="season_id"
+                value={form.season_id}
+                onChange={(event) => set('season_id', event.target.value)}
+              >
+                {seasons.map((season) => (
+                  <option key={season.id} value={season.id}>
+                    {season.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
           <Field label="Status" error={fieldErrors.status}>
             <select
               name="status"

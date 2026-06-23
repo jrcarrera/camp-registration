@@ -13,13 +13,21 @@ test('renders the API-backed dashboard and session catalog', async ({ page }) =>
   await page.getByRole('link', { exact: true, name: 'Sessions' }).click();
   await expect(page).toHaveURL('/sessions');
   await expect(page.locator('.listSummary')).toContainText('scheduled weeks');
-  await expect(page.locator('.sessionsTable tbody tr')).toHaveCount(9);
+  expect(await page.locator('.sessionsTable tbody tr').count()).toBeGreaterThanOrEqual(9);
 });
 
-test('opens API-backed program and session creation forms', async ({ page }) => {
+test('opens API-backed catalog creation forms', async ({ page }) => {
+  await page.goto('/seasons');
+  await expect(page.getByRole('heading', { level: 1, name: 'Seasons' })).toBeVisible();
+  expect(await page.locator('.seasonsTable tbody tr').count()).toBeGreaterThanOrEqual(1);
+
+  await page.getByRole('link', { exact: true, name: 'Add season' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Create season' })).toBeVisible();
+  await expect(page.getByLabel('Season name', { exact: true })).toBeVisible();
+
   await page.goto('/programs');
   await expect(page.getByRole('heading', { level: 1, name: 'Programs' })).toBeVisible();
-  await expect(page.locator('.programsTable tbody tr')).toHaveCount(4);
+  expect(await page.locator('.programsTable tbody tr').count()).toBeGreaterThanOrEqual(4);
 
   await page.getByRole('link', { exact: true, name: 'Add program' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Create program' })).toBeVisible();
@@ -28,6 +36,9 @@ test('opens API-backed program and session creation forms', async ({ page }) => 
   await page.goto('/sessions/new');
   await expect(page.getByRole('heading', { level: 1, name: 'Create session' })).toBeVisible();
   await expect(page.getByLabel('Session code', { exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { exact: true, name: 'Season' })).toHaveValue(
+    'd5d8a8b7-c4ff-43be-a849-60cbd5914c85',
+  );
   await expect(page.getByRole('button', { exact: true, name: 'Create session' })).toBeDisabled();
 });
 

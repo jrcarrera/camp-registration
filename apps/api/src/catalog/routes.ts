@@ -3,6 +3,8 @@ import {
   ProblemResponseSchema,
   ProgramCreateSchema,
   ProgramFixtureSchema,
+  SeasonCreateSchema,
+  SeasonFixtureSchema,
   SessionCreateSchema,
   SessionDetailSchema,
   SessionListResponseSchema,
@@ -12,6 +14,8 @@ import {
   type ProgramCreate,
   type ProgramFixture,
   type ProblemResponse,
+  type SeasonCreate,
+  type SeasonFixture,
   type SessionDetail,
   type SessionCreate,
   type SessionListResponse,
@@ -34,7 +38,11 @@ import {
 function sendProblem(reply: FastifyReply, error: unknown) {
   if (error instanceof CatalogValidationError) {
     return reply.code(400).send({
-      code: error.message.startsWith('Program') ? 'invalid_program' : 'invalid_session',
+      code: error.message.startsWith('Program')
+        ? 'invalid_program'
+        : error.message.startsWith('Season')
+          ? 'invalid_season'
+          : 'invalid_session',
       field_errors: error.fieldErrors,
       message: error.message,
     });
@@ -49,7 +57,8 @@ function sendProblem(reply: FastifyReply, error: unknown) {
     return reply.code(409).send({ code: 'version_conflict', message: error.message });
   }
   if (error instanceof CatalogDuplicateError) {
-    return reply.code(409).send({ code: 'duplicate_code', message: error.message });
+    const code = error.message.startsWith('A season') ? 'duplicate_season' : 'duplicate_code';
+    return reply.code(409).send({ code, message: error.message });
   }
   if (error instanceof CatalogReferenceError) {
     const code = error.message.startsWith('Season') ? 'invalid_season' : 'invalid_program';
@@ -115,6 +124,32 @@ export function registerCatalogRoutes(
       }
       try {
         return { sessions: await service.listSessions() };
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{ Body: SeasonCreate; Reply: SeasonFixture | ProblemResponse }>(
+    '/v1/seasons',
+    {
+      schema: {
+        body: SeasonCreateSchema,
+        description: 'Create a season for the active organization.',
+        response: { 201: SeasonFixtureSchema, ...errorResponses },
+        tags: ['seasons'],
+      },
+    },
+    async (request, reply) => {
+      if (!service) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        const season = await service.createSeason(request.body, request.id);
+        return reply.code(201).send(season);
       } catch (error) {
         return sendProblem(reply, error);
       }

@@ -198,6 +198,14 @@ export const SessionCreateSchema = Type.Object(
   { additionalProperties: false, $id: 'SessionCreate' },
 );
 
+export const SeasonCreateSchema = Type.Object(
+  {
+    name: Type.String({ minLength: 1, maxLength: 160 }),
+    year: Type.Integer({ minimum: 2000, maximum: 2200 }),
+  },
+  { additionalProperties: false, $id: 'SeasonCreate' },
+);
+
 export const ProgramCreateSchema = Type.Object(
   {
     code: Type.String({ minLength: 1, maxLength: 64, pattern: '^[A-Z0-9-]+$' }),
@@ -228,6 +236,7 @@ export type SessionDetail = Static<typeof SessionDetailSchema>;
 export type SessionListResponse = Static<typeof SessionListResponseSchema>;
 export type SessionUpdate = Static<typeof SessionUpdateSchema>;
 export type SessionCreate = Static<typeof SessionCreateSchema>;
+export type SeasonCreate = Static<typeof SeasonCreateSchema>;
 export type ProgramCreate = Static<typeof ProgramCreateSchema>;
 export type SessionParams = Static<typeof SessionParamsSchema>;
 export type ProblemResponse = Static<typeof ProblemResponseSchema>;

@@ -23,6 +23,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   if (response.ok && request.method !== 'GET' && request.method !== 'HEAD') {
     revalidatePath('/');
     revalidatePath('/sessions');
+    revalidatePath('/seasons');
     revalidatePath('/programs');
   }
 

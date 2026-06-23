@@ -3,6 +3,8 @@ import type {
   CatalogContext,
   ProgramCreate,
   ProgramFixture,
+  SeasonCreate,
+  SeasonFixture,
   SessionCreate,
   SessionDetail,
   SessionSummary,
@@ -110,6 +112,17 @@ const createdProgram: ProgramFixture = {
   organization_id: organizationId,
 };
 
+const seasonCreate: SeasonCreate = {
+  name: 'Summer 2028',
+  year: 2028,
+};
+
+const createdSeason: SeasonFixture = {
+  ...seasonCreate,
+  id: '32e8eca1-6a13-4a3e-86fb-4bedfae8f7fd',
+  organization_id: organizationId,
+};
+
 const sessionCreate: SessionCreate = {
   age_as_of: 'SESSION_START',
   capacity: 24,
@@ -169,11 +182,17 @@ describe('catalog routes', () => {
     expect(service.updateSession).toHaveBeenCalledWith(sessionId, update, 'session-update-test');
   });
 
-  it('creates programs and sessions through POST endpoints', async () => {
+  it('creates seasons, programs, and sessions through POST endpoints', async () => {
     const service = fakeService();
     const app = await buildApp({ catalogService: service });
     applications.push(app);
 
+    const seasonResponse = await app.inject({
+      headers: { 'x-request-id': 'season-create-test' },
+      method: 'POST',
+      payload: seasonCreate,
+      url: '/v1/seasons',
+    });
     const programResponse = await app.inject({
       headers: { 'x-request-id': 'program-create-test' },
       method: 'POST',
@@ -187,6 +206,9 @@ describe('catalog routes', () => {
       url: '/v1/sessions',
     });
 
+    expect(seasonResponse.statusCode).toBe(201);
+    expect(seasonResponse.json()).toEqual(createdSeason);
+    expect(service.createSeason).toHaveBeenCalledWith(seasonCreate, 'season-create-test');
     expect(programResponse.statusCode).toBe(201);
     expect(programResponse.json()).toEqual(createdProgram);
     expect(service.createProgram).toHaveBeenCalledWith(programCreate, 'program-create-test');
@@ -254,11 +276,13 @@ const localIdentity: RequestIdentity = {
 
 function fakeService(): CatalogServiceApi & {
   createProgram: ReturnType<typeof vi.fn<CatalogServiceApi['createProgram']>>;
+  createSeason: ReturnType<typeof vi.fn<CatalogServiceApi['createSeason']>>;
   createSession: ReturnType<typeof vi.fn<CatalogServiceApi['createSession']>>;
   updateSession: ReturnType<typeof vi.fn<CatalogServiceApi['updateSession']>>;
 } {
   return {
     createProgram: vi.fn().mockResolvedValue(createdProgram),
+    createSeason: vi.fn().mockResolvedValue(createdSeason),
     createSession: vi.fn().mockResolvedValue({
       ...detail,
       ...sessionCreate,

@@ -110,6 +110,7 @@ describe('catalog store', () => {
   it('creates tenant-scoped programs and sessions with audit events', async () => {
     const store = new CatalogStore(runtimeDatabase);
     const programId = '90e02c14-b175-4ca1-93e5-1f6ddf27bd74';
+    const seasonId = '32e8eca1-6a13-4a3e-86fb-4bedfae8f7fd';
     const sessionId = '19cacb53-2ce9-48d8-a951-664e09d36cd9';
     const context = {
       actorId: 'integration-admin',
@@ -117,6 +118,11 @@ describe('catalog store', () => {
       requestId: 'catalog-create-request',
     };
 
+    const season = await store.createSeason(context, {
+      id: seasonId,
+      name: 'Summer 2028',
+      year: 2028,
+    });
     const program = await store.createProgram(context, {
       code: 'TEEN',
       delivery_mode: 'OVERNIGHT',
@@ -127,28 +133,30 @@ describe('catalog store', () => {
     const session = await store.createSession(context, {
       age_as_of: 'SESSION_START',
       capacity: 24,
-      code: 'TEEN-2027-01',
+      code: 'TEEN-2028-01',
       deposit_cents: 5000,
-      ends_on: '2027-07-09',
+      ends_on: '2028-07-09',
       id: sessionId,
       maximum_age: 17,
       minimum_age: 13,
       name: 'Teen Leadership Week 1',
       price_cents: 45000,
       program_id: programId,
-      registration_closes_at: '2027-07-01T05:00:00Z',
-      registration_opens_at: '2027-01-15T15:00:00Z',
-      season_id: 'd5d8a8b7-c4ff-43be-a849-60cbd5914c85',
-      starts_on: '2027-07-05',
+      registration_closes_at: '2028-07-01T05:00:00Z',
+      registration_opens_at: '2028-01-15T15:00:00Z',
+      season_id: seasonId,
+      starts_on: '2028-07-05',
       status: 'DRAFT',
       waitlist_enabled: true,
     });
 
+    expect(season).toMatchObject({ id: seasonId, organization_id: organizationId, year: 2028 });
     expect(program).toMatchObject({ id: programId, organization_id: organizationId });
     expect(session).toMatchObject({
       id: sessionId,
       organization_id: organizationId,
       program_name: 'Teen Leadership',
+      season_id: seasonId,
       version: 1,
     });
     await expect(store.getSession(otherOrganizationId, sessionId)).resolves.toBeNull();
@@ -156,10 +164,14 @@ describe('catalog store', () => {
     const admin = new Pool({ connectionString: migrationUrl });
     const audit = await admin.query<{ action: string }>(
       `SELECT action FROM audit_events WHERE target_id = ANY($1::uuid[]) ORDER BY action`,
-      [[programId, sessionId]],
+      [[seasonId, programId, sessionId]],
     );
     await admin.end();
-    expect(audit.rows).toEqual([{ action: 'program.created' }, { action: 'session.created' }]);
+    expect(audit.rows).toEqual([
+      { action: 'program.created' },
+      { action: 'season.created' },
+      { action: 'session.created' },
+    ]);
   });
 });
 

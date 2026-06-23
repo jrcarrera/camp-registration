@@ -1,21 +1,33 @@
-import type { SessionSummary } from '@camp-registration/contracts';
+import type { CatalogContext, SessionSummary } from '@camp-registration/contracts';
 import { AlertCircle, Plus } from 'lucide-react';
 import Link from 'next/link';
 
+import { SeasonSelector } from '../../components/season-selector';
 import { SessionTable } from '../../components/session-table';
 import { getCatalog, getSessions } from '../../lib/api';
 
 export const dynamic = 'force-dynamic';
 
-export default async function SessionsPage() {
+export default async function SessionsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ seasonId?: string }>;
+}) {
+  const requestedSeasonId = (await searchParams)?.seasonId;
   let sessions: SessionSummary[] = [];
-  let seasonName = 'Summer 2027';
+  let seasons: CatalogContext['seasons'] = [];
+  let selectedSeasonId: string | null = null;
   let errorMessage: string | null = null;
 
   try {
     const [catalog, response] = await Promise.all([getCatalog(), getSessions()]);
-    sessions = response.sessions;
-    seasonName = catalog.seasons[0]?.name ?? seasonName;
+    seasons = catalog.seasons;
+    const selectedSeason =
+      seasons.find((season) => season.id === requestedSeasonId) ?? seasons[0] ?? null;
+    selectedSeasonId = selectedSeason?.id ?? null;
+    sessions = selectedSeasonId
+      ? response.sessions.filter((session) => session.season_id === selectedSeasonId)
+      : response.sessions;
   } catch {
     errorMessage = 'Session data could not be loaded. Confirm that the local API is running.';
   }
@@ -41,13 +53,13 @@ export default async function SessionsPage() {
           </p>
         </div>
         <div className="headerActions">
-          <label className="seasonControl">
-            <span>Season</span>
-            <select defaultValue="active" aria-label="Active season">
-              <option value="active">{seasonName}</option>
-            </select>
-          </label>
-          <Link className="buttonPrimary" href="/sessions/new">
+          {selectedSeasonId && (
+            <SeasonSelector seasons={seasons} selectedSeasonId={selectedSeasonId} />
+          )}
+          <Link
+            className="buttonPrimary"
+            href={selectedSeasonId ? `/sessions/new?seasonId=${selectedSeasonId}` : '/sessions/new'}
+          >
             <Plus size={17} aria-hidden="true" />
             Add session
           </Link>

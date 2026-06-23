@@ -82,6 +82,12 @@ export interface CreateProgramRecord {
   description: string;
 }
 
+export interface CreateSeasonRecord {
+  id: string;
+  name: string;
+  year: number;
+}
+
 export interface CreateCatalogContext {
   actorId: string;
   organizationId: string;
@@ -318,6 +324,43 @@ export class CatalogStore {
       } catch (error) {
         if ((error as { code?: string }).code === '23505') {
           throw new CatalogDuplicateError('A program with this code already exists');
+        }
+        throw error;
+      }
+    });
+  }
+
+  async createSeason(
+    context: CreateCatalogContext,
+    season: CreateSeasonRecord,
+  ): Promise<CatalogContextRecord['seasons'][number]> {
+    return this.withTenant(context.organizationId, async (client) => {
+      try {
+        const result = await client.query<CatalogContextRecord['seasons'][number]>(
+          `INSERT INTO seasons (
+             id, organization_id, name, year
+           ) VALUES ($1, $2, $3, $4)
+           RETURNING id, organization_id, name, year`,
+          [season.id, context.organizationId, season.name, season.year],
+        );
+
+        await client.query(
+          `INSERT INTO audit_events (
+             organization_id, actor_id, action, target_type, target_id, outcome,
+             request_id, details
+           ) VALUES ($1, $2, 'season.created', 'season', $3, 'success', $4, $5::jsonb)`,
+          [
+            context.organizationId,
+            context.actorId,
+            season.id,
+            context.requestId,
+            JSON.stringify({ year: season.year }),
+          ],
+        );
+        return result.rows[0]!;
+      } catch (error) {
+        if ((error as { code?: string }).code === '23505') {
+          throw new CatalogDuplicateError('A season with this year already exists');
         }
         throw error;
       }

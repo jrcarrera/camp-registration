@@ -7,9 +7,15 @@ import { getCatalog } from '../../../lib/api';
 
 export const dynamic = 'force-dynamic';
 
-export default async function NewSessionPage() {
+export default async function NewSessionPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ seasonId?: string }>;
+}) {
   const catalog = await getCatalog();
-  const season = catalog.seasons[0];
+  const requestedSeasonId = (await searchParams)?.seasonId;
+  const season =
+    catalog.seasons.find((candidate) => candidate.id === requestedSeasonId) ?? catalog.seasons[0];
   const program = catalog.programs[0];
 
   if (!season || !program) {
@@ -48,7 +54,7 @@ export default async function NewSessionPage() {
 
   return (
     <>
-      <Link className="backLink" href="/sessions">
+      <Link className="backLink" href={season ? `/sessions?seasonId=${season.id}` : '/sessions'}>
         <ArrowLeft size={16} aria-hidden="true" />
         Sessions
       </Link>
@@ -59,7 +65,12 @@ export default async function NewSessionPage() {
           <p className="pageDescription">Add a week to {season.name}.</p>
         </div>
       </header>
-      <SessionEditor mode="create" programs={catalog.programs} session={session} />
+      <SessionEditor
+        mode="create"
+        programs={catalog.programs}
+        seasons={catalog.seasons}
+        session={session}
+      />
     </>
   );
 }

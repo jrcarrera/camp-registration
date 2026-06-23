@@ -5,6 +5,8 @@ import type {
   CatalogContext,
   ProgramCreate,
   ProgramFixture,
+  SeasonCreate,
+  SeasonFixture,
   SessionCreate,
   SessionDetail,
   SessionSummary,
@@ -37,6 +39,7 @@ export interface CatalogServiceApi {
   listSessions(): Promise<SessionSummary[]>;
   getSession(sessionId: string): Promise<SessionDetail>;
   createProgram(program: ProgramCreate, requestId: string): Promise<ProgramFixture>;
+  createSeason(season: SeasonCreate, requestId: string): Promise<SeasonFixture>;
   createSession(session: SessionCreate, requestId: string): Promise<SessionDetail>;
   updateSession(
     sessionId: string,
@@ -80,6 +83,14 @@ function validateProgram(program: ProgramCreate): void {
   if (!program.description.trim()) errors.description = 'Enter a program description.';
   if (Object.keys(errors).length > 0) {
     throw new CatalogValidationError(errors, 'Program details are invalid');
+  }
+}
+
+function validateSeason(season: SeasonCreate): void {
+  const errors: Record<string, string> = {};
+  if (!season.name.trim()) errors.name = 'Enter a season name.';
+  if (Object.keys(errors).length > 0) {
+    throw new CatalogValidationError(errors, 'Season details are invalid');
   }
 }
 
@@ -134,6 +145,19 @@ export class CatalogService implements CatalogServiceApi {
         id: randomUUID(),
         name: program.name.trim(),
       },
+    );
+  }
+
+  async createSeason(season: SeasonCreate, requestId: string): Promise<SeasonFixture> {
+    this.authorize(editRoles);
+    validateSeason(season);
+    return this.store.createSeason(
+      {
+        actorId: this.identity.subject,
+        organizationId: this.organizationId,
+        requestId,
+      },
+      { ...season, id: randomUUID(), name: season.name.trim() },
     );
   }
 
