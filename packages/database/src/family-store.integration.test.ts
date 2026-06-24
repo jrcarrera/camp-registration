@@ -74,17 +74,20 @@ describe('family store', () => {
 
     const withAdult = await store.createAdult(context, {
       account_owner: true,
+      authorized_pickup: true,
       can_make_payments: true,
       can_manage_family: true,
       can_register: true,
       email: 'parent@example.test',
       email_normalized: 'parent@example.test',
+      emergency_contact: true,
       family_id: familyId,
       first_name: 'Jordan',
       id: adultId,
       identity_subject: null,
       last_name: 'Smith',
       phone: '555-0100',
+      receives_operational_communication: true,
     });
     expect(withAdult.adults).toHaveLength(1);
     expect(withAdult.adult_count).toBe(1);
@@ -100,13 +103,11 @@ describe('family store', () => {
       cabin_preference: null,
       family_id: familyId,
       first_name: 'Avery',
-      gender: null,
+      gender: 'Female',
       id: camperId,
       last_name: 'Smith',
       preferred_name: null,
-      pronouns: null,
       school_grade: '4',
-      school_name: 'Central Elementary',
     });
     expect(withCamper.campers[0]).toMatchObject({
       birth_date: '2017-03-08',

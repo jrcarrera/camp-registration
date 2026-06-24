@@ -7,6 +7,8 @@ const EmailSchema = Type.String({
   pattern: '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$',
 });
 
+const GenderSchema = Type.Union([Type.Literal('Female'), Type.Literal('Male')]);
+
 export const FamilySummarySchema = Type.Object(
   {
     id: UuidSchema,
@@ -35,6 +37,9 @@ export const AdultSchema = Type.Object(
     can_manage_family: Type.Boolean(),
     can_register: Type.Boolean(),
     can_make_payments: Type.Boolean(),
+    emergency_contact: Type.Boolean(),
+    authorized_pickup: Type.Boolean(),
+    receives_operational_communication: Type.Boolean(),
     version: Type.Integer({ minimum: 1 }),
     updated_at: UtcTimestampSchema,
   },
@@ -50,10 +55,8 @@ export const CamperSchema = Type.Object(
     last_name: Type.String({ minLength: 1 }),
     birth_date: LocalDateSchema,
     preferred_name: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
-    pronouns: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
-    gender: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+    gender: Type.Union([GenderSchema, Type.Null()]),
     school_grade: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
-    school_name: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     cabin_preference: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     accessibility_needs: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     version: Type.Integer({ minimum: 1 }),
@@ -128,6 +131,9 @@ export const AdultCreateSchema = Type.Object(
     can_manage_family: Type.Boolean(),
     can_register: Type.Boolean(),
     can_make_payments: Type.Boolean(),
+    emergency_contact: Type.Boolean(),
+    authorized_pickup: Type.Boolean(),
+    receives_operational_communication: Type.Boolean(),
   },
   { additionalProperties: false, $id: 'AdultCreate' },
 );
@@ -148,15 +154,9 @@ export const CamperCreateSchema = Type.Object(
     preferred_name: Type.Optional(
       Type.Union([Type.String({ minLength: 1, maxLength: 100 }), Type.Null()]),
     ),
-    pronouns: Type.Optional(
-      Type.Union([Type.String({ minLength: 1, maxLength: 80 }), Type.Null()]),
-    ),
-    gender: Type.Optional(Type.Union([Type.String({ minLength: 1, maxLength: 80 }), Type.Null()])),
+    gender: Type.Optional(Type.Union([GenderSchema, Type.Null()])),
     school_grade: Type.Optional(
       Type.Union([Type.String({ minLength: 1, maxLength: 40 }), Type.Null()]),
-    ),
-    school_name: Type.Optional(
-      Type.Union([Type.String({ minLength: 1, maxLength: 160 }), Type.Null()]),
     ),
     cabin_preference: Type.Optional(
       Type.Union([Type.String({ minLength: 1, maxLength: 160 }), Type.Null()]),

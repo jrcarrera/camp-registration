@@ -2777,6 +2777,9 @@
                           "can_manage_family",
                           "can_register",
                           "can_make_payments",
+                          "emergency_contact",
+                          "authorized_pickup",
+                          "receives_operational_communication",
                           "version",
                           "updated_at"
                         ],
@@ -2847,6 +2850,15 @@
                           "can_make_payments": {
                             "type": "boolean"
                           },
+                          "emergency_contact": {
+                            "type": "boolean"
+                          },
+                          "authorized_pickup": {
+                            "type": "boolean"
+                          },
+                          "receives_operational_communication": {
+                            "type": "boolean"
+                          },
                           "version": {
                             "minimum": 1,
                             "type": "integer"
@@ -2872,10 +2884,8 @@
                           "last_name",
                           "birth_date",
                           "preferred_name",
-                          "pronouns",
                           "gender",
                           "school_grade",
-                          "school_name",
                           "cabin_preference",
                           "accessibility_needs",
                           "version",
@@ -2917,22 +2927,23 @@
                               }
                             ]
                           },
-                          "pronouns": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
                           "gender": {
                             "anyOf": [
                               {
-                                "minLength": 1,
-                                "type": "string"
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Female"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Male"
+                                    ]
+                                  }
+                                ]
                               },
                               {
                                 "type": "null"
@@ -2940,17 +2951,6 @@
                             ]
                           },
                           "school_grade": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "school_name": {
                             "anyOf": [
                               {
                                 "minLength": 1,
@@ -3327,6 +3327,9 @@
                           "can_manage_family",
                           "can_register",
                           "can_make_payments",
+                          "emergency_contact",
+                          "authorized_pickup",
+                          "receives_operational_communication",
                           "version",
                           "updated_at"
                         ],
@@ -3397,6 +3400,15 @@
                           "can_make_payments": {
                             "type": "boolean"
                           },
+                          "emergency_contact": {
+                            "type": "boolean"
+                          },
+                          "authorized_pickup": {
+                            "type": "boolean"
+                          },
+                          "receives_operational_communication": {
+                            "type": "boolean"
+                          },
                           "version": {
                             "minimum": 1,
                             "type": "integer"
@@ -3421,10 +3433,8 @@
                           "last_name",
                           "birth_date",
                           "preferred_name",
-                          "pronouns",
                           "gender",
                           "school_grade",
-                          "school_name",
                           "cabin_preference",
                           "accessibility_needs",
                           "version",
@@ -3466,22 +3476,23 @@
                               }
                             ]
                           },
-                          "pronouns": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
                           "gender": {
                             "anyOf": [
                               {
-                                "minLength": 1,
-                                "type": "string"
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Female"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Male"
+                                    ]
+                                  }
+                                ]
                               },
                               {
                                 "type": "null"
@@ -3489,17 +3500,6 @@
                             ]
                           },
                           "school_grade": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "school_name": {
                             "anyOf": [
                               {
                                 "minLength": 1,
@@ -3898,6 +3898,9 @@
                           "can_manage_family",
                           "can_register",
                           "can_make_payments",
+                          "emergency_contact",
+                          "authorized_pickup",
+                          "receives_operational_communication",
                           "version",
                           "updated_at"
                         ],
@@ -3968,6 +3971,15 @@
                           "can_make_payments": {
                             "type": "boolean"
                           },
+                          "emergency_contact": {
+                            "type": "boolean"
+                          },
+                          "authorized_pickup": {
+                            "type": "boolean"
+                          },
+                          "receives_operational_communication": {
+                            "type": "boolean"
+                          },
                           "version": {
                             "minimum": 1,
                             "type": "integer"
@@ -3992,10 +4004,8 @@
                           "last_name",
                           "birth_date",
                           "preferred_name",
-                          "pronouns",
                           "gender",
                           "school_grade",
-                          "school_name",
                           "cabin_preference",
                           "accessibility_needs",
                           "version",
@@ -4037,22 +4047,23 @@
                               }
                             ]
                           },
-                          "pronouns": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
                           "gender": {
                             "anyOf": [
                               {
-                                "minLength": 1,
-                                "type": "string"
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Female"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Male"
+                                    ]
+                                  }
+                                ]
                               },
                               {
                                 "type": "null"
@@ -4060,17 +4071,6 @@
                             ]
                           },
                           "school_grade": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "school_name": {
                             "anyOf": [
                               {
                                 "minLength": 1,
@@ -4376,7 +4376,10 @@
                   "account_owner",
                   "can_manage_family",
                   "can_register",
-                  "can_make_payments"
+                  "can_make_payments",
+                  "emergency_contact",
+                  "authorized_pickup",
+                  "receives_operational_communication"
                 ],
                 "properties": {
                   "first_name": {
@@ -4423,6 +4426,15 @@
                     "type": "boolean"
                   },
                   "can_make_payments": {
+                    "type": "boolean"
+                  },
+                  "emergency_contact": {
+                    "type": "boolean"
+                  },
+                  "authorized_pickup": {
+                    "type": "boolean"
+                  },
+                  "receives_operational_communication": {
                     "type": "boolean"
                   }
                 }
@@ -4512,6 +4524,9 @@
                           "can_manage_family",
                           "can_register",
                           "can_make_payments",
+                          "emergency_contact",
+                          "authorized_pickup",
+                          "receives_operational_communication",
                           "version",
                           "updated_at"
                         ],
@@ -4582,6 +4597,15 @@
                           "can_make_payments": {
                             "type": "boolean"
                           },
+                          "emergency_contact": {
+                            "type": "boolean"
+                          },
+                          "authorized_pickup": {
+                            "type": "boolean"
+                          },
+                          "receives_operational_communication": {
+                            "type": "boolean"
+                          },
                           "version": {
                             "minimum": 1,
                             "type": "integer"
@@ -4606,10 +4630,8 @@
                           "last_name",
                           "birth_date",
                           "preferred_name",
-                          "pronouns",
                           "gender",
                           "school_grade",
-                          "school_name",
                           "cabin_preference",
                           "accessibility_needs",
                           "version",
@@ -4651,22 +4673,23 @@
                               }
                             ]
                           },
-                          "pronouns": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
                           "gender": {
                             "anyOf": [
                               {
-                                "minLength": 1,
-                                "type": "string"
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Female"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Male"
+                                    ]
+                                  }
+                                ]
                               },
                               {
                                 "type": "null"
@@ -4674,17 +4697,6 @@
                             ]
                           },
                           "school_grade": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "school_name": {
                             "anyOf": [
                               {
                                 "minLength": 1,
@@ -4990,6 +5002,9 @@
                   "can_manage_family",
                   "can_register",
                   "can_make_payments",
+                  "emergency_contact",
+                  "authorized_pickup",
+                  "receives_operational_communication",
                   "version"
                 ],
                 "properties": {
@@ -5037,6 +5052,15 @@
                     "type": "boolean"
                   },
                   "can_make_payments": {
+                    "type": "boolean"
+                  },
+                  "emergency_contact": {
+                    "type": "boolean"
+                  },
+                  "authorized_pickup": {
+                    "type": "boolean"
+                  },
+                  "receives_operational_communication": {
                     "type": "boolean"
                   },
                   "version": {
@@ -5139,6 +5163,9 @@
                           "can_manage_family",
                           "can_register",
                           "can_make_payments",
+                          "emergency_contact",
+                          "authorized_pickup",
+                          "receives_operational_communication",
                           "version",
                           "updated_at"
                         ],
@@ -5209,6 +5236,15 @@
                           "can_make_payments": {
                             "type": "boolean"
                           },
+                          "emergency_contact": {
+                            "type": "boolean"
+                          },
+                          "authorized_pickup": {
+                            "type": "boolean"
+                          },
+                          "receives_operational_communication": {
+                            "type": "boolean"
+                          },
                           "version": {
                             "minimum": 1,
                             "type": "integer"
@@ -5233,10 +5269,8 @@
                           "last_name",
                           "birth_date",
                           "preferred_name",
-                          "pronouns",
                           "gender",
                           "school_grade",
-                          "school_name",
                           "cabin_preference",
                           "accessibility_needs",
                           "version",
@@ -5278,22 +5312,23 @@
                               }
                             ]
                           },
-                          "pronouns": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
                           "gender": {
                             "anyOf": [
                               {
-                                "minLength": 1,
-                                "type": "string"
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Female"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Male"
+                                    ]
+                                  }
+                                ]
                               },
                               {
                                 "type": "null"
@@ -5301,17 +5336,6 @@
                             ]
                           },
                           "school_grade": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "school_name": {
                             "anyOf": [
                               {
                                 "minLength": 1,
@@ -5643,24 +5667,23 @@
                       }
                     ]
                   },
-                  "pronouns": {
-                    "anyOf": [
-                      {
-                        "minLength": 1,
-                        "maxLength": 80,
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
                   "gender": {
                     "anyOf": [
                       {
-                        "minLength": 1,
-                        "maxLength": 80,
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "Female"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "Male"
+                            ]
+                          }
+                        ]
                       },
                       {
                         "type": "null"
@@ -5672,18 +5695,6 @@
                       {
                         "minLength": 1,
                         "maxLength": 40,
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "school_name": {
-                    "anyOf": [
-                      {
-                        "minLength": 1,
-                        "maxLength": 160,
                         "type": "string"
                       },
                       {
@@ -5802,6 +5813,9 @@
                           "can_manage_family",
                           "can_register",
                           "can_make_payments",
+                          "emergency_contact",
+                          "authorized_pickup",
+                          "receives_operational_communication",
                           "version",
                           "updated_at"
                         ],
@@ -5872,6 +5886,15 @@
                           "can_make_payments": {
                             "type": "boolean"
                           },
+                          "emergency_contact": {
+                            "type": "boolean"
+                          },
+                          "authorized_pickup": {
+                            "type": "boolean"
+                          },
+                          "receives_operational_communication": {
+                            "type": "boolean"
+                          },
                           "version": {
                             "minimum": 1,
                             "type": "integer"
@@ -5896,10 +5919,8 @@
                           "last_name",
                           "birth_date",
                           "preferred_name",
-                          "pronouns",
                           "gender",
                           "school_grade",
-                          "school_name",
                           "cabin_preference",
                           "accessibility_needs",
                           "version",
@@ -5941,22 +5962,23 @@
                               }
                             ]
                           },
-                          "pronouns": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
                           "gender": {
                             "anyOf": [
                               {
-                                "minLength": 1,
-                                "type": "string"
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Female"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Male"
+                                    ]
+                                  }
+                                ]
                               },
                               {
                                 "type": "null"
@@ -5964,17 +5986,6 @@
                             ]
                           },
                           "school_grade": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "school_name": {
                             "anyOf": [
                               {
                                 "minLength": 1,
@@ -6306,24 +6317,23 @@
                       }
                     ]
                   },
-                  "pronouns": {
-                    "anyOf": [
-                      {
-                        "minLength": 1,
-                        "maxLength": 80,
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
                   "gender": {
                     "anyOf": [
                       {
-                        "minLength": 1,
-                        "maxLength": 80,
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "Female"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "Male"
+                            ]
+                          }
+                        ]
                       },
                       {
                         "type": "null"
@@ -6335,18 +6345,6 @@
                       {
                         "minLength": 1,
                         "maxLength": 40,
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "school_name": {
-                    "anyOf": [
-                      {
-                        "minLength": 1,
-                        "maxLength": 160,
                         "type": "string"
                       },
                       {
@@ -6478,6 +6476,9 @@
                           "can_manage_family",
                           "can_register",
                           "can_make_payments",
+                          "emergency_contact",
+                          "authorized_pickup",
+                          "receives_operational_communication",
                           "version",
                           "updated_at"
                         ],
@@ -6548,6 +6549,15 @@
                           "can_make_payments": {
                             "type": "boolean"
                           },
+                          "emergency_contact": {
+                            "type": "boolean"
+                          },
+                          "authorized_pickup": {
+                            "type": "boolean"
+                          },
+                          "receives_operational_communication": {
+                            "type": "boolean"
+                          },
                           "version": {
                             "minimum": 1,
                             "type": "integer"
@@ -6572,10 +6582,8 @@
                           "last_name",
                           "birth_date",
                           "preferred_name",
-                          "pronouns",
                           "gender",
                           "school_grade",
-                          "school_name",
                           "cabin_preference",
                           "accessibility_needs",
                           "version",
@@ -6617,22 +6625,23 @@
                               }
                             ]
                           },
-                          "pronouns": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
                           "gender": {
                             "anyOf": [
                               {
-                                "minLength": 1,
-                                "type": "string"
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Female"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Male"
+                                    ]
+                                  }
+                                ]
                               },
                               {
                                 "type": "null"
@@ -6640,17 +6649,6 @@
                             ]
                           },
                           "school_grade": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "school_name": {
                             "anyOf": [
                               {
                                 "minLength": 1,
@@ -7087,6 +7085,9 @@
                           "can_manage_family",
                           "can_register",
                           "can_make_payments",
+                          "emergency_contact",
+                          "authorized_pickup",
+                          "receives_operational_communication",
                           "version",
                           "updated_at"
                         ],
@@ -7157,6 +7158,15 @@
                           "can_make_payments": {
                             "type": "boolean"
                           },
+                          "emergency_contact": {
+                            "type": "boolean"
+                          },
+                          "authorized_pickup": {
+                            "type": "boolean"
+                          },
+                          "receives_operational_communication": {
+                            "type": "boolean"
+                          },
                           "version": {
                             "minimum": 1,
                             "type": "integer"
@@ -7181,10 +7191,8 @@
                           "last_name",
                           "birth_date",
                           "preferred_name",
-                          "pronouns",
                           "gender",
                           "school_grade",
-                          "school_name",
                           "cabin_preference",
                           "accessibility_needs",
                           "version",
@@ -7226,22 +7234,23 @@
                               }
                             ]
                           },
-                          "pronouns": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
                           "gender": {
                             "anyOf": [
                               {
-                                "minLength": 1,
-                                "type": "string"
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Female"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Male"
+                                    ]
+                                  }
+                                ]
                               },
                               {
                                 "type": "null"
@@ -7249,17 +7258,6 @@
                             ]
                           },
                           "school_grade": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "school_name": {
                             "anyOf": [
                               {
                                 "minLength": 1,
@@ -7709,6 +7707,9 @@
                           "can_manage_family",
                           "can_register",
                           "can_make_payments",
+                          "emergency_contact",
+                          "authorized_pickup",
+                          "receives_operational_communication",
                           "version",
                           "updated_at"
                         ],
@@ -7779,6 +7780,15 @@
                           "can_make_payments": {
                             "type": "boolean"
                           },
+                          "emergency_contact": {
+                            "type": "boolean"
+                          },
+                          "authorized_pickup": {
+                            "type": "boolean"
+                          },
+                          "receives_operational_communication": {
+                            "type": "boolean"
+                          },
                           "version": {
                             "minimum": 1,
                             "type": "integer"
@@ -7803,10 +7813,8 @@
                           "last_name",
                           "birth_date",
                           "preferred_name",
-                          "pronouns",
                           "gender",
                           "school_grade",
-                          "school_name",
                           "cabin_preference",
                           "accessibility_needs",
                           "version",
@@ -7848,22 +7856,23 @@
                               }
                             ]
                           },
-                          "pronouns": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
                           "gender": {
                             "anyOf": [
                               {
-                                "minLength": 1,
-                                "type": "string"
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Female"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "Male"
+                                    ]
+                                  }
+                                ]
                               },
                               {
                                 "type": "null"
@@ -7871,17 +7880,6 @@
                             ]
                           },
                           "school_grade": {
-                            "anyOf": [
-                              {
-                                "minLength": 1,
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "school_name": {
                             "anyOf": [
                               {
                                 "minLength": 1,
