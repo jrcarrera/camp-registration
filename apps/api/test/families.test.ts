@@ -39,10 +39,12 @@ const summary: FamilySummary = {
 
 const adult: Adult = {
   account_owner: true,
+  authorized_pickup: true,
   can_make_payments: true,
   can_manage_family: true,
   can_register: true,
   email: 'parent@example.test',
+  emergency_contact: true,
   family_id: familyId,
   first_name: 'Jordan',
   id: adultId,
@@ -50,6 +52,7 @@ const adult: Adult = {
   last_name: 'Smith',
   organization_id: organizationId,
   phone: '555-0100',
+  receives_operational_communication: true,
   updated_at: '2026-06-23T12:00:00Z',
   version: 1,
 };
@@ -60,14 +63,12 @@ const camper: Camper = {
   cabin_preference: null,
   family_id: familyId,
   first_name: 'Avery',
-  gender: null,
+  gender: 'Female',
   id: camperId,
   last_name: 'Smith',
   organization_id: organizationId,
   preferred_name: null,
-  pronouns: null,
   school_grade: '4',
-  school_name: 'Central Elementary',
   updated_at: '2026-06-23T12:00:00Z',
   version: 1,
 };
@@ -99,18 +100,22 @@ const familyCreate: FamilyCreate = { family_name: 'Smith Family' };
 const familyUpdate: FamilyUpdate = { family_name: 'Smith-Jones Family', version: 1 };
 const adultCreate: AdultCreate = {
   account_owner: true,
+  authorized_pickup: true,
   can_make_payments: true,
   can_manage_family: true,
   can_register: true,
   email: 'parent@example.test',
+  emergency_contact: true,
   first_name: 'Jordan',
   last_name: 'Smith',
   phone: '555-0100',
+  receives_operational_communication: true,
 };
 const adultUpdate: AdultUpdate = { ...adultCreate, version: 1 };
 const camperCreate: CamperCreate = {
   birth_date: '2017-03-08',
   first_name: 'Avery',
+  gender: 'Female',
   last_name: 'Smith',
   school_grade: '4',
 };

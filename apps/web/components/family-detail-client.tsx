@@ -128,6 +128,43 @@ function PermissionToggles({
   );
 }
 
+function AdultRoleToggles({
+  form,
+  set,
+}: {
+  form: AdultForm;
+  set: <Key extends keyof AdultForm>(key: Key, value: AdultForm[Key]) => void;
+}) {
+  return (
+    <div className="toggleGrid">
+      <label className="checkField">
+        <input
+          type="checkbox"
+          checked={form.emergency_contact}
+          onChange={(event) => set('emergency_contact', event.target.checked)}
+        />
+        <span>Emergency contact</span>
+      </label>
+      <label className="checkField">
+        <input
+          type="checkbox"
+          checked={form.authorized_pickup}
+          onChange={(event) => set('authorized_pickup', event.target.checked)}
+        />
+        <span>Authorized pickup</span>
+      </label>
+      <label className="checkField">
+        <input
+          type="checkbox"
+          checked={form.receives_operational_communication}
+          onChange={(event) => set('receives_operational_communication', event.target.checked)}
+        />
+        <span>Operational communication</span>
+      </label>
+    </div>
+  );
+}
+
 function ContactRoleToggles({
   form,
   set,
@@ -188,12 +225,7 @@ export function FamilyDetailClient({ initialFamily }: FamilyDetailClientProps) {
         </div>
         <div className="recordStack">
           {family.adults.map((adult) => (
-            <AdultEditor
-              key={`${adult.id}:${adult.version}`}
-              adult={adult}
-              familyId={family.id}
-              onSaved={saveFamily}
-            />
+            <AdultEditor key={adult.id} adult={adult} familyId={family.id} onSaved={saveFamily} />
           ))}
           <AdultCreatePanel
             familyId={family.id}
@@ -211,7 +243,7 @@ export function FamilyDetailClient({ initialFamily }: FamilyDetailClientProps) {
         <div className="recordStack">
           {family.campers.map((camper) => (
             <CamperEditor
-              key={`${camper.id}:${camper.version}`}
+              key={camper.id}
               camper={camper}
               familyId={family.id}
               onSaved={saveFamily}
@@ -229,7 +261,7 @@ export function FamilyDetailClient({ initialFamily }: FamilyDetailClientProps) {
         <div className="recordStack">
           {family.contacts.map((contact) => (
             <ContactEditor
-              key={`${contact.id}:${contact.version}`}
+              key={contact.id}
               contact={contact}
               familyId={family.id}
               onSaved={saveFamily}
@@ -300,26 +332,32 @@ function FamilyNameForm({
 
 interface AdultForm {
   account_owner: boolean;
+  authorized_pickup: boolean;
   can_make_payments: boolean;
   can_manage_family: boolean;
   can_register: boolean;
   email: string;
+  emergency_contact: boolean;
   first_name: string;
   last_name: string;
   phone: string;
+  receives_operational_communication: boolean;
   version: number;
 }
 
 function adultForm(adult?: Adult, isFirstAdult = false): AdultForm {
   return {
     account_owner: adult?.account_owner ?? isFirstAdult,
+    authorized_pickup: adult?.authorized_pickup ?? false,
     can_make_payments: adult?.can_make_payments ?? isFirstAdult,
     can_manage_family: adult?.can_manage_family ?? isFirstAdult,
     can_register: adult?.can_register ?? isFirstAdult,
     email: adult?.email ?? '',
+    emergency_contact: adult?.emergency_contact ?? false,
     first_name: adult?.first_name ?? '',
     last_name: adult?.last_name ?? '',
     phone: adult?.phone ?? '',
+    receives_operational_communication: adult?.receives_operational_communication ?? false,
     version: adult?.version ?? 1,
   };
 }
@@ -327,18 +365,28 @@ function adultForm(adult?: Adult, isFirstAdult = false): AdultForm {
 function adultCreatePayload(form: AdultForm): AdultCreate {
   return {
     account_owner: form.account_owner,
+    authorized_pickup: form.authorized_pickup,
     can_make_payments: form.can_make_payments,
     can_manage_family: form.can_manage_family,
     can_register: form.can_register,
     email: nullable(form.email),
+    emergency_contact: form.emergency_contact,
     first_name: form.first_name.trim(),
     last_name: form.last_name.trim(),
     phone: nullable(form.phone),
+    receives_operational_communication: form.receives_operational_communication,
   };
 }
 
 function adultUpdatePayload(form: AdultForm): AdultUpdate {
   return { ...adultCreatePayload(form), version: form.version };
+}
+
+type CamperGender = Exclude<CamperCreate['gender'], null | undefined>;
+type CamperGenderValue = '' | CamperGender;
+
+function nullableGender(value: CamperGenderValue): CamperGender | null {
+  return value || null;
 }
 
 function AdultFields({
@@ -386,6 +434,7 @@ function AdultFields({
         </Field>
       </div>
       <PermissionToggles form={form} set={set} />
+      <AdultRoleToggles form={form} set={set} />
     </>
   );
 }
@@ -418,6 +467,8 @@ function AdultEditor({
       setState(problemMessage(result));
       return;
     }
+    const savedAdult = result.adults.find((nextAdult) => nextAdult.id === adult.id);
+    if (savedAdult) setForm(adultForm(savedAdult));
     onSaved(result);
     setState({ ...cleanState, message: 'Adult saved.' });
   };
@@ -498,12 +549,10 @@ interface CamperForm {
   birth_date: string;
   cabin_preference: string;
   first_name: string;
-  gender: string;
+  gender: CamperGenderValue;
   last_name: string;
   preferred_name: string;
-  pronouns: string;
   school_grade: string;
-  school_name: string;
   version: number;
 }
 
@@ -516,9 +565,7 @@ function camperForm(camper?: Camper): CamperForm {
     gender: camper?.gender ?? '',
     last_name: camper?.last_name ?? '',
     preferred_name: camper?.preferred_name ?? '',
-    pronouns: camper?.pronouns ?? '',
     school_grade: camper?.school_grade ?? '',
-    school_name: camper?.school_name ?? '',
     version: camper?.version ?? 1,
   };
 }
@@ -529,12 +576,10 @@ function camperCreatePayload(form: CamperForm): CamperCreate {
     birth_date: form.birth_date,
     cabin_preference: nullable(form.cabin_preference),
     first_name: form.first_name.trim(),
-    gender: nullable(form.gender),
+    gender: nullableGender(form.gender),
     last_name: form.last_name.trim(),
     preferred_name: nullable(form.preferred_name),
-    pronouns: nullable(form.pronouns),
     school_grade: nullable(form.school_grade),
-    school_name: nullable(form.school_name),
   };
 }
 
@@ -584,32 +629,21 @@ function CamperFields({
           maxLength={100}
         />
       </Field>
-      <Field label="Pronouns">
-        <input
-          value={form.pronouns}
-          onChange={(event) => set('pronouns', event.target.value)}
-          maxLength={80}
-        />
-      </Field>
       <Field label="Gender">
-        <input
+        <select
           value={form.gender}
-          onChange={(event) => set('gender', event.target.value)}
-          maxLength={80}
-        />
+          onChange={(event) => set('gender', event.target.value as CamperGenderValue)}
+        >
+          <option value="">Not set</option>
+          <option value="Female">Female</option>
+          <option value="Male">Male</option>
+        </select>
       </Field>
       <Field label="School grade">
         <input
           value={form.school_grade}
           onChange={(event) => set('school_grade', event.target.value)}
           maxLength={40}
-        />
-      </Field>
-      <Field label="School name">
-        <input
-          value={form.school_name}
-          onChange={(event) => set('school_name', event.target.value)}
-          maxLength={160}
         />
       </Field>
       <Field label="Cabin preference">
@@ -658,6 +692,8 @@ function CamperEditor({
       setState(problemMessage(result));
       return;
     }
+    const savedCamper = result.campers.find((nextCamper) => nextCamper.id === camper.id);
+    if (savedCamper) setForm(camperForm(savedCamper));
     onSaved(result);
     setState({ ...cleanState, message: 'Camper saved.' });
   };
@@ -863,6 +899,8 @@ function ContactEditor({
       setState(problemMessage(result));
       return;
     }
+    const savedContact = result.contacts.find((nextContact) => nextContact.id === contact.id);
+    if (savedContact) setForm(contactForm(savedContact));
     onSaved(result);
     setState({ ...cleanState, message: 'Contact saved.' });
   };

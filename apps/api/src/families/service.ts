@@ -17,6 +17,7 @@ import {
   FamilyConflictError,
   FamilyDuplicateError,
   FamilyNotFoundError,
+  type CamperGender,
   type FamilyStore,
 } from '@camp-registration/database';
 
@@ -70,6 +71,12 @@ function nullable(value: string | null | undefined): string | null {
   return normalized ? normalized : null;
 }
 
+function nullableGender(
+  value: CamperCreate['gender'] | CamperUpdate['gender'],
+): CamperGender | null {
+  return value ?? null;
+}
+
 function normalizedEmail(value: string | null): string | null {
   return value ? value.toLowerCase() : null;
 }
@@ -102,6 +109,13 @@ function validateCamper(camper: CamperCreate | CamperUpdate): void {
   if (!realBirthDate) errors.birth_date = 'Enter a valid birth date.';
   if (realBirthDate && camper.birth_date > new Date().toISOString().slice(0, 10)) {
     errors.birth_date = 'Birth date cannot be in the future.';
+  }
+  if (
+    camper.gender !== undefined &&
+    camper.gender !== null &&
+    !['Female', 'Male'].includes(camper.gender)
+  ) {
+    errors.gender = 'Select Female or Male.';
   }
   if (Object.keys(errors).length > 0) {
     throw new FamilyValidationError(errors, 'Camper details are invalid');
@@ -203,17 +217,20 @@ export class FamilyService implements FamilyServiceApi {
     const email = nullable(adult.email);
     return this.store.createAdult(this.context(requestId), {
       account_owner: adult.account_owner,
+      authorized_pickup: adult.authorized_pickup,
       can_make_payments: adult.can_make_payments,
       can_manage_family: adult.can_manage_family,
       can_register: adult.can_register,
       email,
       email_normalized: normalizedEmail(email),
+      emergency_contact: adult.emergency_contact,
       family_id: familyId,
       first_name: trimmed(adult.first_name),
       id: randomUUID(),
       identity_subject: null,
       last_name: trimmed(adult.last_name),
       phone: nullable(adult.phone),
+      receives_operational_communication: adult.receives_operational_communication,
     });
   }
 
@@ -232,14 +249,17 @@ export class FamilyService implements FamilyServiceApi {
       familyId,
       update: {
         account_owner: adult.account_owner,
+        authorized_pickup: adult.authorized_pickup,
         can_make_payments: adult.can_make_payments,
         can_manage_family: adult.can_manage_family,
         can_register: adult.can_register,
         email,
         email_normalized: normalizedEmail(email),
+        emergency_contact: adult.emergency_contact,
         first_name: trimmed(adult.first_name),
         last_name: trimmed(adult.last_name),
         phone: nullable(adult.phone),
+        receives_operational_communication: adult.receives_operational_communication,
         version: adult.version,
       },
     });
@@ -258,13 +278,11 @@ export class FamilyService implements FamilyServiceApi {
       cabin_preference: nullable(camper.cabin_preference),
       family_id: familyId,
       first_name: trimmed(camper.first_name),
-      gender: nullable(camper.gender),
+      gender: nullableGender(camper.gender),
       id: randomUUID(),
       last_name: trimmed(camper.last_name),
       preferred_name: nullable(camper.preferred_name),
-      pronouns: nullable(camper.pronouns),
       school_grade: nullable(camper.school_grade),
-      school_name: nullable(camper.school_name),
     });
   }
 
@@ -285,12 +303,10 @@ export class FamilyService implements FamilyServiceApi {
         birth_date: camper.birth_date,
         cabin_preference: nullable(camper.cabin_preference),
         first_name: trimmed(camper.first_name),
-        gender: nullable(camper.gender),
+        gender: nullableGender(camper.gender),
         last_name: trimmed(camper.last_name),
         preferred_name: nullable(camper.preferred_name),
-        pronouns: nullable(camper.pronouns),
         school_grade: nullable(camper.school_grade),
-        school_name: nullable(camper.school_name),
         version: camper.version,
       },
     });

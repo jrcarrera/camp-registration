@@ -2,6 +2,8 @@ import type { PoolClient } from 'pg';
 
 import type { DatabaseClient } from './client.js';
 
+export type CamperGender = 'Female' | 'Male';
+
 export interface FamilySummaryRecord {
   id: string;
   organization_id: string;
@@ -26,6 +28,9 @@ export interface AdultRecord {
   can_manage_family: boolean;
   can_register: boolean;
   can_make_payments: boolean;
+  emergency_contact: boolean;
+  authorized_pickup: boolean;
+  receives_operational_communication: boolean;
   version: number;
   updated_at: string;
 }
@@ -38,10 +43,8 @@ export interface CamperRecord {
   last_name: string;
   birth_date: string;
   preferred_name: string | null;
-  pronouns: string | null;
-  gender: string | null;
+  gender: CamperGender | null;
   school_grade: string | null;
-  school_name: string | null;
   cabin_preference: string | null;
   accessibility_needs: string | null;
   version: number;
@@ -99,6 +102,9 @@ export interface CreateAdultRecord {
   can_manage_family: boolean;
   can_register: boolean;
   can_make_payments: boolean;
+  emergency_contact: boolean;
+  authorized_pickup: boolean;
+  receives_operational_communication: boolean;
 }
 
 export interface UpdateAdultRecord extends Omit<
@@ -115,10 +121,8 @@ export interface CreateCamperRecord {
   last_name: string;
   birth_date: string;
   preferred_name: string | null;
-  pronouns: string | null;
-  gender: string | null;
+  gender: CamperGender | null;
   school_grade: string | null;
-  school_name: string | null;
   cabin_preference: string | null;
   accessibility_needs: string | null;
 }
@@ -314,8 +318,9 @@ export class FamilyStore {
           `INSERT INTO adults (
              id, organization_id, family_id, identity_subject, first_name, last_name,
              email, email_normalized, phone, account_owner, can_manage_family,
-             can_register, can_make_payments
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+             can_register, can_make_payments, emergency_contact, authorized_pickup,
+             receives_operational_communication
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
           [
             adult.id,
             context.organizationId,
@@ -330,6 +335,9 @@ export class FamilyStore {
             adult.can_manage_family,
             adult.can_register,
             adult.can_make_payments,
+            adult.emergency_contact,
+            adult.authorized_pickup,
+            adult.receives_operational_communication,
           ],
         );
       } catch (error) {
@@ -368,6 +376,9 @@ export class FamilyStore {
                can_manage_family = $10,
                can_register = $11,
                can_make_payments = $12,
+               emergency_contact = $13,
+               authorized_pickup = $14,
+               receives_operational_communication = $15,
                version = version + 1,
                updated_at = transaction_timestamp()
            WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
@@ -384,6 +395,9 @@ export class FamilyStore {
             context.update.can_manage_family,
             context.update.can_register,
             context.update.can_make_payments,
+            context.update.emergency_contact,
+            context.update.authorized_pickup,
+            context.update.receives_operational_communication,
           ],
         );
       } catch (error) {
@@ -399,6 +413,9 @@ export class FamilyStore {
         'can_manage_family',
         'can_register',
         'can_make_payments',
+        'emergency_contact',
+        'authorized_pickup',
+        'receives_operational_communication',
       ] as const;
       await this.insertAudit(client, context, 'adult.updated', 'adult', context.adultId, {
         changed_fields: changedFields(current, context.update, fields),
@@ -416,9 +433,9 @@ export class FamilyStore {
       await client.query(
         `INSERT INTO campers (
            id, organization_id, family_id, first_name, last_name, birth_date,
-           preferred_name, pronouns, gender, school_grade, school_name,
+           preferred_name, gender, school_grade,
            cabin_preference, accessibility_needs
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
         [
           camper.id,
           context.organizationId,
@@ -427,10 +444,8 @@ export class FamilyStore {
           camper.last_name,
           camper.birth_date,
           camper.preferred_name,
-          camper.pronouns,
           camper.gender,
           camper.school_grade,
-          camper.school_name,
           camper.cabin_preference,
           camper.accessibility_needs,
         ],
@@ -464,12 +479,10 @@ export class FamilyStore {
              last_name = $5,
              birth_date = $6,
              preferred_name = $7,
-             pronouns = $8,
-             gender = $9,
-             school_grade = $10,
-             school_name = $11,
-             cabin_preference = $12,
-             accessibility_needs = $13,
+             gender = $8,
+             school_grade = $9,
+             cabin_preference = $10,
+             accessibility_needs = $11,
              version = version + 1,
              updated_at = transaction_timestamp()
          WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
@@ -481,10 +494,8 @@ export class FamilyStore {
           context.update.last_name,
           context.update.birth_date,
           context.update.preferred_name,
-          context.update.pronouns,
           context.update.gender,
           context.update.school_grade,
-          context.update.school_name,
           context.update.cabin_preference,
           context.update.accessibility_needs,
         ],
@@ -494,10 +505,8 @@ export class FamilyStore {
         'last_name',
         'birth_date',
         'preferred_name',
-        'pronouns',
         'gender',
         'school_grade',
-        'school_name',
         'cabin_preference',
         'accessibility_needs',
       ] as const;
@@ -620,7 +629,8 @@ export class FamilyStore {
     const adults = await client.query<AdultRow>(
       `SELECT id, organization_id, family_id, identity_subject, first_name, last_name,
               email, phone, account_owner, can_manage_family, can_register,
-              can_make_payments, version, updated_at
+              can_make_payments, emergency_contact, authorized_pickup,
+              receives_operational_communication, version, updated_at
        FROM adults
        WHERE organization_id = $1 AND family_id = $2 AND archived_at IS NULL
        ORDER BY account_owner DESC, lower(last_name), lower(first_name), id`,
@@ -628,7 +638,7 @@ export class FamilyStore {
     );
     const campers = await client.query<CamperRow>(
       `SELECT id, organization_id, family_id, first_name, last_name, birth_date::text,
-              preferred_name, pronouns, gender, school_grade, school_name,
+              preferred_name, gender, school_grade,
               cabin_preference, accessibility_needs, version, updated_at
        FROM campers
        WHERE organization_id = $1 AND family_id = $2 AND archived_at IS NULL
@@ -686,7 +696,8 @@ export class FamilyStore {
     const result = await client.query<AdultRow>(
       `SELECT id, organization_id, family_id, identity_subject, first_name, last_name,
               email, phone, account_owner, can_manage_family, can_register,
-              can_make_payments, version, updated_at
+              can_make_payments, emergency_contact, authorized_pickup,
+              receives_operational_communication, version, updated_at
        FROM adults
        WHERE organization_id = $1 AND family_id = $2 AND id = $3 AND archived_at IS NULL
        FOR UPDATE`,
@@ -704,7 +715,7 @@ export class FamilyStore {
   ): Promise<CamperRecord> {
     const result = await client.query<CamperRow>(
       `SELECT id, organization_id, family_id, first_name, last_name, birth_date::text,
-              preferred_name, pronouns, gender, school_grade, school_name,
+              preferred_name, gender, school_grade,
               cabin_preference, accessibility_needs, version, updated_at
        FROM campers
        WHERE organization_id = $1 AND family_id = $2 AND id = $3 AND archived_at IS NULL
