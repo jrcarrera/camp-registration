@@ -788,7 +788,8 @@
                     "age_as_of",
                     "deposit_cents",
                     "waitlist_enabled",
-                    "organization_timezone"
+                    "organization_timezone",
+                    "registered_campers"
                   ],
                   "properties": {
                     "id": {
@@ -933,6 +934,125 @@
                     "organization_timezone": {
                       "minLength": 1,
                       "type": "string"
+                    },
+                    "registered_campers": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "registration_id",
+                          "camper_id",
+                          "family_id",
+                          "family_name",
+                          "first_name",
+                          "last_name",
+                          "preferred_name",
+                          "gender",
+                          "school_grade",
+                          "birth_date",
+                          "status",
+                          "registered_at"
+                        ],
+                        "properties": {
+                          "registration_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "camper_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "family_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "family_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "first_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "last_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "preferred_name": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "gender": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Female"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Male"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "school_grade": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "birth_date": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "type": "string"
+                          },
+                          "status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CONFIRMED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLISTED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CANCELLED"
+                                ]
+                              }
+                            ]
+                          },
+                          "registered_at": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                            "type": "string"
+                          }
+                        },
+                        "title": "RegisteredCamper"
+                      }
                     }
                   }
                 }
@@ -1649,7 +1769,8 @@
                     "age_as_of",
                     "deposit_cents",
                     "waitlist_enabled",
-                    "organization_timezone"
+                    "organization_timezone",
+                    "registered_campers"
                   ],
                   "properties": {
                     "id": {
@@ -1794,6 +1915,124 @@
                     "organization_timezone": {
                       "minLength": 1,
                       "type": "string"
+                    },
+                    "registered_campers": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "registration_id",
+                          "camper_id",
+                          "family_id",
+                          "family_name",
+                          "first_name",
+                          "last_name",
+                          "preferred_name",
+                          "gender",
+                          "school_grade",
+                          "birth_date",
+                          "status",
+                          "registered_at"
+                        ],
+                        "properties": {
+                          "registration_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "camper_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "family_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "family_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "first_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "last_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "preferred_name": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "gender": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Female"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Male"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "school_grade": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "birth_date": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "type": "string"
+                          },
+                          "status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CONFIRMED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLISTED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CANCELLED"
+                                ]
+                              }
+                            ]
+                          },
+                          "registered_at": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                            "type": "string"
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -2139,7 +2378,8 @@
                     "age_as_of",
                     "deposit_cents",
                     "waitlist_enabled",
-                    "organization_timezone"
+                    "organization_timezone",
+                    "registered_campers"
                   ],
                   "properties": {
                     "id": {
@@ -2284,6 +2524,124 @@
                     "organization_timezone": {
                       "minLength": 1,
                       "type": "string"
+                    },
+                    "registered_campers": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "registration_id",
+                          "camper_id",
+                          "family_id",
+                          "family_name",
+                          "first_name",
+                          "last_name",
+                          "preferred_name",
+                          "gender",
+                          "school_grade",
+                          "birth_date",
+                          "status",
+                          "registered_at"
+                        ],
+                        "properties": {
+                          "registration_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "camper_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "family_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "family_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "first_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "last_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "preferred_name": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "gender": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Female"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Male"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "school_grade": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "birth_date": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "type": "string"
+                          },
+                          "status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CONFIRMED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLISTED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CANCELLED"
+                                ]
+                              }
+                            ]
+                          },
+                          "registered_at": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                            "type": "string"
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -2888,6 +3246,7 @@
                           "school_grade",
                           "cabin_preference",
                           "accessibility_needs",
+                          "registrations",
                           "version",
                           "updated_at"
                         ],
@@ -2982,6 +3341,81 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "registrations": {
+                            "type": "array",
+                            "items": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "registration_id",
+                                "session_id",
+                                "session_code",
+                                "session_name",
+                                "program_name",
+                                "starts_on",
+                                "ends_on",
+                                "status",
+                                "registered_at"
+                              ],
+                              "properties": {
+                                "registration_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_code": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "session_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "program_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "starts_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "ends_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CONFIRMED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "WAITLISTED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CANCELLED"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "registered_at": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                  "type": "string"
+                                }
+                              },
+                              "title": "CamperSessionRegistration"
+                            }
                           },
                           "version": {
                             "minimum": 1,
@@ -3437,6 +3871,7 @@
                           "school_grade",
                           "cabin_preference",
                           "accessibility_needs",
+                          "registrations",
                           "version",
                           "updated_at"
                         ],
@@ -3531,6 +3966,80 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "registrations": {
+                            "type": "array",
+                            "items": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "registration_id",
+                                "session_id",
+                                "session_code",
+                                "session_name",
+                                "program_name",
+                                "starts_on",
+                                "ends_on",
+                                "status",
+                                "registered_at"
+                              ],
+                              "properties": {
+                                "registration_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_code": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "session_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "program_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "starts_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "ends_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CONFIRMED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "WAITLISTED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CANCELLED"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "registered_at": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                  "type": "string"
+                                }
+                              }
+                            }
                           },
                           "version": {
                             "minimum": 1,
@@ -4008,6 +4517,7 @@
                           "school_grade",
                           "cabin_preference",
                           "accessibility_needs",
+                          "registrations",
                           "version",
                           "updated_at"
                         ],
@@ -4102,6 +4612,80 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "registrations": {
+                            "type": "array",
+                            "items": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "registration_id",
+                                "session_id",
+                                "session_code",
+                                "session_name",
+                                "program_name",
+                                "starts_on",
+                                "ends_on",
+                                "status",
+                                "registered_at"
+                              ],
+                              "properties": {
+                                "registration_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_code": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "session_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "program_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "starts_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "ends_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CONFIRMED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "WAITLISTED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CANCELLED"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "registered_at": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                  "type": "string"
+                                }
+                              }
+                            }
                           },
                           "version": {
                             "minimum": 1,
@@ -4634,6 +5218,7 @@
                           "school_grade",
                           "cabin_preference",
                           "accessibility_needs",
+                          "registrations",
                           "version",
                           "updated_at"
                         ],
@@ -4728,6 +5313,80 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "registrations": {
+                            "type": "array",
+                            "items": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "registration_id",
+                                "session_id",
+                                "session_code",
+                                "session_name",
+                                "program_name",
+                                "starts_on",
+                                "ends_on",
+                                "status",
+                                "registered_at"
+                              ],
+                              "properties": {
+                                "registration_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_code": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "session_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "program_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "starts_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "ends_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CONFIRMED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "WAITLISTED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CANCELLED"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "registered_at": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                  "type": "string"
+                                }
+                              }
+                            }
                           },
                           "version": {
                             "minimum": 1,
@@ -5273,6 +5932,7 @@
                           "school_grade",
                           "cabin_preference",
                           "accessibility_needs",
+                          "registrations",
                           "version",
                           "updated_at"
                         ],
@@ -5367,6 +6027,80 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "registrations": {
+                            "type": "array",
+                            "items": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "registration_id",
+                                "session_id",
+                                "session_code",
+                                "session_name",
+                                "program_name",
+                                "starts_on",
+                                "ends_on",
+                                "status",
+                                "registered_at"
+                              ],
+                              "properties": {
+                                "registration_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_code": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "session_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "program_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "starts_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "ends_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CONFIRMED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "WAITLISTED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CANCELLED"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "registered_at": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                  "type": "string"
+                                }
+                              }
+                            }
                           },
                           "version": {
                             "minimum": 1,
@@ -5923,6 +6657,7 @@
                           "school_grade",
                           "cabin_preference",
                           "accessibility_needs",
+                          "registrations",
                           "version",
                           "updated_at"
                         ],
@@ -6017,6 +6752,80 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "registrations": {
+                            "type": "array",
+                            "items": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "registration_id",
+                                "session_id",
+                                "session_code",
+                                "session_name",
+                                "program_name",
+                                "starts_on",
+                                "ends_on",
+                                "status",
+                                "registered_at"
+                              ],
+                              "properties": {
+                                "registration_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_code": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "session_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "program_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "starts_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "ends_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CONFIRMED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "WAITLISTED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CANCELLED"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "registered_at": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                  "type": "string"
+                                }
+                              }
+                            }
                           },
                           "version": {
                             "minimum": 1,
@@ -6586,6 +7395,7 @@
                           "school_grade",
                           "cabin_preference",
                           "accessibility_needs",
+                          "registrations",
                           "version",
                           "updated_at"
                         ],
@@ -6680,6 +7490,80 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "registrations": {
+                            "type": "array",
+                            "items": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "registration_id",
+                                "session_id",
+                                "session_code",
+                                "session_name",
+                                "program_name",
+                                "starts_on",
+                                "ends_on",
+                                "status",
+                                "registered_at"
+                              ],
+                              "properties": {
+                                "registration_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_code": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "session_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "program_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "starts_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "ends_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CONFIRMED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "WAITLISTED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CANCELLED"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "registered_at": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                  "type": "string"
+                                }
+                              }
+                            }
                           },
                           "version": {
                             "minimum": 1,
@@ -7195,6 +8079,7 @@
                           "school_grade",
                           "cabin_preference",
                           "accessibility_needs",
+                          "registrations",
                           "version",
                           "updated_at"
                         ],
@@ -7289,6 +8174,80 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "registrations": {
+                            "type": "array",
+                            "items": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "registration_id",
+                                "session_id",
+                                "session_code",
+                                "session_name",
+                                "program_name",
+                                "starts_on",
+                                "ends_on",
+                                "status",
+                                "registered_at"
+                              ],
+                              "properties": {
+                                "registration_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_code": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "session_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "program_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "starts_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "ends_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CONFIRMED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "WAITLISTED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CANCELLED"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "registered_at": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                  "type": "string"
+                                }
+                              }
+                            }
                           },
                           "version": {
                             "minimum": 1,
@@ -7817,6 +8776,7 @@
                           "school_grade",
                           "cabin_preference",
                           "accessibility_needs",
+                          "registrations",
                           "version",
                           "updated_at"
                         ],
@@ -7911,6 +8871,80 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "registrations": {
+                            "type": "array",
+                            "items": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "registration_id",
+                                "session_id",
+                                "session_code",
+                                "session_name",
+                                "program_name",
+                                "starts_on",
+                                "ends_on",
+                                "status",
+                                "registered_at"
+                              ],
+                              "properties": {
+                                "registration_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "session_code": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "session_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "program_name": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "starts_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "ends_on": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CONFIRMED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "WAITLISTED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "CANCELLED"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "registered_at": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                  "type": "string"
+                                }
+                              }
+                            }
                           },
                           "version": {
                             "minimum": 1,

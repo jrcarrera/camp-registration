@@ -120,6 +120,54 @@ describe('catalog store', () => {
     expect(session?.name).toBe('Day Camp Opening Week');
   });
 
+  it('returns confirmed registration counts and registered campers', async () => {
+    const sessionId = '06c02070-2e63-4b7b-bd93-578e54fa1ea6';
+    const familyId = '77fb7b7b-fcd7-4144-b45e-fb4a40773b9c';
+    const camperId = '8c24be8b-1307-4c65-9793-74a2fc769a12';
+    const registrationId = '20f3a0c5-cad9-4c1d-b77b-b4751805ad83';
+    const admin = new Pool({ connectionString: migrationUrl });
+
+    await admin.query(
+      `INSERT INTO families (id, organization_id, family_name)
+       VALUES ($1, $2, 'Roster Test Family')`,
+      [familyId, organizationId],
+    );
+    await admin.query(
+      `INSERT INTO campers (
+         id, organization_id, family_id, first_name, last_name, birth_date,
+         preferred_name, gender, school_grade, cabin_preference, accessibility_needs
+       ) VALUES ($1, $2, $3, 'Riley', 'Roster', '2010-04-12', null, 'Female', '11', null, null)`,
+      [camperId, organizationId, familyId],
+    );
+    await admin.query(
+      `INSERT INTO registrations (
+         id, organization_id, session_id, family_id, camper_id, status, registered_at
+       ) VALUES ($1, $2, $3, $4, $5, 'CONFIRMED', '2027-01-16T15:00:00Z')`,
+      [registrationId, organizationId, sessionId, familyId, camperId],
+    );
+    await admin.end();
+
+    const store = new CatalogStore(runtimeDatabase);
+    const session = await store.getSession(organizationId, sessionId);
+    const summary = (await store.listSessions(organizationId)).find(({ id }) => id === sessionId);
+
+    expect(summary).toMatchObject({ available_count: 139, registered_count: 1 });
+    expect(session).toMatchObject({
+      available_count: 139,
+      registered_campers: [
+        expect.objectContaining({
+          camper_id: camperId,
+          family_id: familyId,
+          family_name: 'Roster Test Family',
+          gender: 'Female',
+          registration_id: registrationId,
+          status: 'CONFIRMED',
+        }),
+      ],
+      registered_count: 1,
+    });
+  });
+
   it('creates tenant-scoped programs and sessions with audit events', async () => {
     const store = new CatalogStore(runtimeDatabase);
     const programId = '90e02c14-b175-4ca1-93e5-1f6ddf27bd74';

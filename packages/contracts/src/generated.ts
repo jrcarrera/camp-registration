@@ -327,6 +327,20 @@ export interface paths {
                             deposit_cents: number;
                             waitlist_enabled: boolean;
                             organization_timezone: string;
+                            registered_campers: {
+                                registration_id: string;
+                                camper_id: string;
+                                family_id: string;
+                                family_name: string;
+                                first_name: string;
+                                last_name: string;
+                                preferred_name: string | null;
+                                gender: "Female" | "Male" | null;
+                                school_grade: string | null;
+                                birth_date: string;
+                                status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                registered_at: string;
+                            }[];
                         };
                     };
                 };
@@ -716,6 +730,20 @@ export interface paths {
                             deposit_cents: number;
                             waitlist_enabled: boolean;
                             organization_timezone: string;
+                            registered_campers: {
+                                registration_id: string;
+                                camper_id: string;
+                                family_id: string;
+                                family_name: string;
+                                first_name: string;
+                                last_name: string;
+                                preferred_name: string | null;
+                                gender: "Female" | "Male" | null;
+                                school_grade: string | null;
+                                birth_date: string;
+                                status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                registered_at: string;
+                            }[];
                         };
                     };
                 };
@@ -868,6 +896,20 @@ export interface paths {
                             deposit_cents: number;
                             waitlist_enabled: boolean;
                             organization_timezone: string;
+                            registered_campers: {
+                                registration_id: string;
+                                camper_id: string;
+                                family_id: string;
+                                family_name: string;
+                                first_name: string;
+                                last_name: string;
+                                preferred_name: string | null;
+                                gender: "Female" | "Male" | null;
+                                school_grade: string | null;
+                                birth_date: string;
+                                status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                registered_at: string;
+                            }[];
                         };
                     };
                 };
@@ -1127,6 +1169,17 @@ export interface paths {
                                 school_grade: string | null;
                                 cabin_preference: string | null;
                                 accessibility_needs: string | null;
+                                registrations: {
+                                    registration_id: string;
+                                    session_id: string;
+                                    session_code: string;
+                                    session_name: string;
+                                    program_name: string;
+                                    starts_on: string;
+                                    ends_on: string;
+                                    status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    registered_at: string;
+                                }[];
                                 version: number;
                                 updated_at: string;
                             }[];
@@ -1296,6 +1349,17 @@ export interface paths {
                                 school_grade: string | null;
                                 cabin_preference: string | null;
                                 accessibility_needs: string | null;
+                                registrations: {
+                                    registration_id: string;
+                                    session_id: string;
+                                    session_code: string;
+                                    session_name: string;
+                                    program_name: string;
+                                    starts_on: string;
+                                    ends_on: string;
+                                    status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    registered_at: string;
+                                }[];
                                 version: number;
                                 updated_at: string;
                             }[];
@@ -1464,6 +1528,17 @@ export interface paths {
                                 school_grade: string | null;
                                 cabin_preference: string | null;
                                 accessibility_needs: string | null;
+                                registrations: {
+                                    registration_id: string;
+                                    session_id: string;
+                                    session_code: string;
+                                    session_name: string;
+                                    program_name: string;
+                                    starts_on: string;
+                                    ends_on: string;
+                                    status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    registered_at: string;
+                                }[];
                                 version: number;
                                 updated_at: string;
                             }[];
@@ -1647,6 +1722,17 @@ export interface paths {
                                 school_grade: string | null;
                                 cabin_preference: string | null;
                                 accessibility_needs: string | null;
+                                registrations: {
+                                    registration_id: string;
+                                    session_id: string;
+                                    session_code: string;
+                                    session_name: string;
+                                    program_name: string;
+                                    starts_on: string;
+                                    ends_on: string;
+                                    status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    registered_at: string;
+                                }[];
                                 version: number;
                                 updated_at: string;
                             }[];
@@ -1840,6 +1926,17 @@ export interface paths {
                                 school_grade: string | null;
                                 cabin_preference: string | null;
                                 accessibility_needs: string | null;
+                                registrations: {
+                                    registration_id: string;
+                                    session_id: string;
+                                    session_code: string;
+                                    session_name: string;
+                                    program_name: string;
+                                    starts_on: string;
+                                    ends_on: string;
+                                    status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    registered_at: string;
+                                }[];
                                 version: number;
                                 updated_at: string;
                             }[];
@@ -2020,6 +2117,17 @@ export interface paths {
                                 school_grade: string | null;
                                 cabin_preference: string | null;
                                 accessibility_needs: string | null;
+                                registrations: {
+                                    registration_id: string;
+                                    session_id: string;
+                                    session_code: string;
+                                    session_name: string;
+                                    program_name: string;
+                                    starts_on: string;
+                                    ends_on: string;
+                                    status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    registered_at: string;
+                                }[];
                                 version: number;
                                 updated_at: string;
                             }[];
@@ -2210,6 +2318,17 @@ export interface paths {
                                 school_grade: string | null;
                                 cabin_preference: string | null;
                                 accessibility_needs: string | null;
+                                registrations: {
+                                    registration_id: string;
+                                    session_id: string;
+                                    session_code: string;
+                                    session_name: string;
+                                    program_name: string;
+                                    starts_on: string;
+                                    ends_on: string;
+                                    status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    registered_at: string;
+                                }[];
                                 version: number;
                                 updated_at: string;
                             }[];
@@ -2390,6 +2509,17 @@ export interface paths {
                                 school_grade: string | null;
                                 cabin_preference: string | null;
                                 accessibility_needs: string | null;
+                                registrations: {
+                                    registration_id: string;
+                                    session_id: string;
+                                    session_code: string;
+                                    session_name: string;
+                                    program_name: string;
+                                    starts_on: string;
+                                    ends_on: string;
+                                    status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    registered_at: string;
+                                }[];
                                 version: number;
                                 updated_at: string;
                             }[];
@@ -2580,6 +2710,17 @@ export interface paths {
                                 school_grade: string | null;
                                 cabin_preference: string | null;
                                 accessibility_needs: string | null;
+                                registrations: {
+                                    registration_id: string;
+                                    session_id: string;
+                                    session_code: string;
+                                    session_name: string;
+                                    program_name: string;
+                                    starts_on: string;
+                                    ends_on: string;
+                                    status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    registered_at: string;
+                                }[];
                                 version: number;
                                 updated_at: string;
                             }[];

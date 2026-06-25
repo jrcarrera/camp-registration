@@ -230,4 +230,62 @@ describe('family store', () => {
       ]),
     );
   });
+
+  it('returns confirmed session registrations on camper records', async () => {
+    const store = new FamilyStore(runtimeDatabase);
+    const familyId = 'ccabdf2f-92a9-4e97-a9ff-a587d0fb2abc';
+    const camperId = '74e880ed-4dfc-4b2f-81f7-16dec18fc11f';
+    const registrationId = '99da279e-f0a8-4fda-b3cc-398cebd9e353';
+    const sessionId = '06c02070-2e63-4b7b-bd93-578e54fa1ea6';
+    const context = {
+      actorId: 'integration-admin',
+      organizationId,
+      requestId: 'camper-registrations-test',
+    };
+
+    await store.createFamily(context, {
+      family_name: 'Camper Links Family',
+      id: familyId,
+    });
+    await store.createCamper(context, {
+      accessibility_needs: null,
+      birth_date: '2010-04-12',
+      cabin_preference: null,
+      family_id: familyId,
+      first_name: 'Riley',
+      gender: 'Female',
+      id: camperId,
+      last_name: 'Links',
+      preferred_name: null,
+      school_grade: '11',
+    });
+
+    const admin = new Pool({ connectionString: migrationUrl });
+    await admin.query(
+      `INSERT INTO registrations (
+         id, organization_id, session_id, family_id, camper_id, status, registered_at
+       ) VALUES ($1, $2, $3, $4, $5, 'CONFIRMED', '2027-01-16T15:00:00Z')`,
+      [registrationId, organizationId, sessionId, familyId, camperId],
+    );
+    await admin.end();
+
+    const family = await store.getFamily(organizationId, familyId);
+
+    expect(family?.campers[0]).toMatchObject({
+      id: camperId,
+      registrations: [
+        {
+          ends_on: '2027-07-10',
+          program_name: 'High School Camp',
+          registered_at: '2027-01-16T15:00:00Z',
+          registration_id: registrationId,
+          session_code: 'HS-2027-01',
+          session_id: sessionId,
+          session_name: 'High School Camp 1',
+          starts_on: '2027-07-04',
+          status: 'CONFIRMED',
+        },
+      ],
+    });
+  });
 });

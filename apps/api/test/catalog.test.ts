@@ -49,6 +49,7 @@ const detail: SessionDetail = {
   maximum_age: 11,
   minimum_age: 5,
   organization_timezone: 'America/Chicago',
+  registered_campers: [],
   registration_closes_at: '2027-06-04T05:00:00Z',
   registration_opens_at: '2027-01-15T15:00:00Z',
   waitlist_enabled: true,

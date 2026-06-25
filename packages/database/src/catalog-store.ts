@@ -4,6 +4,7 @@ import type { DatabaseClient } from './client.js';
 
 export type SessionStatus = 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'ARCHIVED';
 export type AgeAsOf = 'SESSION_START' | 'SEASON_START';
+export type CatalogRegistrationStatus = 'CONFIRMED' | 'WAITLISTED' | 'CANCELLED';
 
 export interface CatalogContextRecord {
   organization: { id: string; slug: string; name: string; timezone: string };
@@ -48,6 +49,22 @@ export interface SessionDetailRecord extends SessionSummaryRecord {
   deposit_cents: number;
   waitlist_enabled: boolean;
   organization_timezone: string;
+  registered_campers: RegisteredCamperRecord[];
+}
+
+export interface RegisteredCamperRecord {
+  registration_id: string;
+  camper_id: string;
+  family_id: string;
+  family_name: string;
+  first_name: string;
+  last_name: string;
+  birth_date: string;
+  preferred_name: string | null;
+  gender: 'Female' | 'Male' | null;
+  school_grade: string | null;
+  status: CatalogRegistrationStatus;
+  registered_at: string;
 }
 
 export interface UpdateSessionRecord {
@@ -138,6 +155,10 @@ interface SessionRow {
   organization_timezone: string;
 }
 
+type RegisteredCamperRow = Omit<RegisteredCamperRecord, 'registered_at'> & {
+  registered_at: Date | string;
+};
+
 const sessionSelect = `
   SELECT
     s.id,
@@ -162,24 +183,36 @@ const sessionSelect = `
     s.status,
     s.version,
     s.updated_at,
-    0::integer AS registered_count,
+    COALESCE(registration_counts.registered_count, 0)::integer AS registered_count,
     0::integer AS active_hold_count,
-    s.capacity::integer AS available_count,
+    GREATEST(s.capacity - COALESCE(registration_counts.registered_count, 0), 0)::integer
+      AS available_count,
     o.timezone AS organization_timezone
   FROM sessions s
   JOIN programs p
     ON p.organization_id = s.organization_id
    AND p.id = s.program_id
   JOIN organizations o ON o.id = s.organization_id
+  LEFT JOIN LATERAL (
+    SELECT count(*)::integer AS registered_count
+    FROM registrations r
+    WHERE r.organization_id = s.organization_id
+      AND r.session_id = s.id
+      AND r.status = 'CONFIRMED'
+  ) registration_counts ON true
 `;
 
 function timestamp(value: Date | string): string {
   return value instanceof Date ? value.toISOString().replace('.000Z', 'Z') : value;
 }
 
-function mapSession(row: SessionRow): SessionDetailRecord {
+function mapSession(
+  row: SessionRow,
+  registeredCampers: RegisteredCamperRecord[] = [],
+): SessionDetailRecord {
   return {
     ...row,
+    registered_campers: registeredCampers,
     registration_opens_at: timestamp(row.registration_opens_at),
     registration_closes_at: timestamp(row.registration_closes_at),
     updated_at: timestamp(row.updated_at),
@@ -272,7 +305,7 @@ export class CatalogStore {
          ORDER BY s.starts_on, s.code, s.id`,
         [organizationId],
       );
-      return result.rows.map(mapSession).map(toSummary);
+      return result.rows.map((row) => mapSession(row)).map(toSummary);
     });
   }
 
@@ -283,7 +316,10 @@ export class CatalogStore {
          WHERE s.organization_id = $1 AND s.id = $2`,
         [organizationId, sessionId],
       );
-      return result.rows[0] ? mapSession(result.rows[0]) : null;
+      const session = result.rows[0];
+      if (!session) return null;
+      const registeredCampers = await this.listRegisteredCampers(client, organizationId, sessionId);
+      return mapSession(session, registeredCampers);
     });
   }
 
@@ -575,5 +611,44 @@ export class CatalogStore {
       }
       return mapSession(updated.rows[0]);
     });
+  }
+
+  private async listRegisteredCampers(
+    client: PoolClient,
+    organizationId: string,
+    sessionId: string,
+  ): Promise<RegisteredCamperRecord[]> {
+    const result = await client.query<RegisteredCamperRow>(
+      `SELECT
+         r.id AS registration_id,
+         c.id AS camper_id,
+         c.family_id,
+         f.family_name,
+         c.first_name,
+         c.last_name,
+         c.birth_date::text,
+         c.preferred_name,
+         c.gender,
+         c.school_grade,
+         r.status,
+         r.registered_at
+       FROM registrations r
+       JOIN campers c
+         ON c.organization_id = r.organization_id
+        AND c.family_id = r.family_id
+        AND c.id = r.camper_id
+        AND c.archived_at IS NULL
+       JOIN families f
+         ON f.organization_id = c.organization_id
+        AND f.id = c.family_id
+        AND f.archived_at IS NULL
+       WHERE r.organization_id = $1
+         AND r.session_id = $2
+         AND r.status = 'CONFIRMED'
+       ORDER BY c.gender NULLS LAST, lower(c.last_name), lower(c.first_name), c.id`,
+      [organizationId, sessionId],
+    );
+
+    return result.rows.map((row) => ({ ...row, registered_at: timestamp(row.registered_at) }));
   }
 }

@@ -41,6 +41,7 @@ export default async function NewSessionPage({
     price_cents: 0,
     program_id: program.id,
     program_name: program.name,
+    registered_campers: [],
     registered_count: 0,
     registration_closes_at: `${year}-05-29T05:00:00Z`,
     registration_opens_at: `${year}-01-15T15:00:00Z`,
