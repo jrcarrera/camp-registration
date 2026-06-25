@@ -20,6 +20,7 @@
     "build": "tsc -p tsconfig.json",
     "migrate": "tsx src/migrate.ts",
     "seed": "tsx src/seed.ts",
+    "seed:winter-families": "tsx src/seed.ts --winter-families",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

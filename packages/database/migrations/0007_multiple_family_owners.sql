@@ -1,0 +1,1 @@
+DROP INDEX adults_one_owner_per_family_idx;

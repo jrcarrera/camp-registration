@@ -170,4 +170,64 @@ describe('family store', () => {
       { action: 'family.updated', details: { changed_fields: ['family_name'] } },
     ]);
   });
+
+  it('permits multiple family owners in one family', async () => {
+    const store = new FamilyStore(runtimeDatabase);
+    const familyId = 'da5b93e5-2bb5-4a27-9a52-31983b280c5c';
+    const firstAdultId = '8f30484e-38b5-42f8-b75f-f0df52a3338e';
+    const secondAdultId = 'e0292f6e-7f4a-42ac-ad53-533b2d525844';
+    const context = {
+      actorId: 'integration-admin',
+      organizationId,
+      requestId: 'multiple-family-owners-test',
+    };
+
+    await store.createFamily(context, {
+      family_name: 'Garcia Family',
+      id: familyId,
+    });
+    await store.createAdult(context, {
+      account_owner: true,
+      authorized_pickup: true,
+      can_make_payments: true,
+      can_manage_family: true,
+      can_register: true,
+      email: 'first.owner@example.test',
+      email_normalized: 'first.owner@example.test',
+      emergency_contact: true,
+      family_id: familyId,
+      first_name: 'Alex',
+      id: firstAdultId,
+      identity_subject: null,
+      last_name: 'Garcia',
+      phone: '555-0110',
+      receives_operational_communication: true,
+    });
+
+    const withSecondOwner = await store.createAdult(context, {
+      account_owner: true,
+      authorized_pickup: true,
+      can_make_payments: true,
+      can_manage_family: true,
+      can_register: true,
+      email: 'second.owner@example.test',
+      email_normalized: 'second.owner@example.test',
+      emergency_contact: true,
+      family_id: familyId,
+      first_name: 'Sam',
+      id: secondAdultId,
+      identity_subject: null,
+      last_name: 'Garcia',
+      phone: '555-0111',
+      receives_operational_communication: true,
+    });
+
+    expect(withSecondOwner.adult_count).toBe(2);
+    expect(withSecondOwner.adults).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ account_owner: true, id: firstAdultId }),
+        expect.objectContaining({ account_owner: true, id: secondAdultId }),
+      ]),
+    );
+  });
 });
