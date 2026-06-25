@@ -9,7 +9,9 @@ workflow and registration-capacity testing. It contains 140 families, 250
 adults, 157 emergency or pickup contacts, and 273 campers. Exactly 200 campers
 are in grades 9 through 12 so the fixture can fill a 200-seat high-school winter
 camp session, while younger siblings support day, elementary, and junior-high
-camp testing.
+camp testing. The winter family seed also registers 140 eligible campers into
+High School Camp 1 with 84 female and 56 male campers, matching a 60/40 split
+for that session's current capacity.
 
 Fixture assumptions:
 

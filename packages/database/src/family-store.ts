@@ -3,6 +3,7 @@ import type { PoolClient } from 'pg';
 import type { DatabaseClient } from './client.js';
 
 export type CamperGender = 'Female' | 'Male';
+export type FamilyRegistrationStatus = 'CONFIRMED' | 'WAITLISTED' | 'CANCELLED';
 
 export interface FamilySummaryRecord {
   id: string;
@@ -47,8 +48,21 @@ export interface CamperRecord {
   school_grade: string | null;
   cabin_preference: string | null;
   accessibility_needs: string | null;
+  registrations: CamperSessionRegistrationRecord[];
   version: number;
   updated_at: string;
+}
+
+export interface CamperSessionRegistrationRecord {
+  registration_id: string;
+  session_id: string;
+  session_code: string;
+  session_name: string;
+  program_name: string;
+  starts_on: string;
+  ends_on: string;
+  status: FamilyRegistrationStatus;
+  registered_at: string;
 }
 
 export interface ContactRecord {
@@ -158,7 +172,9 @@ interface Timestamped {
 
 type FamilySummaryRow = Omit<FamilySummaryRecord, 'updated_at'> & Timestamped;
 type AdultRow = Omit<AdultRecord, 'updated_at'> & Timestamped;
-type CamperRow = Omit<CamperRecord, 'updated_at'> & Timestamped;
+type CamperRow = Omit<CamperRecord, 'registrations' | 'updated_at'> & Timestamped;
+type CamperSessionRegistrationRow = Omit<CamperSessionRegistrationRecord, 'registered_at'> &
+  Timestamped & { camper_id: string };
 type ContactRow = Omit<ContactRecord, 'updated_at'> & Timestamped;
 
 const familySummarySelect = `
@@ -207,8 +223,11 @@ function mapAdult(row: AdultRow): AdultRecord {
   return { ...row, updated_at: timestamp(row.updated_at) };
 }
 
-function mapCamper(row: CamperRow): CamperRecord {
-  return { ...row, updated_at: timestamp(row.updated_at) };
+function mapCamper(
+  row: CamperRow,
+  registrations: CamperSessionRegistrationRecord[] = [],
+): CamperRecord {
+  return { ...row, registrations, updated_at: timestamp(row.updated_at) };
 }
 
 function mapContact(row: ContactRow): ContactRecord {
@@ -654,11 +673,18 @@ export class FamilyStore {
        ORDER BY emergency_priority NULLS LAST, lower(last_name), lower(first_name), id`,
       [organizationId, familyId],
     );
+    const camperRegistrations = await this.listCamperRegistrations(
+      client,
+      organizationId,
+      familyId,
+    );
 
     return {
       ...summary,
       adults: adults.rows.map(mapAdult),
-      campers: campers.rows.map(mapCamper),
+      campers: campers.rows.map((camper) =>
+        mapCamper(camper, camperRegistrations.get(camper.id) ?? []),
+      ),
       contacts: contacts.rows.map(mapContact),
     };
   }
@@ -705,6 +731,56 @@ export class FamilyStore {
     );
     if (!result.rows[0]) throw new FamilyNotFoundError('Adult not found');
     return mapAdult(result.rows[0]);
+  }
+
+  private async listCamperRegistrations(
+    client: PoolClient,
+    organizationId: string,
+    familyId: string,
+  ): Promise<Map<string, CamperSessionRegistrationRecord[]>> {
+    const result = await client.query<CamperSessionRegistrationRow>(
+      `SELECT
+         r.camper_id,
+         r.id AS registration_id,
+         s.id AS session_id,
+         s.code AS session_code,
+         s.name AS session_name,
+         p.name AS program_name,
+         s.starts_on::text,
+         s.ends_on::text,
+         r.status,
+         r.registered_at AS updated_at
+       FROM registrations r
+       JOIN sessions s
+         ON s.organization_id = r.organization_id
+        AND s.id = r.session_id
+       JOIN programs p
+         ON p.organization_id = s.organization_id
+        AND p.id = s.program_id
+       WHERE r.organization_id = $1
+         AND r.family_id = $2
+         AND r.status = 'CONFIRMED'
+       ORDER BY s.starts_on, s.code, r.id`,
+      [organizationId, familyId],
+    );
+
+    const registrations = new Map<string, CamperSessionRegistrationRecord[]>();
+    for (const row of result.rows) {
+      const camperRegistrations = registrations.get(row.camper_id) ?? [];
+      camperRegistrations.push({
+        ends_on: row.ends_on,
+        program_name: row.program_name,
+        registered_at: timestamp(row.updated_at),
+        registration_id: row.registration_id,
+        session_code: row.session_code,
+        session_id: row.session_id,
+        session_name: row.session_name,
+        starts_on: row.starts_on,
+        status: row.status,
+      });
+      registrations.set(row.camper_id, camperRegistrations);
+    }
+    return registrations;
   }
 
   private async getCamperForUpdate(

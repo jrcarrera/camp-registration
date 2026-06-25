@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
@@ -90,6 +91,17 @@ interface ContactFixture {
   authorized_pickup: boolean;
   receives_operational_communication: boolean;
   emergency_priority: number | null;
+}
+
+const highSchoolCampOneSessionId = '06c02070-2e63-4b7b-bd93-578e54fa1ea6';
+const highSchoolCampOneFemaleRatio = 0.6;
+
+function deterministicUuid(input: string): string {
+  const bytes = Buffer.from(createHash('sha256').update(input).digest().subarray(0, 16));
+  bytes[6] = (bytes[6]! & 0x0f) | 0x50;
+  bytes[8] = (bytes[8]! & 0x3f) | 0x80;
+  const hex = bytes.toString('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 function normalizedEmail(email: string | null): string | null {
@@ -194,6 +206,7 @@ export async function seedWinterFamilies(connectionString: string): Promise<void
   ) as FamilyLoadFixture;
 
   await seedFamilyFixture(connectionString, fixture);
+  await seedHighSchoolCampOneRegistrations(connectionString, fixture);
 }
 
 export async function seedFamilyFixture(
@@ -290,6 +303,110 @@ export async function seedFamilyFixture(
           ],
         );
       }
+    }
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+export async function seedHighSchoolCampOneRegistrations(
+  connectionString: string,
+  fixture: FamilyLoadFixture,
+): Promise<void> {
+  const pool = new Pool({ connectionString, max: 1 });
+  const client = await pool.connect();
+  const familyIds = fixture.families.map((family) => family.id);
+
+  try {
+    await client.query('BEGIN');
+
+    const session = await client.query<{
+      capacity: number;
+      maximum_age: number;
+      minimum_age: number;
+      starts_on: string;
+    }>(
+      `SELECT capacity, minimum_age, maximum_age, starts_on::text
+       FROM sessions
+       WHERE organization_id = $1 AND id = $2
+       FOR UPDATE`,
+      [fixture.organization_id, highSchoolCampOneSessionId],
+    );
+    const sessionRow = session.rows[0];
+    if (!sessionRow) {
+      throw new Error('High School Camp 1 was not found in the seeded catalog');
+    }
+
+    const femaleTarget = Math.round(sessionRow.capacity * highSchoolCampOneFemaleRatio);
+    const maleTarget = sessionRow.capacity - femaleTarget;
+
+    await client.query(
+      `DELETE FROM registrations
+       WHERE organization_id = $1
+         AND session_id = $2
+         AND family_id = ANY($3::uuid[])`,
+      [fixture.organization_id, highSchoolCampOneSessionId, familyIds],
+    );
+
+    const eligibleCampers = await client.query<{
+      camper_id: string;
+      family_id: string;
+      gender: 'Female' | 'Male';
+    }>(
+      `SELECT c.id AS camper_id, c.family_id, c.gender
+       FROM campers c
+       WHERE c.organization_id = $1
+         AND c.family_id = ANY($2::uuid[])
+         AND c.archived_at IS NULL
+         AND c.gender IN ('Female', 'Male')
+         AND c.school_grade IN ('9', '10', '11', '12')
+         AND date_part('year', age($3::date, c.birth_date))::integer BETWEEN $4 AND $5
+       ORDER BY c.gender, lower(c.last_name), lower(c.first_name), c.id`,
+      [
+        fixture.organization_id,
+        familyIds,
+        sessionRow.starts_on,
+        sessionRow.minimum_age,
+        sessionRow.maximum_age,
+      ],
+    );
+
+    const selectedCampers = [
+      ...eligibleCampers.rows.filter((camper) => camper.gender === 'Female').slice(0, femaleTarget),
+      ...eligibleCampers.rows.filter((camper) => camper.gender === 'Male').slice(0, maleTarget),
+    ];
+    const selectedFemaleCount = selectedCampers.filter(
+      (camper) => camper.gender === 'Female',
+    ).length;
+    const selectedMaleCount = selectedCampers.filter((camper) => camper.gender === 'Male').length;
+
+    if (selectedFemaleCount !== femaleTarget || selectedMaleCount !== maleTarget) {
+      throw new Error(
+        `Expected ${femaleTarget} female and ${maleTarget} male eligible campers, found ${selectedFemaleCount} female and ${selectedMaleCount} male`,
+      );
+    }
+
+    for (const camper of selectedCampers) {
+      await client.query(
+        `INSERT INTO registrations (
+           id, organization_id, session_id, family_id, camper_id, status, registered_at
+         ) VALUES ($1, $2, $3, $4, $5, 'CONFIRMED', $6)
+         ON CONFLICT (organization_id, session_id, camper_id) DO NOTHING`,
+        [
+          deterministicUuid(`registration:${highSchoolCampOneSessionId}:${camper.camper_id}`),
+          fixture.organization_id,
+          highSchoolCampOneSessionId,
+          camper.family_id,
+          camper.camper_id,
+          '2027-01-16T15:00:00Z',
+        ],
+      );
     }
 
     await client.query('COMMIT');

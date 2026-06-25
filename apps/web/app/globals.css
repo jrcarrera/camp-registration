@@ -271,6 +271,12 @@ h2 {
   margin-bottom: 13px;
 }
 
+.sectionDescription {
+  margin: 5px 0 0;
+  color: #66736d;
+  font-size: 13px;
+}
+
 .systemStatus {
   display: flex;
   align-items: center;
@@ -807,6 +813,7 @@ tbody tr + tr td {
 }
 
 .recordPanel {
+  scroll-margin-top: 24px;
   display: grid;
   gap: 16px;
   padding: 16px;
@@ -877,6 +884,52 @@ tbody tr + tr td {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.registrationLinks {
+  display: grid;
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 3px solid #2a6f97;
+}
+
+.registrationLinks > span {
+  color: #53615b;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.registrationLinks > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.registrationLinks a {
+  min-height: 42px;
+  display: grid;
+  gap: 2px;
+  padding: 4px 0;
+  color: #173d30;
+}
+
+.registrationLinks a:hover strong {
+  text-decoration: underline;
+}
+
+.registrationLinks strong,
+.registrationLinks small {
+  display: block;
+}
+
+.registrationLinks strong {
+  font-size: 13px;
+}
+
+.registrationLinks small {
+  color: #66736d;
+  font-size: 12px;
 }
 
 .formErrorText {

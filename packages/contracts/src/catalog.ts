@@ -53,6 +53,30 @@ export const SessionStatusSchema = Type.Union([
   Type.Literal('ARCHIVED'),
 ]);
 
+export const RegistrationStatusSchema = Type.Union([
+  Type.Literal('CONFIRMED'),
+  Type.Literal('WAITLISTED'),
+  Type.Literal('CANCELLED'),
+]);
+
+export const RegisteredCamperSchema = Type.Object(
+  {
+    registration_id: UuidSchema,
+    camper_id: UuidSchema,
+    family_id: UuidSchema,
+    family_name: Type.String({ minLength: 1 }),
+    first_name: Type.String({ minLength: 1 }),
+    last_name: Type.String({ minLength: 1 }),
+    preferred_name: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+    gender: Type.Union([Type.Literal('Female'), Type.Literal('Male'), Type.Null()]),
+    school_grade: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+    birth_date: LocalDateSchema,
+    status: RegistrationStatusSchema,
+    registered_at: UtcTimestampSchema,
+  },
+  { additionalProperties: false, $id: 'RegisteredCamper' },
+);
+
 export const SessionFixtureSchema = Type.Object(
   {
     id: UuidSchema,
@@ -141,6 +165,7 @@ export const SessionDetailSchema = Type.Composite(
         deposit_cents: Type.Integer({ minimum: 0 }),
         waitlist_enabled: Type.Boolean(),
         organization_timezone: Type.String({ minLength: 1 }),
+        registered_campers: Type.Array(RegisteredCamperSchema),
       },
       { additionalProperties: false },
     ),
@@ -232,6 +257,8 @@ export const ProblemResponseSchema = Type.Object(
 );
 
 export type CatalogContext = Static<typeof CatalogContextSchema>;
+export type RegistrationStatus = Static<typeof RegistrationStatusSchema>;
+export type RegisteredCamper = Static<typeof RegisteredCamperSchema>;
 export type SessionSummary = Static<typeof SessionSummarySchema>;
 export type SessionDetail = Static<typeof SessionDetailSchema>;
 export type SessionListResponse = Static<typeof SessionListResponseSchema>;

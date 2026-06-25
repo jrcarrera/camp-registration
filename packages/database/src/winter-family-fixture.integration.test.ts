@@ -8,6 +8,7 @@ import { runMigrations } from './migrate.js';
 import { seedWinterFamilies } from './seed.js';
 
 const organizationId = 'a60b272f-b028-4f1a-b666-3ef3cffd9827';
+const highSchoolCampOneSessionId = '06c02070-2e63-4b7b-bd93-578e54fa1ea6';
 
 interface WinterFamilyFixture {
   counts: {
@@ -16,6 +17,9 @@ interface WinterFamilyFixture {
     contacts: number;
     families: number;
     families_with_multiple_account_owners: number;
+    high_school_camp_1_female_registrations: number;
+    high_school_camp_1_male_registrations: number;
+    high_school_camp_1_registrations: number;
     high_school_campers: number;
   };
   families: Array<{
@@ -36,6 +40,10 @@ interface SeededCountRow {
   contacts: number;
   duplicate_family_email_count: number;
   families: number;
+  high_school_camp_1_female_registrations: number;
+  high_school_camp_1_invalid_grade_registrations: number;
+  high_school_camp_1_male_registrations: number;
+  high_school_camp_1_registrations: number;
   high_school_campers: number;
   invalid_contact_count: number;
   invalid_email_count: number;
@@ -112,6 +120,47 @@ describe('winter family fixture', () => {
          ) AS high_school_campers,
          (
            SELECT count(*)::integer
+           FROM registrations
+           WHERE organization_id = $1 AND session_id = $2 AND status = 'CONFIRMED'
+         ) AS high_school_camp_1_registrations,
+         (
+           SELECT count(*)::integer
+           FROM registrations r
+           JOIN campers c
+             ON c.organization_id = r.organization_id
+            AND c.family_id = r.family_id
+            AND c.id = r.camper_id
+           WHERE r.organization_id = $1
+             AND r.session_id = $2
+             AND r.status = 'CONFIRMED'
+             AND c.gender = 'Female'
+         ) AS high_school_camp_1_female_registrations,
+         (
+           SELECT count(*)::integer
+           FROM registrations r
+           JOIN campers c
+             ON c.organization_id = r.organization_id
+            AND c.family_id = r.family_id
+            AND c.id = r.camper_id
+           WHERE r.organization_id = $1
+             AND r.session_id = $2
+             AND r.status = 'CONFIRMED'
+             AND c.gender = 'Male'
+         ) AS high_school_camp_1_male_registrations,
+         (
+           SELECT count(*)::integer
+           FROM registrations r
+           JOIN campers c
+             ON c.organization_id = r.organization_id
+            AND c.family_id = r.family_id
+            AND c.id = r.camper_id
+           WHERE r.organization_id = $1
+             AND r.session_id = $2
+             AND r.status = 'CONFIRMED'
+             AND c.school_grade NOT IN ('9', '10', '11', '12')
+         ) AS high_school_camp_1_invalid_grade_registrations,
+         (
+           SELECT count(*)::integer
            FROM (
              SELECT family_id
              FROM adults
@@ -163,7 +212,7 @@ describe('winter family fixture', () => {
              HAVING count(*) > 1
            ) duplicate_emails
          ) AS duplicate_family_email_count`,
-      [organizationId],
+      [organizationId, highSchoolCampOneSessionId],
     );
     await admin.end();
 
@@ -173,6 +222,11 @@ describe('winter family fixture', () => {
       contacts: fixture.counts.contacts,
       duplicate_family_email_count: 0,
       families: fixture.counts.families,
+      high_school_camp_1_female_registrations:
+        fixture.counts.high_school_camp_1_female_registrations,
+      high_school_camp_1_invalid_grade_registrations: 0,
+      high_school_camp_1_male_registrations: fixture.counts.high_school_camp_1_male_registrations,
+      high_school_camp_1_registrations: fixture.counts.high_school_camp_1_registrations,
       high_school_campers: fixture.counts.high_school_campers,
       invalid_contact_count: 0,
       invalid_email_count: 0,

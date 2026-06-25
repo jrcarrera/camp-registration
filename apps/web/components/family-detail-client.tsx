@@ -15,6 +15,7 @@ import type {
   ProblemResponse,
 } from '@camp-registration/contracts';
 import { AlertCircle, CheckCircle2, Plus, Save } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, type ReactNode, useState } from 'react';
 
@@ -699,7 +700,7 @@ function CamperEditor({
   };
 
   return (
-    <form className="recordPanel" onSubmit={submit}>
+    <form className="recordPanel" id={`camper-${camper.id}`} onSubmit={submit}>
       <div className="recordPanelHeader">
         <strong>
           {camper.first_name} {camper.last_name}
@@ -707,6 +708,7 @@ function CamperEditor({
         <span>Camper</span>
       </div>
       <Message state={state} />
+      <CamperRegistrations camper={camper} />
       <CamperFields form={form} state={state} set={set} />
       <div className="inlineActions">
         <button className="buttonSecondary" type="submit" disabled={state.saving}>
@@ -715,6 +717,26 @@ function CamperEditor({
         </button>
       </div>
     </form>
+  );
+}
+
+function CamperRegistrations({ camper }: { camper: Camper }) {
+  if (camper.registrations.length === 0) return null;
+
+  return (
+    <div className="registrationLinks" aria-label={`${camper.first_name} registered sessions`}>
+      <span>Registered sessions</span>
+      <div>
+        {camper.registrations.map((registration) => (
+          <Link key={registration.registration_id} href={`/sessions/${registration.session_id}`}>
+            <strong>{registration.session_name}</strong>
+            <small>
+              {registration.session_code} - {registration.starts_on}
+            </small>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 

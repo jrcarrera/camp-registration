@@ -8,6 +8,26 @@ const EmailSchema = Type.String({
 });
 
 const GenderSchema = Type.Union([Type.Literal('Female'), Type.Literal('Male')]);
+const RegistrationStatusSchema = Type.Union([
+  Type.Literal('CONFIRMED'),
+  Type.Literal('WAITLISTED'),
+  Type.Literal('CANCELLED'),
+]);
+
+export const CamperSessionRegistrationSchema = Type.Object(
+  {
+    registration_id: UuidSchema,
+    session_id: UuidSchema,
+    session_code: Type.String({ minLength: 1 }),
+    session_name: Type.String({ minLength: 1 }),
+    program_name: Type.String({ minLength: 1 }),
+    starts_on: LocalDateSchema,
+    ends_on: LocalDateSchema,
+    status: RegistrationStatusSchema,
+    registered_at: UtcTimestampSchema,
+  },
+  { additionalProperties: false, $id: 'CamperSessionRegistration' },
+);
 
 export const FamilySummarySchema = Type.Object(
   {
@@ -59,6 +79,7 @@ export const CamperSchema = Type.Object(
     school_grade: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     cabin_preference: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     accessibility_needs: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+    registrations: Type.Array(CamperSessionRegistrationSchema),
     version: Type.Integer({ minimum: 1 }),
     updated_at: UtcTimestampSchema,
   },
@@ -220,6 +241,7 @@ export const ContactParamsSchema = Type.Object(
 
 export type FamilySummary = Static<typeof FamilySummarySchema>;
 export type Adult = Static<typeof AdultSchema>;
+export type CamperSessionRegistration = Static<typeof CamperSessionRegistrationSchema>;
 export type Camper = Static<typeof CamperSchema>;
 export type Contact = Static<typeof ContactSchema>;
 export type FamilyDetail = Static<typeof FamilyDetailSchema>;
