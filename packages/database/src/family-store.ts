@@ -773,9 +773,6 @@ export class FamilyStore {
   private mapUniqueViolation(error: unknown): never {
     const pgError = error as { code?: string; constraint?: string };
     if (pgError.code === '23505') {
-      if (pgError.constraint === 'adults_one_owner_per_family_idx') {
-        throw new FamilyDuplicateError('This family already has an account owner');
-      }
       if (pgError.constraint === 'adults_family_email_normalized_idx') {
         throw new FamilyDuplicateError('This adult email is already used in the family');
       }

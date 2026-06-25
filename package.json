@@ -12,6 +12,7 @@
     "build": "pnpm -r --if-present run build",
     "db:migrate": "pnpm --filter @camp-registration/database migrate",
     "db:seed": "pnpm --filter @camp-registration/database seed",
+    "db:seed:winter-families": "pnpm --filter @camp-registration/database seed:winter-families",
     "dev": "pnpm --parallel --filter @camp-registration/api --filter @camp-registration/web run dev",
     "dev:local": "docker compose up --build",
     "infra:down": "docker compose down",
