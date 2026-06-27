@@ -95,6 +95,9 @@ interface ContactFixture {
 
 const highSchoolCampOneSessionId = '06c02070-2e63-4b7b-bd93-578e54fa1ea6';
 const highSchoolCampOneFemaleRatio = 0.6;
+const highSchoolWinterCampOneSessionId = '58bc426a-eb35-4e17-8f2b-7f2a2adc27ff';
+const highSchoolWinterCampOneFemaleWaitlistTarget = 12;
+const highSchoolWinterCampOneMaleWaitlistTarget = 20;
 
 function deterministicUuid(input: string): string {
   const bytes = Buffer.from(createHash('sha256').update(input).digest().subarray(0, 16));
@@ -207,6 +210,7 @@ export async function seedWinterFamilies(connectionString: string): Promise<void
 
   await seedFamilyFixture(connectionString, fixture);
   await seedHighSchoolCampOneRegistrations(connectionString, fixture);
+  await seedHighSchoolWinterCampOneRegistrations(connectionString, fixture);
 }
 
 export async function seedFamilyFixture(
@@ -405,6 +409,147 @@ export async function seedHighSchoolCampOneRegistrations(
           camper.family_id,
           camper.camper_id,
           '2027-01-16T15:00:00Z',
+        ],
+      );
+    }
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+export async function seedHighSchoolWinterCampOneRegistrations(
+  connectionString: string,
+  fixture: FamilyLoadFixture,
+): Promise<void> {
+  const pool = new Pool({ connectionString, max: 1 });
+  const client = await pool.connect();
+  const familyIds = fixture.families.map((family) => family.id);
+
+  try {
+    await client.query('BEGIN');
+
+    const session = await client.query<{
+      capacity: number;
+      maximum_age: number;
+      minimum_age: number;
+      starts_on: string;
+    }>(
+      `SELECT capacity, minimum_age, maximum_age, starts_on::text
+       FROM sessions
+       WHERE organization_id = $1 AND id = $2
+       FOR UPDATE`,
+      [fixture.organization_id, highSchoolWinterCampOneSessionId],
+    );
+    const sessionRow = session.rows[0];
+    if (!sessionRow) {
+      throw new Error('High School Winter Camp #1 was not found in the seeded catalog');
+    }
+
+    await client.query(
+      `DELETE FROM registrations
+       WHERE organization_id = $1
+         AND session_id = $2
+         AND family_id = ANY($3::uuid[])`,
+      [fixture.organization_id, highSchoolWinterCampOneSessionId, familyIds],
+    );
+
+    const sourceCampers = await client.query<{
+      camper_id: string;
+      family_id: string;
+      gender: 'Female' | 'Male';
+    }>(
+      `SELECT c.id AS camper_id, c.family_id, c.gender
+       FROM registrations hsc
+       JOIN campers c
+         ON c.organization_id = hsc.organization_id
+        AND c.family_id = hsc.family_id
+        AND c.id = hsc.camper_id
+       WHERE hsc.organization_id = $1
+         AND hsc.session_id = $2
+         AND hsc.status = 'CONFIRMED'
+         AND c.archived_at IS NULL
+         AND c.gender IN ('Female', 'Male')
+         AND c.school_grade IN ('9', '10', '11', '12')
+         AND date_part('year', age($3::date, c.birth_date))::integer BETWEEN $4 AND $5
+       ORDER BY c.gender, lower(c.last_name), lower(c.first_name), c.id`,
+      [
+        fixture.organization_id,
+        highSchoolCampOneSessionId,
+        sessionRow.starts_on,
+        sessionRow.minimum_age,
+        sessionRow.maximum_age,
+      ],
+    );
+
+    const femaleCampers = sourceCampers.rows.filter((camper) => camper.gender === 'Female');
+    const maleCampers = sourceCampers.rows.filter((camper) => camper.gender === 'Male');
+
+    if (
+      femaleCampers.length < highSchoolWinterCampOneFemaleWaitlistTarget ||
+      maleCampers.length < highSchoolWinterCampOneMaleWaitlistTarget
+    ) {
+      throw new Error(
+        `Expected at least ${highSchoolWinterCampOneFemaleWaitlistTarget} female and ${highSchoolWinterCampOneMaleWaitlistTarget} male waitlist candidates from High School Camp 1`,
+      );
+    }
+
+    const waitlistedCampers = [
+      ...femaleCampers.slice(-highSchoolWinterCampOneFemaleWaitlistTarget),
+      ...maleCampers.slice(-highSchoolWinterCampOneMaleWaitlistTarget),
+    ];
+    const waitlistedCamperIds = new Set(waitlistedCampers.map((camper) => camper.camper_id));
+    const remainingFemales = femaleCampers.filter(
+      (camper) => !waitlistedCamperIds.has(camper.camper_id),
+    );
+    const remainingMales = maleCampers.filter(
+      (camper) => !waitlistedCamperIds.has(camper.camper_id),
+    );
+    const confirmedMales = remainingMales.slice(0, sessionRow.capacity);
+    const confirmedFemales = remainingFemales.slice(0, sessionRow.capacity - confirmedMales.length);
+    const confirmedCampers = [...confirmedFemales, ...confirmedMales];
+
+    if (confirmedCampers.length !== sessionRow.capacity) {
+      throw new Error(
+        `Expected ${sessionRow.capacity} High School Winter Camp #1 confirmed campers, found ${confirmedCampers.length}`,
+      );
+    }
+
+    for (const camper of confirmedCampers) {
+      await client.query(
+        `INSERT INTO registrations (
+           id, organization_id, session_id, family_id, camper_id, status, registered_at
+         ) VALUES ($1, $2, $3, $4, $5, 'CONFIRMED', $6)
+         ON CONFLICT (organization_id, session_id, camper_id) DO NOTHING`,
+        [
+          deterministicUuid(`registration:${highSchoolWinterCampOneSessionId}:${camper.camper_id}`),
+          fixture.organization_id,
+          highSchoolWinterCampOneSessionId,
+          camper.family_id,
+          camper.camper_id,
+          '2027-01-17T15:00:00Z',
+        ],
+      );
+    }
+
+    for (const camper of waitlistedCampers) {
+      await client.query(
+        `INSERT INTO registrations (
+           id, organization_id, session_id, family_id, camper_id, status, registered_at
+         ) VALUES ($1, $2, $3, $4, $5, 'WAITLISTED', $6)
+         ON CONFLICT (organization_id, session_id, camper_id) DO NOTHING`,
+        [
+          deterministicUuid(`registration:${highSchoolWinterCampOneSessionId}:${camper.camper_id}`),
+          fixture.organization_id,
+          highSchoolWinterCampOneSessionId,
+          camper.family_id,
+          camper.camper_id,
+          '2027-01-18T15:00:00Z',
         ],
       );
     }

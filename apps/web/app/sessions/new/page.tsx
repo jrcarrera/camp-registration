@@ -43,6 +43,8 @@ export default async function NewSessionPage({
     program_name: program.name,
     registered_campers: [],
     registered_count: 0,
+    registered_female_count: 0,
+    registered_male_count: 0,
     registration_closes_at: `${year}-05-29T05:00:00Z`,
     registration_opens_at: `${year}-01-15T15:00:00Z`,
     season_id: season.id,
@@ -50,6 +52,9 @@ export default async function NewSessionPage({
     status: 'DRAFT',
     updated_at: new Date().toISOString(),
     version: 1,
+    waitlisted_count: 0,
+    waitlisted_female_count: 0,
+    waitlisted_male_count: 0,
     waitlist_enabled: true,
   };
 

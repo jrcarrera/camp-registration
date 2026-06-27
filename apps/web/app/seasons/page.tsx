@@ -6,6 +6,10 @@ import { getCatalog, getSessions } from '../../lib/api';
 
 export const dynamic = 'force-dynamic';
 
+function formatRosterCount(total: number, male: number, female: number): string {
+  return `${total} (${male} M, ${female} F)`;
+}
+
 export default async function SeasonsPage() {
   let seasons: CatalogContext['seasons'] = [];
   let sessions: SessionSummary[] = [];
@@ -26,9 +30,33 @@ export default async function SeasonsPage() {
     );
     return {
       ...season,
+      registeredCount: scheduledSessions.reduce(
+        (total, session) => total + session.registered_count,
+        0,
+      ),
+      registeredFemaleCount: scheduledSessions.reduce(
+        (total, session) => total + session.registered_female_count,
+        0,
+      ),
+      registeredMaleCount: scheduledSessions.reduce(
+        (total, session) => total + session.registered_male_count,
+        0,
+      ),
       scheduledCapacity: scheduledSessions.reduce((total, session) => total + session.capacity, 0),
       scheduledCount: scheduledSessions.length,
       sessionCount: seasonSessions.length,
+      waitlistedCount: scheduledSessions.reduce(
+        (total, session) => total + session.waitlisted_count,
+        0,
+      ),
+      waitlistedFemaleCount: scheduledSessions.reduce(
+        (total, session) => total + session.waitlisted_female_count,
+        0,
+      ),
+      waitlistedMaleCount: scheduledSessions.reduce(
+        (total, session) => total + session.waitlisted_male_count,
+        0,
+      ),
     };
   });
 
@@ -68,6 +96,8 @@ export default async function SeasonsPage() {
                 <th>Year</th>
                 <th>Sessions</th>
                 <th>Scheduled spaces</th>
+                <th>Registered</th>
+                <th>Wait List</th>
                 {seasonRows.length > 0 && (
                   <th className="actionColumn" scope="col">
                     <span className="srOnly">Open</span>
@@ -88,6 +118,20 @@ export default async function SeasonsPage() {
                     {season.scheduledCount} scheduled / {season.sessionCount} total
                   </td>
                   <td data-label="Scheduled spaces">{season.scheduledCapacity}</td>
+                  <td data-label="Registered">
+                    {formatRosterCount(
+                      season.registeredCount,
+                      season.registeredMaleCount,
+                      season.registeredFemaleCount,
+                    )}
+                  </td>
+                  <td data-label="Wait List">
+                    {formatRosterCount(
+                      season.waitlistedCount,
+                      season.waitlistedMaleCount,
+                      season.waitlistedFemaleCount,
+                    )}
+                  </td>
                   <td className="rowAction">
                     <Link
                       href={`/sessions?seasonId=${season.id}`}
@@ -100,7 +144,7 @@ export default async function SeasonsPage() {
               ))}
               {seasonRows.length === 0 && !errorMessage && (
                 <tr>
-                  <td className="emptyState" colSpan={5}>
+                  <td className="emptyState" colSpan={6}>
                     <strong>No seasons yet</strong>
                     <span>Add a season before creating sessions.</span>
                   </td>

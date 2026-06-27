@@ -11,7 +11,9 @@ are in grades 9 through 12 so the fixture can fill a 200-seat high-school winter
 camp session, while younger siblings support day, elementary, and junior-high
 camp testing. The winter family seed also registers 140 eligible campers into
 High School Camp 1 with 84 female and 56 male campers, matching a 60/40 split
-for that session's current capacity.
+for that session's current capacity. It then uses those High School Camp 1
+campers to fill High School Winter Camp #1 with 100 confirmed registrations and
+adds a 32-camper waitlist with 12 female and 20 male campers.
 
 Fixture assumptions:
 

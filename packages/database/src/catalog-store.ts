@@ -31,6 +31,11 @@ export interface SessionSummaryRecord {
   ends_on: string;
   capacity: number;
   registered_count: number;
+  registered_female_count: number;
+  registered_male_count: number;
+  waitlisted_count: number;
+  waitlisted_female_count: number;
+  waitlisted_male_count: number;
   active_hold_count: number;
   available_count: number;
   currency: 'USD';
@@ -150,6 +155,11 @@ interface SessionRow {
   version: number;
   updated_at: Date | string;
   registered_count: number;
+  registered_female_count: number;
+  registered_male_count: number;
+  waitlisted_count: number;
+  waitlisted_female_count: number;
+  waitlisted_male_count: number;
   active_hold_count: number;
   available_count: number;
   organization_timezone: string;
@@ -184,6 +194,11 @@ const sessionSelect = `
     s.version,
     s.updated_at,
     COALESCE(registration_counts.registered_count, 0)::integer AS registered_count,
+    COALESCE(registration_counts.registered_female_count, 0)::integer AS registered_female_count,
+    COALESCE(registration_counts.registered_male_count, 0)::integer AS registered_male_count,
+    COALESCE(registration_counts.waitlisted_count, 0)::integer AS waitlisted_count,
+    COALESCE(registration_counts.waitlisted_female_count, 0)::integer AS waitlisted_female_count,
+    COALESCE(registration_counts.waitlisted_male_count, 0)::integer AS waitlisted_male_count,
     0::integer AS active_hold_count,
     GREATEST(s.capacity - COALESCE(registration_counts.registered_count, 0), 0)::integer
       AS available_count,
@@ -194,11 +209,24 @@ const sessionSelect = `
    AND p.id = s.program_id
   JOIN organizations o ON o.id = s.organization_id
   LEFT JOIN LATERAL (
-    SELECT count(*)::integer AS registered_count
+    SELECT
+      count(*) FILTER (WHERE r.status = 'CONFIRMED')::integer AS registered_count,
+      count(*) FILTER (WHERE r.status = 'CONFIRMED' AND c.gender = 'Female')::integer
+        AS registered_female_count,
+      count(*) FILTER (WHERE r.status = 'CONFIRMED' AND c.gender = 'Male')::integer
+        AS registered_male_count,
+      count(*) FILTER (WHERE r.status = 'WAITLISTED')::integer AS waitlisted_count,
+      count(*) FILTER (WHERE r.status = 'WAITLISTED' AND c.gender = 'Female')::integer
+        AS waitlisted_female_count,
+      count(*) FILTER (WHERE r.status = 'WAITLISTED' AND c.gender = 'Male')::integer
+        AS waitlisted_male_count
     FROM registrations r
+    LEFT JOIN campers c
+      ON c.organization_id = r.organization_id
+     AND c.family_id = r.family_id
+     AND c.id = r.camper_id
     WHERE r.organization_id = s.organization_id
       AND r.session_id = s.id
-      AND r.status = 'CONFIRMED'
   ) registration_counts ON true
 `;
 
@@ -234,11 +262,16 @@ function toSummary(session: SessionDetailRecord): SessionSummaryRecord {
     program_id: session.program_id,
     program_name: session.program_name,
     registered_count: session.registered_count,
+    registered_female_count: session.registered_female_count,
+    registered_male_count: session.registered_male_count,
     season_id: session.season_id,
     starts_on: session.starts_on,
     status: session.status,
     updated_at: session.updated_at,
     version: session.version,
+    waitlisted_count: session.waitlisted_count,
+    waitlisted_female_count: session.waitlisted_female_count,
+    waitlisted_male_count: session.waitlisted_male_count,
   };
 }
 
@@ -644,8 +677,13 @@ export class CatalogStore {
         AND f.archived_at IS NULL
        WHERE r.organization_id = $1
          AND r.session_id = $2
-         AND r.status = 'CONFIRMED'
-       ORDER BY c.gender NULLS LAST, lower(c.last_name), lower(c.first_name), c.id`,
+         AND r.status IN ('CONFIRMED', 'WAITLISTED')
+       ORDER BY
+         CASE r.status WHEN 'CONFIRMED' THEN 0 WHEN 'WAITLISTED' THEN 1 ELSE 2 END,
+         c.gender NULLS LAST,
+         lower(c.last_name),
+         lower(c.first_name),
+         c.id`,
       [organizationId, sessionId],
     );
 

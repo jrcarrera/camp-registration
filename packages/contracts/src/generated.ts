@@ -172,6 +172,11 @@ export interface paths {
                                 ends_on: string;
                                 capacity: number;
                                 registered_count: number;
+                                registered_female_count: number;
+                                registered_male_count: number;
+                                waitlisted_count: number;
+                                waitlisted_female_count: number;
+                                waitlisted_male_count: number;
                                 active_hold_count: number;
                                 available_count: number;
                                 /** @enum {string} */
@@ -311,6 +316,11 @@ export interface paths {
                             ends_on: string;
                             capacity: number;
                             registered_count: number;
+                            registered_female_count: number;
+                            registered_male_count: number;
+                            waitlisted_count: number;
+                            waitlisted_female_count: number;
+                            waitlisted_male_count: number;
                             active_hold_count: number;
                             available_count: number;
                             /** @enum {string} */
@@ -714,6 +724,11 @@ export interface paths {
                             ends_on: string;
                             capacity: number;
                             registered_count: number;
+                            registered_female_count: number;
+                            registered_male_count: number;
+                            waitlisted_count: number;
+                            waitlisted_female_count: number;
+                            waitlisted_male_count: number;
                             active_hold_count: number;
                             available_count: number;
                             /** @enum {string} */
@@ -880,6 +895,11 @@ export interface paths {
                             ends_on: string;
                             capacity: number;
                             registered_count: number;
+                            registered_female_count: number;
+                            registered_male_count: number;
+                            waitlisted_count: number;
+                            waitlisted_female_count: number;
+                            waitlisted_male_count: number;
                             active_hold_count: number;
                             available_count: number;
                             /** @enum {string} */

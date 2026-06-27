@@ -9,6 +9,7 @@ import { seedWinterFamilies } from './seed.js';
 
 const organizationId = 'a60b272f-b028-4f1a-b666-3ef3cffd9827';
 const highSchoolCampOneSessionId = '06c02070-2e63-4b7b-bd93-578e54fa1ea6';
+const highSchoolWinterCampOneSessionId = '58bc426a-eb35-4e17-8f2b-7f2a2adc27ff';
 
 interface WinterFamilyFixture {
   counts: {
@@ -20,6 +21,12 @@ interface WinterFamilyFixture {
     high_school_camp_1_female_registrations: number;
     high_school_camp_1_male_registrations: number;
     high_school_camp_1_registrations: number;
+    high_school_winter_camp_1_female_registrations: number;
+    high_school_winter_camp_1_female_waitlist: number;
+    high_school_winter_camp_1_male_registrations: number;
+    high_school_winter_camp_1_male_waitlist: number;
+    high_school_winter_camp_1_registrations: number;
+    high_school_winter_camp_1_waitlist: number;
     high_school_campers: number;
   };
   families: Array<{
@@ -44,6 +51,14 @@ interface SeededCountRow {
   high_school_camp_1_invalid_grade_registrations: number;
   high_school_camp_1_male_registrations: number;
   high_school_camp_1_registrations: number;
+  high_school_winter_camp_1_female_registrations: number;
+  high_school_winter_camp_1_female_waitlist: number;
+  high_school_winter_camp_1_invalid_grade_registrations: number;
+  high_school_winter_camp_1_male_registrations: number;
+  high_school_winter_camp_1_male_waitlist: number;
+  high_school_winter_camp_1_non_hs1_registrations: number;
+  high_school_winter_camp_1_registrations: number;
+  high_school_winter_camp_1_waitlist: number;
   high_school_campers: number;
   invalid_contact_count: number;
   invalid_email_count: number;
@@ -161,6 +176,92 @@ describe('winter family fixture', () => {
          ) AS high_school_camp_1_invalid_grade_registrations,
          (
            SELECT count(*)::integer
+           FROM registrations
+           WHERE organization_id = $1 AND session_id = $3 AND status = 'CONFIRMED'
+         ) AS high_school_winter_camp_1_registrations,
+         (
+           SELECT count(*)::integer
+           FROM registrations r
+           JOIN campers c
+             ON c.organization_id = r.organization_id
+            AND c.family_id = r.family_id
+            AND c.id = r.camper_id
+           WHERE r.organization_id = $1
+             AND r.session_id = $3
+             AND r.status = 'CONFIRMED'
+             AND c.gender = 'Female'
+         ) AS high_school_winter_camp_1_female_registrations,
+         (
+           SELECT count(*)::integer
+           FROM registrations r
+           JOIN campers c
+             ON c.organization_id = r.organization_id
+            AND c.family_id = r.family_id
+            AND c.id = r.camper_id
+           WHERE r.organization_id = $1
+             AND r.session_id = $3
+             AND r.status = 'CONFIRMED'
+             AND c.gender = 'Male'
+         ) AS high_school_winter_camp_1_male_registrations,
+         (
+           SELECT count(*)::integer
+           FROM registrations
+           WHERE organization_id = $1 AND session_id = $3 AND status = 'WAITLISTED'
+         ) AS high_school_winter_camp_1_waitlist,
+         (
+           SELECT count(*)::integer
+           FROM registrations r
+           JOIN campers c
+             ON c.organization_id = r.organization_id
+            AND c.family_id = r.family_id
+            AND c.id = r.camper_id
+           WHERE r.organization_id = $1
+             AND r.session_id = $3
+             AND r.status = 'WAITLISTED'
+             AND c.gender = 'Female'
+         ) AS high_school_winter_camp_1_female_waitlist,
+         (
+           SELECT count(*)::integer
+           FROM registrations r
+           JOIN campers c
+             ON c.organization_id = r.organization_id
+            AND c.family_id = r.family_id
+            AND c.id = r.camper_id
+           WHERE r.organization_id = $1
+             AND r.session_id = $3
+             AND r.status = 'WAITLISTED'
+             AND c.gender = 'Male'
+         ) AS high_school_winter_camp_1_male_waitlist,
+         (
+           SELECT count(*)::integer
+           FROM registrations r
+           JOIN campers c
+             ON c.organization_id = r.organization_id
+            AND c.family_id = r.family_id
+            AND c.id = r.camper_id
+           WHERE r.organization_id = $1
+             AND r.session_id = $3
+             AND r.status IN ('CONFIRMED', 'WAITLISTED')
+             AND c.school_grade NOT IN ('9', '10', '11', '12')
+         ) AS high_school_winter_camp_1_invalid_grade_registrations,
+         (
+           SELECT count(*)::integer
+           FROM registrations winter
+           WHERE winter.organization_id = $1
+             AND winter.session_id = $3
+             AND winter.status IN ('CONFIRMED', 'WAITLISTED')
+             AND NOT EXISTS (
+               SELECT 1
+               FROM registrations summer
+               WHERE summer.organization_id = winter.organization_id
+                 AND summer.session_id = $2
+                 AND summer.family_id = winter.family_id
+                 AND summer.camper_id = winter.camper_id
+                 AND summer.status = 'CONFIRMED'
+             )
+         ) AS high_school_winter_camp_1_non_hs1_registrations,
+         (
+           SELECT count(*)::integer
            FROM (
              SELECT family_id
              FROM adults
@@ -212,7 +313,7 @@ describe('winter family fixture', () => {
              HAVING count(*) > 1
            ) duplicate_emails
          ) AS duplicate_family_email_count`,
-      [organizationId, highSchoolCampOneSessionId],
+      [organizationId, highSchoolCampOneSessionId, highSchoolWinterCampOneSessionId],
     );
     await admin.end();
 
@@ -227,6 +328,19 @@ describe('winter family fixture', () => {
       high_school_camp_1_invalid_grade_registrations: 0,
       high_school_camp_1_male_registrations: fixture.counts.high_school_camp_1_male_registrations,
       high_school_camp_1_registrations: fixture.counts.high_school_camp_1_registrations,
+      high_school_winter_camp_1_female_registrations:
+        fixture.counts.high_school_winter_camp_1_female_registrations,
+      high_school_winter_camp_1_female_waitlist:
+        fixture.counts.high_school_winter_camp_1_female_waitlist,
+      high_school_winter_camp_1_invalid_grade_registrations: 0,
+      high_school_winter_camp_1_male_registrations:
+        fixture.counts.high_school_winter_camp_1_male_registrations,
+      high_school_winter_camp_1_male_waitlist:
+        fixture.counts.high_school_winter_camp_1_male_waitlist,
+      high_school_winter_camp_1_non_hs1_registrations: 0,
+      high_school_winter_camp_1_registrations:
+        fixture.counts.high_school_winter_camp_1_registrations,
+      high_school_winter_camp_1_waitlist: fixture.counts.high_school_winter_camp_1_waitlist,
       high_school_campers: fixture.counts.high_school_campers,
       invalid_contact_count: 0,
       invalid_email_count: 0,

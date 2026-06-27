@@ -35,11 +35,16 @@ const summary: SessionSummary = {
   program_id: programId,
   program_name: 'Day Camp',
   registered_count: 0,
+  registered_female_count: 0,
+  registered_male_count: 0,
   season_id: seasonId,
   starts_on: '2027-06-07',
   status: 'PUBLISHED',
   updated_at: '2026-06-21T12:00:00Z',
   version: 1,
+  waitlisted_count: 0,
+  waitlisted_female_count: 0,
+  waitlisted_male_count: 0,
 };
 
 const detail: SessionDetail = {

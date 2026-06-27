@@ -342,6 +342,11 @@
                           "ends_on",
                           "capacity",
                           "registered_count",
+                          "registered_female_count",
+                          "registered_male_count",
+                          "waitlisted_count",
+                          "waitlisted_female_count",
+                          "waitlisted_male_count",
                           "active_hold_count",
                           "available_count",
                           "currency",
@@ -392,6 +397,26 @@
                             "type": "integer"
                           },
                           "registered_count": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "registered_female_count": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "registered_male_count": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "waitlisted_count": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "waitlisted_female_count": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "waitlisted_male_count": {
                             "minimum": 0,
                             "type": "integer"
                           },
@@ -774,6 +799,11 @@
                     "ends_on",
                     "capacity",
                     "registered_count",
+                    "registered_female_count",
+                    "registered_male_count",
+                    "waitlisted_count",
+                    "waitlisted_female_count",
+                    "waitlisted_male_count",
                     "active_hold_count",
                     "available_count",
                     "currency",
@@ -833,6 +863,26 @@
                       "type": "integer"
                     },
                     "registered_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "registered_female_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "registered_male_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlisted_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlisted_female_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlisted_male_count": {
                       "minimum": 0,
                       "type": "integer"
                     },
@@ -1755,6 +1805,11 @@
                     "ends_on",
                     "capacity",
                     "registered_count",
+                    "registered_female_count",
+                    "registered_male_count",
+                    "waitlisted_count",
+                    "waitlisted_female_count",
+                    "waitlisted_male_count",
                     "active_hold_count",
                     "available_count",
                     "currency",
@@ -1814,6 +1869,26 @@
                       "type": "integer"
                     },
                     "registered_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "registered_female_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "registered_male_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlisted_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlisted_female_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlisted_male_count": {
                       "minimum": 0,
                       "type": "integer"
                     },
@@ -2364,6 +2439,11 @@
                     "ends_on",
                     "capacity",
                     "registered_count",
+                    "registered_female_count",
+                    "registered_male_count",
+                    "waitlisted_count",
+                    "waitlisted_female_count",
+                    "waitlisted_male_count",
                     "active_hold_count",
                     "available_count",
                     "currency",
@@ -2423,6 +2503,26 @@
                       "type": "integer"
                     },
                     "registered_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "registered_female_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "registered_male_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlisted_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlisted_female_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlisted_male_count": {
                       "minimum": 0,
                       "type": "integer"
                     },

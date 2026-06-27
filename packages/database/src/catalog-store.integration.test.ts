@@ -39,7 +39,7 @@ describe('catalog store', () => {
   it('enforces tenant context for the runtime role', async () => {
     const store = new CatalogStore(runtimeDatabase);
 
-    await expect(store.listSessions(organizationId)).resolves.toHaveLength(9);
+    await expect(store.listSessions(organizationId)).resolves.toHaveLength(10);
     await expect(store.listSessions(otherOrganizationId)).resolves.toEqual([]);
 
     const direct = await runtimeDatabase.pool.query('SELECT id FROM sessions');
@@ -120,11 +120,13 @@ describe('catalog store', () => {
     expect(session?.name).toBe('Day Camp Opening Week');
   });
 
-  it('returns confirmed registration counts and registered campers', async () => {
+  it('returns active camper registrations while only confirmed registrations consume capacity', async () => {
     const sessionId = '06c02070-2e63-4b7b-bd93-578e54fa1ea6';
     const familyId = '77fb7b7b-fcd7-4144-b45e-fb4a40773b9c';
     const camperId = '8c24be8b-1307-4c65-9793-74a2fc769a12';
+    const waitlistedCamperId = 'e702e19c-3da9-426c-8ed7-8a0908128112';
     const registrationId = '20f3a0c5-cad9-4c1d-b77b-b4751805ad83';
+    const waitlistedRegistrationId = 'a60e6122-a85a-4aaf-91d4-a45f7c9574f8';
     const admin = new Pool({ connectionString: migrationUrl });
 
     await admin.query(
@@ -140,10 +142,23 @@ describe('catalog store', () => {
       [camperId, organizationId, familyId],
     );
     await admin.query(
+      `INSERT INTO campers (
+         id, organization_id, family_id, first_name, last_name, birth_date,
+         preferred_name, gender, school_grade, cabin_preference, accessibility_needs
+       ) VALUES ($1, $2, $3, 'Sam', 'Roster', '2010-09-12', null, 'Male', '10', null, null)`,
+      [waitlistedCamperId, organizationId, familyId],
+    );
+    await admin.query(
       `INSERT INTO registrations (
          id, organization_id, session_id, family_id, camper_id, status, registered_at
        ) VALUES ($1, $2, $3, $4, $5, 'CONFIRMED', '2027-01-16T15:00:00Z')`,
       [registrationId, organizationId, sessionId, familyId, camperId],
+    );
+    await admin.query(
+      `INSERT INTO registrations (
+         id, organization_id, session_id, family_id, camper_id, status, registered_at
+       ) VALUES ($1, $2, $3, $4, $5, 'WAITLISTED', '2027-01-17T15:00:00Z')`,
+      [waitlistedRegistrationId, organizationId, sessionId, familyId, waitlistedCamperId],
     );
     await admin.end();
 
@@ -151,9 +166,20 @@ describe('catalog store', () => {
     const session = await store.getSession(organizationId, sessionId);
     const summary = (await store.listSessions(organizationId)).find(({ id }) => id === sessionId);
 
-    expect(summary).toMatchObject({ available_count: 139, registered_count: 1 });
+    expect(summary).toMatchObject({
+      available_count: 139,
+      registered_count: 1,
+      registered_female_count: 1,
+      registered_male_count: 0,
+      waitlisted_count: 1,
+      waitlisted_female_count: 0,
+      waitlisted_male_count: 1,
+    });
     expect(session).toMatchObject({
       available_count: 139,
+      registered_count: 1,
+      registered_female_count: 1,
+      registered_male_count: 0,
       registered_campers: [
         expect.objectContaining({
           camper_id: camperId,
@@ -163,8 +189,18 @@ describe('catalog store', () => {
           registration_id: registrationId,
           status: 'CONFIRMED',
         }),
+        expect.objectContaining({
+          camper_id: waitlistedCamperId,
+          family_id: familyId,
+          family_name: 'Roster Test Family',
+          gender: 'Male',
+          registration_id: waitlistedRegistrationId,
+          status: 'WAITLISTED',
+        }),
       ],
-      registered_count: 1,
+      waitlisted_count: 1,
+      waitlisted_female_count: 0,
+      waitlisted_male_count: 1,
     });
   });
 
@@ -181,8 +217,8 @@ describe('catalog store', () => {
 
     const season = await store.createSeason(context, {
       id: seasonId,
-      name: 'Summer 2028',
-      year: 2028,
+      name: 'Summer 2030',
+      year: 2030,
     });
     const program = await store.createProgram(context, {
       code: 'TEEN',
@@ -194,24 +230,24 @@ describe('catalog store', () => {
     const session = await store.createSession(context, {
       age_as_of: 'SESSION_START',
       capacity: 24,
-      code: 'TEEN-2028-01',
+      code: 'TEEN-2030-01',
       deposit_cents: 5000,
-      ends_on: '2028-07-09',
+      ends_on: '2030-07-09',
       id: sessionId,
       maximum_age: 17,
       minimum_age: 13,
       name: 'Teen Leadership Week 1',
       price_cents: 45000,
       program_id: programId,
-      registration_closes_at: '2028-07-01T05:00:00Z',
-      registration_opens_at: '2028-01-15T15:00:00Z',
+      registration_closes_at: '2030-07-01T05:00:00Z',
+      registration_opens_at: '2030-01-15T15:00:00Z',
       season_id: seasonId,
-      starts_on: '2028-07-05',
+      starts_on: '2030-07-05',
       status: 'DRAFT',
       waitlist_enabled: true,
     });
 
-    expect(season).toMatchObject({ id: seasonId, organization_id: organizationId, year: 2028 });
+    expect(season).toMatchObject({ id: seasonId, organization_id: organizationId, year: 2030 });
     expect(program).toMatchObject({ id: programId, organization_id: organizationId });
     expect(session).toMatchObject({
       id: sessionId,

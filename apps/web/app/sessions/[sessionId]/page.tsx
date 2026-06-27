@@ -47,12 +47,17 @@ export default async function SessionEditorPage({
 }
 
 function RegisteredCampers({ campers }: { campers: RegisteredCamper[] }) {
+  const confirmedCount = campers.filter((camper) => camper.status === 'CONFIRMED').length;
+  const waitlistedCount = campers.filter((camper) => camper.status === 'WAITLISTED').length;
+
   return (
     <section className="contentSection" id="registered-campers" aria-labelledby="roster-heading">
       <div className="sectionHeading">
         <div>
-          <h2 id="roster-heading">Registered Campers</h2>
-          <p className="sectionDescription">{campers.length} confirmed campers</p>
+          <h2 id="roster-heading">Campers</h2>
+          <p className="sectionDescription">
+            {confirmedCount} attending, {waitlistedCount} waitlisted
+          </p>
         </div>
       </div>
       <div className="tableFrame">
@@ -63,20 +68,24 @@ function RegisteredCampers({ campers }: { campers: RegisteredCamper[] }) {
               <th>Family</th>
               <th>Gender</th>
               <th>Grade</th>
+              <th>Status</th>
               <th>Registered</th>
             </tr>
           </thead>
           <tbody>
             {campers.length === 0 ? (
               <tr>
-                <td className="emptyState" colSpan={5}>
-                  <strong>No registered campers</strong>
-                  <span>Confirmed registrations will appear here.</span>
+                <td className="emptyState" colSpan={6}>
+                  <strong>No campers</strong>
+                  <span>Confirmed and waitlisted campers will appear here.</span>
                 </td>
               </tr>
             ) : (
               campers.map((camper) => (
-                <tr key={camper.registration_id}>
+                <tr
+                  className={camper.status === 'WAITLISTED' ? 'rosterRowWaitlisted' : undefined}
+                  key={camper.registration_id}
+                >
                   <td>
                     <Link
                       className="sessionLink"
@@ -88,10 +97,19 @@ function RegisteredCampers({ campers }: { campers: RegisteredCamper[] }) {
                       <span>{camper.birth_date}</span>
                     </Link>
                   </td>
-                  <td>{camper.family_name}</td>
-                  <td>{camper.gender ?? 'Not specified'}</td>
-                  <td>{camper.school_grade ?? 'Not set'}</td>
-                  <td>{new Date(camper.registered_at).toLocaleDateString('en-US')}</td>
+                  <td data-label="Family">{camper.family_name}</td>
+                  <td data-label="Gender">{camper.gender ?? 'Not specified'}</td>
+                  <td data-label="Grade">{camper.school_grade ?? 'Not set'}</td>
+                  <td data-label="Status">
+                    <span
+                      className={`registrationStatus registrationStatus${camper.status.toLowerCase()}`}
+                    >
+                      {camper.status === 'CONFIRMED' ? 'Attending' : 'Waitlisted'}
+                    </span>
+                  </td>
+                  <td data-label="Registered">
+                    {new Date(camper.registered_at).toLocaleDateString('en-US')}
+                  </td>
                 </tr>
               ))
             )}

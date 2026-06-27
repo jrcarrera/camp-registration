@@ -62,7 +62,7 @@ describe('2027 MVP catalog fixture', () => {
       expect(session.deposit_cents <= session.price_cents).toBe(true);
     }
 
-    expect(fixture.sessions).toHaveLength(9);
-    expect(fixture.sessions.reduce((total, session) => total + session.capacity, 0)).toBe(1040);
+    expect(fixture.sessions).toHaveLength(10);
+    expect(fixture.sessions.reduce((total, session) => total + session.capacity, 0)).toBe(1140);
   });
 });

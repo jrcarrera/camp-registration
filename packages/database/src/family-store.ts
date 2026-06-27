@@ -759,8 +759,12 @@ export class FamilyStore {
         AND p.id = s.program_id
        WHERE r.organization_id = $1
          AND r.family_id = $2
-         AND r.status = 'CONFIRMED'
-       ORDER BY s.starts_on, s.code, r.id`,
+         AND r.status IN ('CONFIRMED', 'WAITLISTED')
+       ORDER BY
+         s.starts_on,
+         CASE r.status WHEN 'CONFIRMED' THEN 0 WHEN 'WAITLISTED' THEN 1 ELSE 2 END,
+         s.code,
+         r.id`,
       [organizationId, familyId],
     );
 

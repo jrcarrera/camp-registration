@@ -14,6 +14,12 @@
       "organization_id": "a60b272f-b028-4f1a-b666-3ef3cffd9827",
       "name": "Summer 2027",
       "year": 2027
+    },
+    {
+      "id": "fc94ef27-1fa6-466b-b877-312c27d00a7c",
+      "organization_id": "a60b272f-b028-4f1a-b666-3ef3cffd9827",
+      "name": "Winter 2028",
+      "year": 2028
     }
   ],
   "programs": [
@@ -48,6 +54,14 @@
       "name": "High School Camp",
       "delivery_mode": "OVERNIGHT",
       "description": "High school overnight camp."
+    },
+    {
+      "id": "a72ef345-3476-4270-b6dc-ece7bf406059",
+      "organization_id": "a60b272f-b028-4f1a-b666-3ef3cffd9827",
+      "code": "WIN",
+      "name": "Winter Camp",
+      "delivery_mode": "OVERNIGHT",
+      "description": "Winter weekend camp."
     }
   ],
   "sessions": [
@@ -239,6 +253,27 @@
       "deposit_cents": 10000,
       "waitlist_enabled": true,
       "status": "PUBLISHED"
+    },
+    {
+      "id": "58bc426a-eb35-4e17-8f2b-7f2a2adc27ff",
+      "organization_id": "a60b272f-b028-4f1a-b666-3ef3cffd9827",
+      "season_id": "fc94ef27-1fa6-466b-b877-312c27d00a7c",
+      "program_id": "a72ef345-3476-4270-b6dc-ece7bf406059",
+      "code": "WB-2027-01",
+      "name": "High School Winter Camp #1",
+      "starts_on": "2028-02-04",
+      "ends_on": "2028-02-06",
+      "registration_opens_at": "2026-06-01T14:00:00Z",
+      "registration_closes_at": "2028-02-03T06:00:00Z",
+      "capacity": 100,
+      "minimum_age": 5,
+      "maximum_age": 18,
+      "age_as_of": "SESSION_START",
+      "currency": "USD",
+      "price_cents": 10000,
+      "deposit_cents": 2000,
+      "waitlist_enabled": true,
+      "status": "DRAFT"
     }
   ]
 }

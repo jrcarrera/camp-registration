@@ -724,13 +724,18 @@ function CamperRegistrations({ camper }: { camper: Camper }) {
   if (camper.registrations.length === 0) return null;
 
   return (
-    <div className="registrationLinks" aria-label={`${camper.first_name} registered sessions`}>
-      <span>Registered sessions</span>
+    <div className="registrationLinks" aria-label={`${camper.first_name} session registrations`}>
+      <span>Session registrations</span>
       <div>
         {camper.registrations.map((registration) => (
-          <Link key={registration.registration_id} href={`/sessions/${registration.session_id}`}>
+          <Link
+            className={`registrationLink registrationLink${registration.status.toLowerCase()}`}
+            key={registration.registration_id}
+            href={`/sessions/${registration.session_id}`}
+          >
             <strong>{registration.session_name}</strong>
             <small>
+              {registration.status === 'CONFIRMED' ? 'Attending' : 'Waitlisted'} -{' '}
               {registration.session_code} - {registration.starts_on}
             </small>
           </Link>
