@@ -306,15 +306,30 @@ function normalizedGrade(value: string | null): string | null {
 }
 
 function allowedGradesForSession(session: RegistrationSessionRow): string[] | null {
+  const code = session.code.toUpperCase();
   const descriptor =
     `${session.program_code} ${session.program_name} ${session.code} ${session.name}`.toLowerCase();
-  if (session.program_code === 'HS' || descriptor.includes('high school')) {
+  if (
+    session.program_code === 'HS' ||
+    code.startsWith('HS-') ||
+    descriptor.includes('high school')
+  ) {
     return ['9', '10', '11', '12'];
   }
-  if (session.program_code === 'JH' || descriptor.includes('junior high')) {
+  if (
+    session.program_code === 'JH' ||
+    code.startsWith('JH-') ||
+    descriptor.includes('junior high') ||
+    descriptor.includes('jr high') ||
+    descriptor.includes('middle school')
+  ) {
     return ['6', '7', '8'];
   }
-  if (session.program_code === 'ELEM' || descriptor.includes('elementary')) {
+  if (
+    session.program_code === 'ELEM' ||
+    code.startsWith('ELEM-') ||
+    descriptor.includes('elementary')
+  ) {
     return ['2', '3', '4', '5'];
   }
   return null;

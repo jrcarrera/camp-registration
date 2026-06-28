@@ -108,8 +108,9 @@ interface CandidateCamper {
   school_grade: string | null;
 }
 
-function formatSessionOption(session: SessionDetail): string {
-  return `${session.name} - ${session.code} - ${session.registered_count}/${session.capacity} registered, ${session.waitlisted_count} waitlisted`;
+function formatSessionOption(session: SessionDetail, now: Date): string {
+  const registrationWindow = registrationWindowLabel(session, now);
+  return `${session.name} - ${session.code} - ${registrationWindow} - ${session.registered_count}/${session.capacity} registered, ${session.waitlisted_count} waitlisted`;
 }
 
 function resultMessage(result: FamilyRegistrationResult): string {
@@ -158,12 +159,50 @@ function findCreatedCamper(family: FamilyDetail, payload: CamperCreate): Camper 
     );
 }
 
+function currentLocalDate(now: Date): string {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatDate(value: string): string {
+  return new Date(value).toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function isCurrentOrFutureSession(session: SessionDetail, now: Date): boolean {
+  return session.status === 'PUBLISHED' && session.ends_on >= currentLocalDate(now);
+}
+
+function hasAvailableRegistrationWindow(session: SessionDetail, now: Date): boolean {
+  return new Date(session.registration_closes_at) > now;
+}
+
 function isRegistrationOpen(session: SessionDetail, now: Date): boolean {
   return (
     session.status === 'PUBLISHED' &&
     new Date(session.registration_opens_at) <= now &&
     now < new Date(session.registration_closes_at)
   );
+}
+
+function registrationWindowLabel(session: SessionDetail, now: Date): string {
+  if (isRegistrationOpen(session, now)) return 'Open';
+  if (new Date(session.registration_opens_at) > now) {
+    return `Opens ${formatDate(session.registration_opens_at)}`;
+  }
+  return 'Closed';
+}
+
+function registrationWindowMessage(session: SessionDetail, now: Date): string {
+  if (new Date(session.registration_opens_at) > now) {
+    return `Registration for ${session.name} opens ${formatDate(session.registration_opens_at)}.`;
+  }
+  return `Registration for ${session.name} is closed.`;
 }
 
 function ageOn(birthDate: string, date: string): number | null {
@@ -201,16 +240,36 @@ function normalizedGrade(value: string | null): string | null {
 }
 
 function allowedGradesForSession(session: SessionDetail): string[] | null {
+  const code = session.code.toUpperCase();
   const descriptor = `${session.program_name} ${session.code} ${session.name}`.toLowerCase();
-  if (descriptor.includes('high school')) return ['9', '10', '11', '12'];
-  if (descriptor.includes('junior high')) return ['6', '7', '8'];
-  if (descriptor.includes('elementary')) return ['2', '3', '4', '5'];
+  if (code.startsWith('HS-') || descriptor.includes('high school')) return ['9', '10', '11', '12'];
+  if (
+    code.startsWith('JH-') ||
+    descriptor.includes('junior high') ||
+    descriptor.includes('jr high') ||
+    descriptor.includes('middle school')
+  ) {
+    return ['6', '7', '8'];
+  }
+  if (code.startsWith('ELEM-') || descriptor.includes('elementary')) return ['2', '3', '4', '5'];
   return null;
 }
 
-function isEligibleForSession(camper: CandidateCamper | null, session: SessionDetail): boolean {
+function ageAsOfDate(session: SessionDetail, seasonYearsById: Record<string, number>): string {
+  if (session.age_as_of === 'SESSION_START') return session.starts_on;
+  const seasonYear =
+    seasonYearsById[session.season_id] ??
+    new Date(`${session.starts_on}T00:00:00Z`).getUTCFullYear();
+  return `${seasonYear}-01-01`;
+}
+
+function isEligibleForSession(
+  camper: CandidateCamper | null,
+  session: SessionDetail,
+  seasonYearsById: Record<string, number>,
+): boolean {
   if (!camper?.birth_date) return false;
-  const age = ageOn(camper.birth_date, session.starts_on);
+  const age = ageOn(camper.birth_date, ageAsOfDate(session, seasonYearsById));
   if (age === null || age < session.minimum_age || age > session.maximum_age) return false;
 
   const allowedGrades = allowedGradesForSession(session);
@@ -230,14 +289,21 @@ function camperFromForm(form: CamperForm): CandidateCamper | null {
 
 export function RegistrationCheckoutClient({
   families,
+  seasonYearsById,
   sessions,
 }: {
   families: FamilySummary[];
+  seasonYearsById: Record<string, number>;
   sessions: SessionDetail[];
 }) {
-  const parentOpenSessions = useMemo(
-    () => sessions.filter((session) => isRegistrationOpen(session, new Date())),
-    [sessions],
+  const [now, setNow] = useState(() => new Date());
+  const candidateSessions = useMemo(
+    () =>
+      sessions.filter(
+        (session) =>
+          isCurrentOrFutureSession(session, now) && hasAvailableRegistrationWindow(session, now),
+      ),
+    [now, sessions],
   );
   const [familyId, setFamilyId] = useState(families[0]?.id ?? '');
   const [family, setFamily] = useState<FamilyDetail | null>(null);
@@ -253,8 +319,15 @@ export function RegistrationCheckoutClient({
   }, [camperForm, camperId, camperMode, family?.campers]);
 
   const eligibleSessions = useMemo(
-    () => parentOpenSessions.filter((session) => isEligibleForSession(selectedCamper, session)),
-    [parentOpenSessions, selectedCamper],
+    () =>
+      candidateSessions.filter((session) =>
+        isEligibleForSession(selectedCamper, session, seasonYearsById),
+      ),
+    [candidateSessions, seasonYearsById, selectedCamper],
+  );
+  const selectedSession = useMemo(
+    () => eligibleSessions.find((session) => session.id === sessionId) ?? null,
+    [eligibleSessions, sessionId],
   );
 
   useEffect(() => {
@@ -275,6 +348,11 @@ export function RegistrationCheckoutClient({
     };
   }, [familyId]);
 
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
+
   const setCamperField = <Key extends keyof CamperForm>(key: Key, value: CamperForm[Key]) => {
     setCamperForm((current) => ({ ...current, [key]: value }));
     setState(cleanState);
@@ -282,16 +360,28 @@ export function RegistrationCheckoutClient({
 
   useEffect(() => {
     if (eligibleSessions.some((session) => session.id === sessionId)) return;
-    setSessionId(eligibleSessions[0]?.id ?? '');
-  }, [eligibleSessions, sessionId]);
+    const openSession = eligibleSessions.find((session) => isRegistrationOpen(session, now));
+    setSessionId((openSession ?? eligibleSessions[0])?.id ?? '');
+  }, [eligibleSessions, now, sessionId]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!family) return;
     if (!sessionId) {
       setState({
-        fieldErrors: { session_id: 'Select an eligible open session.' },
-        message: 'No eligible open session is available for this camper.',
+        fieldErrors: { session_id: 'Select an eligible session.' },
+        message: 'No eligible current or future session is available for this camper.',
+        saving: false,
+        tone: 'error',
+      });
+      return;
+    }
+    if (!selectedSession || !isRegistrationOpen(selectedSession, now)) {
+      setState({
+        fieldErrors: { session_id: 'Select a session with open registration.' },
+        message: selectedSession
+          ? registrationWindowMessage(selectedSession, now)
+          : 'Select an eligible session.',
         saving: false,
         tone: 'error',
       });
@@ -368,22 +458,28 @@ export function RegistrationCheckoutClient({
           >
             {eligibleSessions.map((session) => (
               <option key={session.id} value={session.id}>
-                {formatSessionOption(session)}
+                {formatSessionOption(session, now)}
               </option>
             ))}
           </select>
         </Field>
       </div>
-      {parentOpenSessions.length === 0 && (
+      {candidateSessions.length === 0 && (
         <div className="notice noticeError" role="status">
           <AlertCircle size={18} aria-hidden="true" />
-          No sessions are currently open for parent registration.
+          No current or future sessions are available for parent registration.
         </div>
       )}
-      {parentOpenSessions.length > 0 && selectedCamper && eligibleSessions.length === 0 && (
+      {candidateSessions.length > 0 && selectedCamper && eligibleSessions.length === 0 && (
         <div className="notice noticeError" role="status">
           <AlertCircle size={18} aria-hidden="true" />
-          This camper does not match the age and grade rules for an open session.
+          This camper does not match the age and grade rules for a current or future session.
+        </div>
+      )}
+      {selectedSession && !isRegistrationOpen(selectedSession, now) && (
+        <div className="notice noticeError" role="status">
+          <AlertCircle size={18} aria-hidden="true" />
+          {registrationWindowMessage(selectedSession, now)}
         </div>
       )}
 
@@ -483,6 +579,8 @@ export function RegistrationCheckoutClient({
             state.saving ||
             !family ||
             !sessionId ||
+            !selectedSession ||
+            !isRegistrationOpen(selectedSession, now) ||
             eligibleSessions.length === 0 ||
             (camperMode === 'existing' && !camperId)
           }

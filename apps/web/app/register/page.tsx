@@ -1,12 +1,20 @@
 import { AlertCircle } from 'lucide-react';
 
 import { RegistrationCheckoutClient } from '../../components/registration-checkout-client';
-import { getFamilies, getSession, getSessions } from '../../lib/api';
+import { getCatalog, getFamilies, getSession, getSessions } from '../../lib/api';
 
 export const dynamic = 'force-dynamic';
 
 export default async function RegistrationCheckoutPage() {
-  const [familiesResult, sessionsResult] = await Promise.allSettled([getFamilies(), getSessions()]);
+  const [catalogResult, familiesResult, sessionsResult] = await Promise.allSettled([
+    getCatalog(),
+    getFamilies(),
+    getSessions(),
+  ]);
+  const seasonYearsById =
+    catalogResult.status === 'fulfilled'
+      ? Object.fromEntries(catalogResult.value.seasons.map((season) => [season.id, season.year]))
+      : {};
   const families = familiesResult.status === 'fulfilled' ? familiesResult.value.families : [];
   const sessionSummaries =
     sessionsResult.status === 'fulfilled' ? sessionsResult.value.sessions : [];
@@ -36,7 +44,11 @@ export default async function RegistrationCheckoutPage() {
       )}
 
       <section className="contentSection registrationCheckout" aria-label="Registration checkout">
-        <RegistrationCheckoutClient families={families} sessions={sessions} />
+        <RegistrationCheckoutClient
+          families={families}
+          seasonYearsById={seasonYearsById}
+          sessions={sessions}
+        />
       </section>
     </>
   );

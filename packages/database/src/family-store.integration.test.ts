@@ -361,6 +361,95 @@ describe('family store', () => {
     ).rejects.toBeInstanceOf(FamilyRegistrationDuplicateError);
   });
 
+  it('applies grade eligibility to junior high session names without program grade codes', async () => {
+    const store = new FamilyStore(runtimeDatabase);
+    const dates = checkoutFixtureDates();
+    const sessionId = '211983fc-2221-4f9c-9949-f77d0ac7f256';
+    const eligibleFamilyId = '6aa4ab55-8877-45b7-a533-32eaaf38a3cc';
+    const eligibleCamperId = 'd483fe70-4878-473c-b67d-6dd8662e448c';
+    const ineligibleFamilyId = '54abaf22-68df-438d-8955-a6e963439c27';
+    const ineligibleCamperId = '8639496f-0e3f-4524-8f70-094375c2b521';
+    const context = {
+      actorId: 'integration-admin',
+      organizationId,
+      requestId: 'checkout-jr-high-name-test',
+    };
+
+    const admin = new Pool({ connectionString: migrationUrl });
+    await admin.query(
+      `INSERT INTO sessions (
+         id, organization_id, season_id, program_id, code, name, starts_on, ends_on,
+         registration_opens_at, registration_closes_at, capacity, minimum_age,
+         maximum_age, age_as_of, currency, price_cents, deposit_cents,
+         waitlist_enabled, status
+       ) VALUES (
+         $1, $2, 'fc94ef27-1fa6-466b-b877-312c27d00a7c',
+         'a72ef345-3476-4270-b6dc-ece7bf406059', 'SB-CHECKOUT-01',
+         'Jr High Winter Checkout', $3, $4, $5, $6, 20, 5, 18,
+         'SESSION_START', 'USD', 10000, 2000, true, 'PUBLISHED'
+       )`,
+      [sessionId, organizationId, dates.startsOn, dates.endsOn, dates.opensAt, dates.closesAt],
+    );
+    await admin.end();
+
+    await store.createFamily(context, {
+      family_name: 'Junior High Eligible Family',
+      id: eligibleFamilyId,
+    });
+    await store.createCamper(context, {
+      accessibility_needs: null,
+      birth_date: `${new Date(dates.startsOn).getUTCFullYear() - 12}-04-12`,
+      cabin_preference: null,
+      family_id: eligibleFamilyId,
+      first_name: 'Riley',
+      gender: 'Female',
+      id: eligibleCamperId,
+      last_name: 'Eligible',
+      preferred_name: null,
+      school_grade: '6th',
+    });
+    await store.createFamily(context, {
+      family_name: 'Junior High Ineligible Family',
+      id: ineligibleFamilyId,
+    });
+    await store.createCamper(context, {
+      accessibility_needs: null,
+      birth_date: `${new Date(dates.startsOn).getUTCFullYear() - 12}-04-12`,
+      cabin_preference: null,
+      family_id: ineligibleFamilyId,
+      first_name: 'Avery',
+      gender: 'Male',
+      id: ineligibleCamperId,
+      last_name: 'Ineligible',
+      preferred_name: null,
+      school_grade: '4',
+    });
+
+    await expect(
+      store.createRegistration(context, {
+        camper_id: eligibleCamperId,
+        family_id: eligibleFamilyId,
+        id: '4c5de318-6365-4dc6-90d3-7af9195cd877',
+        session_id: sessionId,
+        source: 'PARENT',
+      }),
+    ).resolves.toMatchObject({
+      registration: {
+        session_id: sessionId,
+        status: 'CONFIRMED',
+      },
+    });
+    await expect(
+      store.createRegistration(context, {
+        camper_id: ineligibleCamperId,
+        family_id: ineligibleFamilyId,
+        id: '861a7876-e3f2-4edc-a75a-1b1fd15bff43',
+        session_id: sessionId,
+        source: 'PARENT',
+      }),
+    ).rejects.toBeInstanceOf(FamilyRegistrationEligibilityError);
+  });
+
   it('rejects parent registration outside the registration window', async () => {
     const store = new FamilyStore(runtimeDatabase);
     const dates = checkoutFixtureDates();
