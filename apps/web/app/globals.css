@@ -859,6 +859,46 @@ tbody tr + tr td {
   background: #fbfcfb;
 }
 
+.registrationPanel {
+  margin-top: 16px;
+}
+
+.checkoutForm {
+  max-width: 920px;
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid #d5dcd8;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.segmentedControl {
+  display: inline-flex;
+  width: fit-content;
+  padding: 3px;
+  border: 1px solid #cbd3cf;
+  border-radius: 6px;
+  background: #f1f4f2;
+}
+
+.segmentedControl button {
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #52615a;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.segmentedControl button[aria-pressed='true'] {
+  background: #ffffff;
+  color: #0e543b;
+  box-shadow: 0 1px 2px rgba(25, 35, 31, 0.12);
+}
+
 .recordPanelHeader {
   display: flex;
   align-items: center;

@@ -11,13 +11,16 @@ import type {
   ContactCreate,
   ContactUpdate,
   FamilyDetail,
+  FamilyRegistrationCreate,
+  FamilyRegistrationResult,
   FamilyUpdate,
   ProblemResponse,
+  SessionSummary,
 } from '@camp-registration/contracts';
 import { AlertCircle, CheckCircle2, Plus, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { type FormEvent, type ReactNode, useState } from 'react';
+import { type FormEvent, type ReactNode, useEffect, useState } from 'react';
 
 interface SaveState {
   fieldErrors: Record<string, string>;
@@ -205,9 +208,10 @@ function ContactRoleToggles({
 
 interface FamilyDetailClientProps {
   initialFamily: FamilyDetail;
+  sessions: SessionSummary[];
 }
 
-export function FamilyDetailClient({ initialFamily }: FamilyDetailClientProps) {
+export function FamilyDetailClient({ initialFamily, sessions }: FamilyDetailClientProps) {
   const [family, setFamily] = useState(initialFamily);
   const router = useRouter();
 
@@ -252,6 +256,7 @@ export function FamilyDetailClient({ initialFamily }: FamilyDetailClientProps) {
           ))}
           <CamperCreatePanel familyId={family.id} onSaved={saveFamily} />
         </div>
+        <AdminRegistrationPanel family={family} onSaved={saveFamily} sessions={sessions} />
       </section>
 
       <section className="editorSection" aria-labelledby="family-contacts">
@@ -736,12 +741,116 @@ function CamperRegistrations({ camper }: { camper: Camper }) {
             <strong>{registration.session_name}</strong>
             <small>
               {registration.status === 'CONFIRMED' ? 'Attending' : 'Waitlisted'} -{' '}
-              {registration.session_code} - {registration.starts_on}
+              {registration.source === 'ADMIN' ? 'Admin' : 'Parent'} - {registration.session_code} -{' '}
+              {new Date(registration.registered_at).toLocaleDateString('en-US')}
             </small>
           </Link>
         ))}
       </div>
     </div>
+  );
+}
+
+function formatSessionOption(session: SessionSummary): string {
+  return `${session.name} - ${session.code} - ${session.registered_count}/${session.capacity} registered, ${session.waitlisted_count} waitlisted`;
+}
+
+function registrationMessage(registration: FamilyRegistrationResult['registration']): string {
+  return registration.status === 'CONFIRMED'
+    ? 'Registration confirmed.'
+    : 'Camper added to the waitlist.';
+}
+
+function AdminRegistrationPanel({
+  family,
+  onSaved,
+  sessions,
+}: {
+  family: FamilyDetail;
+  onSaved: (family: FamilyDetail) => void;
+  sessions: SessionSummary[];
+}) {
+  const sessionOptions = sessions.filter(
+    (session) => session.status !== 'CANCELLED' && session.status !== 'ARCHIVED',
+  );
+  const [camperId, setCamperId] = useState(family.campers[0]?.id ?? '');
+  const [sessionId, setSessionId] = useState(sessionOptions[0]?.id ?? '');
+  const [state, setState] = useState<SaveState>(cleanState);
+
+  useEffect(() => {
+    if (!camperId && family.campers[0]) setCamperId(family.campers[0].id);
+    if (!sessionId && sessionOptions[0]) setSessionId(sessionOptions[0].id);
+  }, [camperId, family.campers, sessionId, sessionOptions]);
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setState({ ...cleanState, saving: true });
+    const payload: FamilyRegistrationCreate = {
+      camper_id: camperId,
+      session_id: sessionId,
+      source: 'ADMIN',
+    };
+    const result = await writeRegistration(`/api/v1/families/${family.id}/registrations`, payload);
+    if ('field_errors' in result || 'code' in result) {
+      setState(problemMessage(result));
+      return;
+    }
+    onSaved(result.family);
+    setState({ ...cleanState, message: registrationMessage(result.registration) });
+  };
+
+  return (
+    <form className="recordPanel registrationPanel" onSubmit={submit}>
+      <div className="recordPanelHeader">
+        <strong>Register camper</strong>
+        <span>Admin</span>
+      </div>
+      <Message state={state} />
+      <div className="fieldGrid">
+        <Field label="Camper" error={state.fieldErrors.camper_id}>
+          <select
+            value={camperId}
+            onChange={(event) => {
+              setCamperId(event.target.value);
+              setState(cleanState);
+            }}
+            required
+          >
+            {family.campers.map((camper) => (
+              <option key={camper.id} value={camper.id}>
+                {camper.first_name} {camper.last_name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Session" error={state.fieldErrors.session_id}>
+          <select
+            value={sessionId}
+            onChange={(event) => {
+              setSessionId(event.target.value);
+              setState(cleanState);
+            }}
+            required
+          >
+            {sessionOptions.map((session) => (
+              <option key={session.id} value={session.id}>
+                {formatSessionOption(session)}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+      <div className="inlineActions">
+        <button
+          className="buttonPrimary"
+          type="submit"
+          disabled={state.saving || family.campers.length === 0 || sessionOptions.length === 0}
+        >
+          <Plus size={17} aria-hidden="true" />
+          {state.saving ? 'Registering...' : 'Register camper'}
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -1022,5 +1131,21 @@ async function writeFamily(
     return (await response.json()) as FamilyDetail | ProblemResponse;
   } catch {
     return { code: 'request_failed', message: 'The family record could not be saved.' };
+  }
+}
+
+async function writeRegistration(
+  path: string,
+  payload: FamilyRegistrationCreate,
+): Promise<FamilyRegistrationResult | ProblemResponse> {
+  try {
+    const response = await fetch(path, {
+      body: JSON.stringify(payload),
+      headers: { 'content-type': 'application/json' },
+      method: 'POST',
+    });
+    return (await response.json()) as FamilyRegistrationResult | ProblemResponse;
+  } catch {
+    return { code: 'request_failed', message: 'The camper could not be registered.' };
   }
 }

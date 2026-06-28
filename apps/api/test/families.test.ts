@@ -10,6 +10,8 @@ import type {
   ContactUpdate,
   FamilyCreate,
   FamilyDetail,
+  FamilyRegistrationCreate,
+  FamilyRegistrationResult,
   FamilySummary,
   FamilyUpdate,
 } from '@camp-registration/contracts';
@@ -132,6 +134,47 @@ const contactCreate: ContactCreate = {
   relationship: 'Aunt',
 };
 const contactUpdate: ContactUpdate = { ...contactCreate, version: 1 };
+const registrationCreate: FamilyRegistrationCreate = {
+  camper_id: camperId,
+  session_id: '06c02070-2e63-4b7b-bd93-578e54fa1ea6',
+  source: 'ADMIN',
+};
+const registrationResult: FamilyRegistrationResult = {
+  family: {
+    ...detail,
+    campers: [
+      {
+        ...camper,
+        registrations: [
+          {
+            ends_on: '2027-07-10',
+            program_name: 'High School Camp',
+            registered_at: '2026-06-27T12:00:00Z',
+            registration_id: '20f3a0c5-cad9-4c1d-b77b-b4751805ad83',
+            session_code: 'HS-2027-01',
+            session_id: registrationCreate.session_id,
+            session_name: 'High School Camp 1',
+            source: 'ADMIN',
+            starts_on: '2027-07-04',
+            status: 'CONFIRMED',
+          },
+        ],
+      },
+    ],
+  },
+  registration: {
+    ends_on: '2027-07-10',
+    program_name: 'High School Camp',
+    registered_at: '2026-06-27T12:00:00Z',
+    registration_id: '20f3a0c5-cad9-4c1d-b77b-b4751805ad83',
+    session_code: 'HS-2027-01',
+    session_id: registrationCreate.session_id,
+    session_name: 'High School Camp 1',
+    source: 'ADMIN',
+    starts_on: '2027-07-04',
+    status: 'CONFIRMED',
+  },
+};
 
 describe('family routes', () => {
   const applications: Awaited<ReturnType<typeof buildApp>>[] = [];
@@ -258,6 +301,27 @@ describe('family routes', () => {
     );
   });
 
+  it('creates camper registrations through the family API', async () => {
+    const service = fakeService();
+    const app = await buildApp({ familyService: service });
+    applications.push(app);
+
+    const response = await app.inject({
+      headers: { 'x-request-id': 'registration-create-route-test' },
+      method: 'POST',
+      payload: registrationCreate,
+      url: `/v1/families/${familyId}/registrations`,
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).toEqual(registrationResult);
+    expect(service.createRegistration).toHaveBeenCalledWith(
+      familyId,
+      registrationCreate,
+      'registration-create-route-test',
+    );
+  });
+
   it('returns a stable conflict response', async () => {
     const service = fakeService();
     service.updateFamily = vi.fn().mockRejectedValue(new FamilyConflictError('Stale version'));
@@ -336,6 +400,7 @@ function fakeService(): FamilyServiceApi & {
   createCamper: ReturnType<typeof vi.fn<FamilyServiceApi['createCamper']>>;
   createContact: ReturnType<typeof vi.fn<FamilyServiceApi['createContact']>>;
   createFamily: ReturnType<typeof vi.fn<FamilyServiceApi['createFamily']>>;
+  createRegistration: ReturnType<typeof vi.fn<FamilyServiceApi['createRegistration']>>;
   updateAdult: ReturnType<typeof vi.fn<FamilyServiceApi['updateAdult']>>;
   updateCamper: ReturnType<typeof vi.fn<FamilyServiceApi['updateCamper']>>;
   updateContact: ReturnType<typeof vi.fn<FamilyServiceApi['updateContact']>>;
@@ -346,6 +411,7 @@ function fakeService(): FamilyServiceApi & {
     createCamper: vi.fn().mockResolvedValue(detail),
     createContact: vi.fn().mockResolvedValue(detail),
     createFamily: vi.fn().mockResolvedValue(detail),
+    createRegistration: vi.fn().mockResolvedValue(registrationResult),
     getFamily: vi.fn().mockResolvedValue(detail),
     listFamilies: vi.fn().mockResolvedValue([summary]),
     updateAdult: vi.fn().mockResolvedValue(detail),

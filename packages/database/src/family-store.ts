@@ -4,6 +4,7 @@ import type { DatabaseClient } from './client.js';
 
 export type CamperGender = 'Female' | 'Male';
 export type FamilyRegistrationStatus = 'CONFIRMED' | 'WAITLISTED' | 'CANCELLED';
+export type FamilyRegistrationSource = 'ADMIN' | 'PARENT';
 
 export interface FamilySummaryRecord {
   id: string;
@@ -62,6 +63,7 @@ export interface CamperSessionRegistrationRecord {
   starts_on: string;
   ends_on: string;
   status: FamilyRegistrationStatus;
+  source: FamilyRegistrationSource;
   registered_at: string;
 }
 
@@ -162,9 +164,32 @@ export interface UpdateContactRecord extends Omit<CreateContactRecord, 'family_i
   version: number;
 }
 
+export interface CreateRegistrationRecord {
+  id: string;
+  family_id: string;
+  camper_id: string;
+  session_id: string;
+  source: FamilyRegistrationSource;
+}
+
+export interface FamilyRegistrationResultRecord {
+  family: FamilyDetailRecord;
+  registration: CamperSessionRegistrationRecord;
+}
+
 export class FamilyNotFoundError extends Error {}
 export class FamilyConflictError extends Error {}
 export class FamilyDuplicateError extends Error {}
+export class FamilyRegistrationCapacityError extends Error {}
+export class FamilyRegistrationDuplicateError extends Error {}
+export class FamilyRegistrationEligibilityError extends Error {
+  constructor(
+    message: string,
+    readonly fieldErrors: Record<string, string> = {},
+  ) {
+    super(message);
+  }
+}
 
 interface Timestamped {
   updated_at: Date | string;
@@ -176,6 +201,31 @@ type CamperRow = Omit<CamperRecord, 'registrations' | 'updated_at'> & Timestampe
 type CamperSessionRegistrationRow = Omit<CamperSessionRegistrationRecord, 'registered_at'> &
   Timestamped & { camper_id: string };
 type ContactRow = Omit<ContactRecord, 'updated_at'> & Timestamped;
+
+interface RegistrationSessionRow {
+  id: string;
+  code: string;
+  name: string;
+  program_code: string;
+  program_name: string;
+  season_year: number;
+  starts_on: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'ARCHIVED';
+  registration_opens_at: Date | string;
+  registration_closes_at: Date | string;
+  capacity: number;
+  minimum_age: number;
+  maximum_age: number;
+  age_as_of: 'SESSION_START' | 'SEASON_START';
+  waitlist_enabled: boolean;
+}
+
+interface RegistrationCamperRow {
+  id: string;
+  family_id: string;
+  school_grade: string | null;
+  age_years: number;
+}
 
 const familySummarySelect = `
   SELECT
@@ -232,6 +282,55 @@ function mapCamper(
 
 function mapContact(row: ContactRow): ContactRecord {
   return { ...row, updated_at: timestamp(row.updated_at) };
+}
+
+function normalizedGrade(value: string | null): string | null {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return null;
+
+  const numeric = normalized.match(/\b(1[0-2]|[2-9])(?:st|nd|rd|th)?\b/);
+  if (numeric) return numeric[1] ?? null;
+
+  const aliases = new Map([
+    ['freshman', '9'],
+    ['ninth', '9'],
+    ['sophomore', '10'],
+    ['tenth', '10'],
+    ['junior', '11'],
+    ['eleventh', '11'],
+    ['senior', '12'],
+    ['twelfth', '12'],
+  ]);
+  return aliases.get(normalized) ?? null;
+}
+
+function allowedGradesForSession(session: RegistrationSessionRow): string[] | null {
+  const descriptor =
+    `${session.program_code} ${session.program_name} ${session.code} ${session.name}`.toLowerCase();
+  if (session.program_code === 'HS' || descriptor.includes('high school')) {
+    return ['9', '10', '11', '12'];
+  }
+  if (session.program_code === 'JH' || descriptor.includes('junior high')) {
+    return ['6', '7', '8'];
+  }
+  if (session.program_code === 'ELEM' || descriptor.includes('elementary')) {
+    return ['2', '3', '4', '5'];
+  }
+  return null;
+}
+
+function registrationResultFromFamily(
+  family: FamilyDetailRecord,
+  registrationId: string,
+): CamperSessionRegistrationRecord {
+  for (const camper of family.campers) {
+    const registration = camper.registrations.find(
+      (candidate) => candidate.registration_id === registrationId,
+    );
+    if (registration) return registration;
+  }
+  throw new FamilyNotFoundError('Created registration not found');
 }
 
 function changedFields(current: object, update: object, fields: readonly string[]): string[] {
@@ -632,6 +731,210 @@ export class FamilyStore {
     });
   }
 
+  async createRegistration(
+    context: FamilyWriteContext,
+    registration: CreateRegistrationRecord,
+  ): Promise<FamilyRegistrationResultRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      await this.ensureFamilyExists(client, context.organizationId, registration.family_id);
+
+      const session = await client.query<RegistrationSessionRow>(
+        `SELECT
+           s.id,
+           s.code,
+           s.name,
+           p.code AS program_code,
+           p.name AS program_name,
+           se.year AS season_year,
+           s.starts_on::text,
+           s.status,
+           s.registration_opens_at,
+           s.registration_closes_at,
+           s.capacity,
+           s.minimum_age,
+           s.maximum_age,
+           s.age_as_of,
+           s.waitlist_enabled
+         FROM sessions s
+         JOIN programs p
+           ON p.organization_id = s.organization_id
+          AND p.id = s.program_id
+         JOIN seasons se
+           ON se.organization_id = s.organization_id
+          AND se.id = s.season_id
+         WHERE s.organization_id = $1 AND s.id = $2
+         FOR UPDATE OF s`,
+        [context.organizationId, registration.session_id],
+      );
+      const sessionRow = session.rows[0];
+      if (!sessionRow) {
+        throw new FamilyRegistrationEligibilityError('Session not found', {
+          session_id: 'Select a valid session.',
+        });
+      }
+
+      if (registration.source === 'PARENT') {
+        if (sessionRow.status !== 'PUBLISHED') {
+          throw new FamilyRegistrationEligibilityError('Session is not open for registration', {
+            session_id: 'Select a published session.',
+          });
+        }
+        const window = await client.query<{ is_open: boolean }>(
+          `SELECT transaction_timestamp() >= $1::timestamptz
+              AND transaction_timestamp() < $2::timestamptz AS is_open`,
+          [sessionRow.registration_opens_at, sessionRow.registration_closes_at],
+        );
+        if (!window.rows[0]?.is_open) {
+          throw new FamilyRegistrationEligibilityError(
+            'Registration is not open for this session',
+            {
+              session_id: 'Select a session with open registration.',
+            },
+          );
+        }
+      } else if (['CANCELLED', 'ARCHIVED'].includes(sessionRow.status)) {
+        throw new FamilyRegistrationEligibilityError('Session is not available for registration', {
+          session_id: 'Select an active session.',
+        });
+      }
+
+      const ageAsOfDate =
+        sessionRow.age_as_of === 'SEASON_START'
+          ? `${sessionRow.season_year}-01-01`
+          : sessionRow.starts_on;
+      const camper = await client.query<RegistrationCamperRow>(
+        `SELECT
+           c.id,
+           c.family_id,
+           c.school_grade,
+           date_part('year', age($4::date, c.birth_date))::integer AS age_years
+         FROM campers c
+         WHERE c.organization_id = $1
+           AND c.family_id = $2
+           AND c.id = $3
+           AND c.archived_at IS NULL`,
+        [context.organizationId, registration.family_id, registration.camper_id, ageAsOfDate],
+      );
+      const camperRow = camper.rows[0];
+      if (!camperRow) {
+        throw new FamilyRegistrationEligibilityError('Camper not found', {
+          camper_id: 'Select a camper in this family.',
+        });
+      }
+      if (
+        camperRow.age_years < sessionRow.minimum_age ||
+        camperRow.age_years > sessionRow.maximum_age
+      ) {
+        throw new FamilyRegistrationEligibilityError(
+          'Camper is not age eligible for this session',
+          {
+            camper_id: `Camper must be age ${sessionRow.minimum_age}-${sessionRow.maximum_age}.`,
+          },
+        );
+      }
+
+      if (!camperRow.school_grade?.trim()) {
+        throw new FamilyRegistrationEligibilityError('Camper grade is required for registration', {
+          camper_id: 'Set the camper school grade before registering.',
+        });
+      }
+      const allowedGrades = allowedGradesForSession(sessionRow);
+      const grade = normalizedGrade(camperRow.school_grade);
+      if (allowedGrades && (!grade || !allowedGrades.includes(grade))) {
+        throw new FamilyRegistrationEligibilityError(
+          'Camper is not grade eligible for this session',
+          {
+            camper_id: `Camper must be in grade ${allowedGrades.join(', ')}.`,
+          },
+        );
+      }
+
+      const duplicate = await client.query(
+        `SELECT id
+         FROM registrations
+         WHERE organization_id = $1
+           AND session_id = $2
+           AND family_id = $3
+           AND camper_id = $4`,
+        [
+          context.organizationId,
+          registration.session_id,
+          registration.family_id,
+          registration.camper_id,
+        ],
+      );
+      if (duplicate.rows[0]) {
+        throw new FamilyRegistrationDuplicateError('Camper is already registered for this session');
+      }
+
+      const confirmed = await client.query<{ count: number }>(
+        `SELECT count(*)::integer
+         FROM registrations
+         WHERE organization_id = $1
+           AND session_id = $2
+           AND status = 'CONFIRMED'`,
+        [context.organizationId, registration.session_id],
+      );
+      const confirmedCount = confirmed.rows[0]?.count ?? 0;
+      const status: FamilyRegistrationStatus =
+        confirmedCount < sessionRow.capacity
+          ? 'CONFIRMED'
+          : sessionRow.waitlist_enabled
+            ? 'WAITLISTED'
+            : 'CANCELLED';
+      if (status === 'CANCELLED') {
+        throw new FamilyRegistrationCapacityError('Session capacity is full');
+      }
+
+      try {
+        await client.query(
+          `INSERT INTO registrations (
+             id, organization_id, session_id, family_id, camper_id, status, source
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            registration.id,
+            context.organizationId,
+            registration.session_id,
+            registration.family_id,
+            registration.camper_id,
+            status,
+            registration.source,
+          ],
+        );
+      } catch (error) {
+        if ((error as { code?: string }).code === '23505') {
+          throw new FamilyRegistrationDuplicateError(
+            'Camper is already registered for this session',
+          );
+        }
+        throw error;
+      }
+
+      await this.insertAudit(
+        client,
+        context,
+        'registration.created',
+        'registration',
+        registration.id,
+        {
+          camper_id: registration.camper_id,
+          session_id: registration.session_id,
+          source: registration.source,
+          status,
+        },
+      );
+      const family = await this.requireFamilyInTenant(
+        client,
+        context.organizationId,
+        registration.family_id,
+      );
+      return {
+        family,
+        registration: registrationResultFromFamily(family, registration.id),
+      };
+    });
+  }
+
   private async getFamilyInTenant(
     client: PoolClient,
     organizationId: string,
@@ -749,6 +1052,7 @@ export class FamilyStore {
          s.starts_on::text,
          s.ends_on::text,
          r.status,
+         r.source,
          r.registered_at AS updated_at
        FROM registrations r
        JOIN sessions s
@@ -779,6 +1083,7 @@ export class FamilyStore {
         session_code: row.session_code,
         session_id: row.session_id,
         session_name: row.session_name,
+        source: row.source,
         starts_on: row.starts_on,
         status: row.status,
       });

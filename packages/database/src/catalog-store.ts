@@ -5,6 +5,7 @@ import type { DatabaseClient } from './client.js';
 export type SessionStatus = 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'ARCHIVED';
 export type AgeAsOf = 'SESSION_START' | 'SEASON_START';
 export type CatalogRegistrationStatus = 'CONFIRMED' | 'WAITLISTED' | 'CANCELLED';
+export type CatalogRegistrationSource = 'ADMIN' | 'PARENT';
 
 export interface CatalogContextRecord {
   organization: { id: string; slug: string; name: string; timezone: string };
@@ -69,6 +70,7 @@ export interface RegisteredCamperRecord {
   gender: 'Female' | 'Male' | null;
   school_grade: string | null;
   status: CatalogRegistrationStatus;
+  source: CatalogRegistrationSource;
   registered_at: string;
 }
 
@@ -664,6 +666,7 @@ export class CatalogStore {
          c.gender,
          c.school_grade,
          r.status,
+         r.source,
          r.registered_at
        FROM registrations r
        JOIN campers c

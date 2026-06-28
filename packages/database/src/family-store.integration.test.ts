@@ -3,12 +3,28 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createDatabaseClient, type DatabaseClient } from './client.js';
-import { FamilyConflictError, FamilyStore } from './family-store.js';
+import {
+  FamilyConflictError,
+  FamilyRegistrationDuplicateError,
+  FamilyRegistrationEligibilityError,
+  FamilyStore,
+} from './family-store.js';
 import { runMigrations } from './migrate.js';
 import { seedCatalog } from './seed.js';
 
 const organizationId = 'a60b272f-b028-4f1a-b666-3ef3cffd9827';
 const otherOrganizationId = 'd193b5ee-818c-43e0-969d-26ea651ac38c';
+
+function checkoutFixtureDates() {
+  const startYear = new Date().getUTCFullYear() + 2;
+  return {
+    birthDate: `${startYear - 16}-04-12`,
+    closesAt: `${startYear}-06-01T00:00:00Z`,
+    endsOn: `${startYear}-07-07`,
+    opensAt: `${new Date().getUTCFullYear() - 1}-01-01T00:00:00Z`,
+    startsOn: `${startYear}-07-01`,
+  };
+}
 
 describe('family store', () => {
   let container: StartedPostgreSqlContainer;
@@ -231,6 +247,181 @@ describe('family store', () => {
     );
   });
 
+  it('creates confirmed and waitlisted registrations with source and duplicate checks', async () => {
+    const store = new FamilyStore(runtimeDatabase);
+    const dates = checkoutFixtureDates();
+    const sessionId = '587a2aba-bbb5-4bed-908b-9360d763f1af';
+    const firstFamilyId = '32d8392e-ff31-4918-9d7a-daf7ca25a89d';
+    const secondFamilyId = '95044083-24b3-46c6-8ff3-cb42c8774243';
+    const firstCamperId = '09282baa-9a96-464a-ab70-d1a75054f625';
+    const secondCamperId = '9ba377e7-248b-4c0c-8d4f-5d7dbef27ca2';
+    const firstRegistrationId = '8e85a2b8-51b4-4dc7-ab93-07b20f270c68';
+    const secondRegistrationId = '4ab7de03-4512-4475-b3d2-97b48d9c91e8';
+    const context = {
+      actorId: 'integration-admin',
+      organizationId,
+      requestId: 'checkout-registration-test',
+    };
+
+    const admin = new Pool({ connectionString: migrationUrl });
+    await admin.query(
+      `INSERT INTO sessions (
+         id, organization_id, season_id, program_id, code, name, starts_on, ends_on,
+         registration_opens_at, registration_closes_at, capacity, minimum_age,
+         maximum_age, age_as_of, currency, price_cents, deposit_cents,
+         waitlist_enabled, status
+       ) VALUES (
+         $1, $2, 'd5d8a8b7-c4ff-43be-a849-60cbd5914c85',
+         '6d75c29b-e424-4da6-8191-db70859382fd', 'HS-CHECKOUT-01',
+         'High School Checkout Test', $3, $4, $5, $6, 1, 14, 18,
+         'SESSION_START', 'USD', 52500, 10000, true, 'PUBLISHED'
+       )`,
+      [sessionId, organizationId, dates.startsOn, dates.endsOn, dates.opensAt, dates.closesAt],
+    );
+    await admin.end();
+
+    await store.createFamily(context, {
+      family_name: 'Checkout First Family',
+      id: firstFamilyId,
+    });
+    await store.createCamper(context, {
+      accessibility_needs: null,
+      birth_date: dates.birthDate,
+      cabin_preference: null,
+      family_id: firstFamilyId,
+      first_name: 'Jordan',
+      gender: 'Female',
+      id: firstCamperId,
+      last_name: 'Checkout',
+      preferred_name: null,
+      school_grade: '10th',
+    });
+    await store.createFamily(context, {
+      family_name: 'Checkout Second Family',
+      id: secondFamilyId,
+    });
+    await store.createCamper(context, {
+      accessibility_needs: null,
+      birth_date: dates.birthDate,
+      cabin_preference: null,
+      family_id: secondFamilyId,
+      first_name: 'Sam',
+      gender: 'Male',
+      id: secondCamperId,
+      last_name: 'Checkout',
+      preferred_name: null,
+      school_grade: '11',
+    });
+
+    const confirmed = await store.createRegistration(context, {
+      camper_id: firstCamperId,
+      family_id: firstFamilyId,
+      id: firstRegistrationId,
+      session_id: sessionId,
+      source: 'PARENT',
+    });
+    const waitlisted = await store.createRegistration(
+      { ...context, requestId: 'checkout-waitlist-test' },
+      {
+        camper_id: secondCamperId,
+        family_id: secondFamilyId,
+        id: secondRegistrationId,
+        session_id: sessionId,
+        source: 'ADMIN',
+      },
+    );
+
+    expect(confirmed.registration).toMatchObject({
+      registration_id: firstRegistrationId,
+      session_id: sessionId,
+      source: 'PARENT',
+      status: 'CONFIRMED',
+    });
+    expect(waitlisted.registration).toMatchObject({
+      registration_id: secondRegistrationId,
+      session_id: sessionId,
+      source: 'ADMIN',
+      status: 'WAITLISTED',
+    });
+    expect(confirmed.family.campers[0]?.registrations).toEqual([
+      expect.objectContaining({ registration_id: firstRegistrationId, status: 'CONFIRMED' }),
+    ]);
+
+    await expect(
+      store.createRegistration(
+        { ...context, requestId: 'checkout-duplicate-test' },
+        {
+          camper_id: firstCamperId,
+          family_id: firstFamilyId,
+          id: 'e0ca33f8-5212-456b-a7fd-0a565c8cb098',
+          session_id: sessionId,
+          source: 'PARENT',
+        },
+      ),
+    ).rejects.toBeInstanceOf(FamilyRegistrationDuplicateError);
+  });
+
+  it('rejects parent registration outside the registration window', async () => {
+    const store = new FamilyStore(runtimeDatabase);
+    const dates = checkoutFixtureDates();
+    const sessionId = '1ba76de0-c7a6-4955-864e-2af9061f29cc';
+    const familyId = '4038ba6c-f673-4b48-9bbd-8cc173f52209';
+    const camperId = 'd64e9b0a-d651-4878-92be-f06cd14628fe';
+    const context = {
+      actorId: 'integration-admin',
+      organizationId,
+      requestId: 'checkout-window-test',
+    };
+
+    const admin = new Pool({ connectionString: migrationUrl });
+    await admin.query(
+      `INSERT INTO sessions (
+         id, organization_id, season_id, program_id, code, name, starts_on, ends_on,
+         registration_opens_at, registration_closes_at, capacity, minimum_age,
+         maximum_age, age_as_of, currency, price_cents, deposit_cents,
+         waitlist_enabled, status
+       ) VALUES (
+         $1, $2, 'd5d8a8b7-c4ff-43be-a849-60cbd5914c85',
+         '6d75c29b-e424-4da6-8191-db70859382fd', 'HS-CHECKOUT-02',
+         'High School Future Registration Test', $3, $4, $5, $6, 20, 14, 18,
+         'SESSION_START', 'USD', 52500, 10000, true, 'PUBLISHED'
+       )`,
+      [
+        sessionId,
+        organizationId,
+        dates.startsOn,
+        dates.endsOn,
+        `${new Date().getUTCFullYear() + 1}-01-01T00:00:00Z`,
+        dates.closesAt,
+      ],
+    );
+    await admin.end();
+
+    await store.createFamily(context, { family_name: 'Window Family', id: familyId });
+    await store.createCamper(context, {
+      accessibility_needs: null,
+      birth_date: dates.birthDate,
+      cabin_preference: null,
+      family_id: familyId,
+      first_name: 'Avery',
+      gender: 'Female',
+      id: camperId,
+      last_name: 'Window',
+      preferred_name: null,
+      school_grade: '10',
+    });
+
+    await expect(
+      store.createRegistration(context, {
+        camper_id: camperId,
+        family_id: familyId,
+        id: 'edc69343-4984-42a6-915a-b55e6a6feb0e',
+        session_id: sessionId,
+        source: 'PARENT',
+      }),
+    ).rejects.toBeInstanceOf(FamilyRegistrationEligibilityError);
+  });
+
   it('returns active session registrations on camper records', async () => {
     const store = new FamilyStore(runtimeDatabase);
     const familyId = 'ccabdf2f-92a9-4e97-a9ff-a587d0fb2abc';
@@ -290,6 +481,7 @@ describe('family store', () => {
           session_code: 'HS-2027-01',
           session_id: sessionId,
           session_name: 'High School Camp 1',
+          source: 'ADMIN',
           starts_on: '2027-07-04',
           status: 'CONFIRMED',
         },
@@ -301,6 +493,7 @@ describe('family store', () => {
           session_code: 'WB-2027-01',
           session_id: winterSessionId,
           session_name: 'High School Winter Camp #1',
+          source: 'ADMIN',
           starts_on: '2028-02-04',
           status: 'WAITLISTED',
         },

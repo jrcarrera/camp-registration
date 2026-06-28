@@ -69,13 +69,14 @@ function RegisteredCampers({ campers }: { campers: RegisteredCamper[] }) {
               <th>Gender</th>
               <th>Grade</th>
               <th>Status</th>
+              <th>Source</th>
               <th>Registered</th>
             </tr>
           </thead>
           <tbody>
             {campers.length === 0 ? (
               <tr>
-                <td className="emptyState" colSpan={6}>
+                <td className="emptyState" colSpan={7}>
                   <strong>No campers</strong>
                   <span>Confirmed and waitlisted campers will appear here.</span>
                 </td>
@@ -107,6 +108,7 @@ function RegisteredCampers({ campers }: { campers: RegisteredCamper[] }) {
                       {camper.status === 'CONFIRMED' ? 'Attending' : 'Waitlisted'}
                     </span>
                   </td>
+                  <td data-label="Source">{camper.source === 'ADMIN' ? 'Admin' : 'Parent'}</td>
                   <td data-label="Registered">
                     {new Date(camper.registered_at).toLocaleDateString('en-US')}
                   </td>

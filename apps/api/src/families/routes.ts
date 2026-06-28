@@ -12,6 +12,8 @@ import {
   FamilyDetailSchema,
   FamilyListResponseSchema,
   FamilyParamsSchema,
+  FamilyRegistrationCreateSchema,
+  FamilyRegistrationResultSchema,
   FamilyUpdateSchema,
   ProblemResponseSchema,
   type AdultCreate,
@@ -27,6 +29,8 @@ import {
   type FamilyDetail,
   type FamilyListResponse,
   type FamilyParams,
+  type FamilyRegistrationCreate,
+  type FamilyRegistrationResult,
   type FamilyUpdate,
   type ProblemResponse,
 } from '@camp-registration/contracts';
@@ -37,6 +41,9 @@ import {
   FamilyConflictError,
   FamilyDuplicateError,
   FamilyNotFoundError,
+  FamilyRegistrationCapacityError,
+  FamilyRegistrationDuplicateError,
+  FamilyRegistrationEligibilityError,
   FamilyValidationError,
   type FamilyServiceApi,
 } from './service.js';
@@ -60,6 +67,19 @@ function sendProblem(reply: FastifyReply, error: unknown) {
   }
   if (error instanceof FamilyDuplicateError) {
     return reply.code(409).send({ code: 'duplicate_family_record', message: error.message });
+  }
+  if (error instanceof FamilyRegistrationEligibilityError) {
+    return reply.code(400).send({
+      code: 'invalid_registration',
+      field_errors: error.fieldErrors,
+      message: error.message,
+    });
+  }
+  if (error instanceof FamilyRegistrationDuplicateError) {
+    return reply.code(409).send({ code: 'duplicate_registration', message: error.message });
+  }
+  if (error instanceof FamilyRegistrationCapacityError) {
+    return reply.code(409).send({ code: 'capacity_full', message: error.message });
   }
   throw error;
 }
@@ -258,6 +278,36 @@ export function registerFamilyRoutes(
           request.body,
           request.id,
         );
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Body: FamilyRegistrationCreate;
+    Params: FamilyParams;
+    Reply: FamilyRegistrationResult | ProblemResponse;
+  }>(
+    '/v1/families/:familyId/registrations',
+    {
+      schema: {
+        body: FamilyRegistrationCreateSchema,
+        description: 'Register a camper in a session for this family.',
+        params: FamilyParamsSchema,
+        response: { 201: FamilyRegistrationResultSchema, ...errorResponses },
+        tags: ['families', 'registrations'],
+      },
+    },
+    async (request, reply) => {
+      if (!service) return unavailable(reply);
+      try {
+        const result = await service.createRegistration(
+          request.params.familyId,
+          request.body,
+          request.id,
+        );
+        return reply.code(201).send(result);
       } catch (error) {
         return sendProblem(reply, error);
       }

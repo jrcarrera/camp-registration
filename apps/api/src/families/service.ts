@@ -10,6 +10,8 @@ import type {
   ContactUpdate,
   FamilyCreate,
   FamilyDetail,
+  FamilyRegistrationCreate,
+  FamilyRegistrationResult,
   FamilySummary,
   FamilyUpdate,
 } from '@camp-registration/contracts';
@@ -17,12 +19,21 @@ import {
   FamilyConflictError,
   FamilyDuplicateError,
   FamilyNotFoundError,
+  FamilyRegistrationCapacityError,
+  FamilyRegistrationDuplicateError,
+  FamilyRegistrationEligibilityError,
   type CamperGender,
   type FamilyStore,
 } from '@camp-registration/database';
 
 const readRoles = new Set(['camp_staff', 'camp_admin', 'organization_admin']);
 const editRoles = new Set(['camp_staff', 'camp_admin', 'organization_admin']);
+const parentRegistrationRoles = new Set([
+  'parent_guardian',
+  'camp_staff',
+  'camp_admin',
+  'organization_admin',
+]);
 
 export class FamilyAuthorizationError extends Error {}
 export class FamilyValidationError extends Error {
@@ -60,6 +71,11 @@ export interface FamilyServiceApi {
     contact: ContactUpdate,
     requestId: string,
   ): Promise<FamilyDetail>;
+  createRegistration(
+    familyId: string,
+    registration: FamilyRegistrationCreate,
+    requestId: string,
+  ): Promise<FamilyRegistrationResult>;
 }
 
 function trimmed(value: string): string {
@@ -162,6 +178,10 @@ export class FamilyService implements FamilyServiceApi {
     if (!this.membership?.roles.some((role) => allowedRoles.has(role))) {
       throw new FamilyAuthorizationError('Family access is not permitted');
     }
+  }
+
+  private authorizeRegistration(source: FamilyRegistrationCreate['source']): void {
+    this.authorize(source === 'ADMIN' ? editRoles : parentRegistrationRoles);
   }
 
   private context(requestId: string) {
@@ -358,6 +378,26 @@ export class FamilyService implements FamilyServiceApi {
       },
     });
   }
+
+  async createRegistration(
+    familyId: string,
+    registration: FamilyRegistrationCreate,
+    requestId: string,
+  ): Promise<FamilyRegistrationResult> {
+    this.authorizeRegistration(registration.source);
+    return this.store.createRegistration(this.context(requestId), {
+      camper_id: registration.camper_id,
+      family_id: familyId,
+      id: randomUUID(),
+      session_id: registration.session_id,
+      source: registration.source,
+    });
+  }
 }
 
 export { FamilyConflictError, FamilyDuplicateError, FamilyNotFoundError };
+export {
+  FamilyRegistrationCapacityError,
+  FamilyRegistrationDuplicateError,
+  FamilyRegistrationEligibilityError,
+};

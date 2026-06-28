@@ -13,6 +13,7 @@ const RegistrationStatusSchema = Type.Union([
   Type.Literal('WAITLISTED'),
   Type.Literal('CANCELLED'),
 ]);
+const RegistrationSourceSchema = Type.Union([Type.Literal('ADMIN'), Type.Literal('PARENT')]);
 
 export const CamperSessionRegistrationSchema = Type.Object(
   {
@@ -24,9 +25,26 @@ export const CamperSessionRegistrationSchema = Type.Object(
     starts_on: LocalDateSchema,
     ends_on: LocalDateSchema,
     status: RegistrationStatusSchema,
+    source: RegistrationSourceSchema,
     registered_at: UtcTimestampSchema,
   },
   { additionalProperties: false, $id: 'CamperSessionRegistration' },
+);
+
+const FamilyRegistrationResultRegistrationSchema = Type.Object(
+  {
+    registration_id: UuidSchema,
+    session_id: UuidSchema,
+    session_code: Type.String({ minLength: 1 }),
+    session_name: Type.String({ minLength: 1 }),
+    program_name: Type.String({ minLength: 1 }),
+    starts_on: LocalDateSchema,
+    ends_on: LocalDateSchema,
+    status: RegistrationStatusSchema,
+    source: RegistrationSourceSchema,
+    registered_at: UtcTimestampSchema,
+  },
+  { additionalProperties: false },
 );
 
 export const FamilySummarySchema = Type.Object(
@@ -125,6 +143,23 @@ export const FamilyListResponseSchema = Type.Object(
     families: Type.Array(FamilySummarySchema),
   },
   { additionalProperties: false, $id: 'FamilyListResponse' },
+);
+
+export const FamilyRegistrationCreateSchema = Type.Object(
+  {
+    camper_id: UuidSchema,
+    session_id: UuidSchema,
+    source: RegistrationSourceSchema,
+  },
+  { additionalProperties: false, $id: 'FamilyRegistrationCreate' },
+);
+
+export const FamilyRegistrationResultSchema = Type.Object(
+  {
+    family: FamilyDetailSchema,
+    registration: FamilyRegistrationResultRegistrationSchema,
+  },
+  { additionalProperties: false, $id: 'FamilyRegistrationResult' },
 );
 
 export const FamilyCreateSchema = Type.Object(
@@ -246,6 +281,8 @@ export type Camper = Static<typeof CamperSchema>;
 export type Contact = Static<typeof ContactSchema>;
 export type FamilyDetail = Static<typeof FamilyDetailSchema>;
 export type FamilyListResponse = Static<typeof FamilyListResponseSchema>;
+export type FamilyRegistrationCreate = Static<typeof FamilyRegistrationCreateSchema>;
+export type FamilyRegistrationResult = Static<typeof FamilyRegistrationResultSchema>;
 export type FamilyCreate = Static<typeof FamilyCreateSchema>;
 export type FamilyUpdate = Static<typeof FamilyUpdateSchema>;
 export type AdultCreate = Static<typeof AdultCreateSchema>;

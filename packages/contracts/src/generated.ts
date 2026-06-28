@@ -349,6 +349,7 @@ export interface paths {
                                 school_grade: string | null;
                                 birth_date: string;
                                 status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                source: "ADMIN" | "PARENT";
                                 registered_at: string;
                             }[];
                         };
@@ -757,6 +758,7 @@ export interface paths {
                                 school_grade: string | null;
                                 birth_date: string;
                                 status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                source: "ADMIN" | "PARENT";
                                 registered_at: string;
                             }[];
                         };
@@ -928,6 +930,7 @@ export interface paths {
                                 school_grade: string | null;
                                 birth_date: string;
                                 status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                source: "ADMIN" | "PARENT";
                                 registered_at: string;
                             }[];
                         };
@@ -1198,6 +1201,7 @@ export interface paths {
                                     starts_on: string;
                                     ends_on: string;
                                     status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    source: "ADMIN" | "PARENT";
                                     registered_at: string;
                                 }[];
                                 version: number;
@@ -1378,6 +1382,7 @@ export interface paths {
                                     starts_on: string;
                                     ends_on: string;
                                     status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    source: "ADMIN" | "PARENT";
                                     registered_at: string;
                                 }[];
                                 version: number;
@@ -1557,6 +1562,7 @@ export interface paths {
                                     starts_on: string;
                                     ends_on: string;
                                     status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    source: "ADMIN" | "PARENT";
                                     registered_at: string;
                                 }[];
                                 version: number;
@@ -1751,6 +1757,7 @@ export interface paths {
                                     starts_on: string;
                                     ends_on: string;
                                     status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    source: "ADMIN" | "PARENT";
                                     registered_at: string;
                                 }[];
                                 version: number;
@@ -1955,6 +1962,7 @@ export interface paths {
                                     starts_on: string;
                                     ends_on: string;
                                     status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    source: "ADMIN" | "PARENT";
                                     registered_at: string;
                                 }[];
                                 version: number;
@@ -2146,6 +2154,7 @@ export interface paths {
                                     starts_on: string;
                                     ends_on: string;
                                     status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    source: "ADMIN" | "PARENT";
                                     registered_at: string;
                                 }[];
                                 version: number;
@@ -2347,6 +2356,7 @@ export interface paths {
                                     starts_on: string;
                                     ends_on: string;
                                     status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    source: "ADMIN" | "PARENT";
                                     registered_at: string;
                                 }[];
                                 version: number;
@@ -2449,6 +2459,212 @@ export interface paths {
         };
         trace?: never;
     };
+    "/v1/families/{familyId}/registrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Register a camper in a session for this family. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    familyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        camper_id: string;
+                        session_id: string;
+                        source: "ADMIN" | "PARENT";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** FamilyDetail */
+                            family: {
+                                id: string;
+                                organization_id: string;
+                                family_name: string;
+                                adult_count: number;
+                                camper_count: number;
+                                contact_count: number;
+                                version: number;
+                                updated_at: string;
+                                adults: {
+                                    id: string;
+                                    organization_id: string;
+                                    family_id: string;
+                                    identity_subject: string | null;
+                                    first_name: string;
+                                    last_name: string;
+                                    email: string | null;
+                                    phone: string | null;
+                                    account_owner: boolean;
+                                    can_manage_family: boolean;
+                                    can_register: boolean;
+                                    can_make_payments: boolean;
+                                    emergency_contact: boolean;
+                                    authorized_pickup: boolean;
+                                    receives_operational_communication: boolean;
+                                    version: number;
+                                    updated_at: string;
+                                }[];
+                                campers: {
+                                    id: string;
+                                    organization_id: string;
+                                    family_id: string;
+                                    first_name: string;
+                                    last_name: string;
+                                    birth_date: string;
+                                    preferred_name: string | null;
+                                    gender: ("Female" | "Male") | null;
+                                    school_grade: string | null;
+                                    cabin_preference: string | null;
+                                    accessibility_needs: string | null;
+                                    registrations: {
+                                        registration_id: string;
+                                        session_id: string;
+                                        session_code: string;
+                                        session_name: string;
+                                        program_name: string;
+                                        starts_on: string;
+                                        ends_on: string;
+                                        status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                        source: "ADMIN" | "PARENT";
+                                        registered_at: string;
+                                    }[];
+                                    version: number;
+                                    updated_at: string;
+                                }[];
+                                contacts: {
+                                    id: string;
+                                    organization_id: string;
+                                    family_id: string;
+                                    first_name: string;
+                                    last_name: string;
+                                    phone: string;
+                                    relationship: string;
+                                    emergency_contact: boolean;
+                                    authorized_pickup: boolean;
+                                    receives_operational_communication: boolean;
+                                    emergency_priority: number | null;
+                                    version: number;
+                                    updated_at: string;
+                                }[];
+                            };
+                            registration: {
+                                registration_id: string;
+                                session_id: string;
+                                session_code: string;
+                                session_name: string;
+                                program_name: string;
+                                starts_on: string;
+                                ends_on: string;
+                                status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                source: "ADMIN" | "PARENT";
+                                registered_at: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/families/{familyId}/contacts": {
         parameters: {
             query?: never;
@@ -2538,6 +2754,7 @@ export interface paths {
                                     starts_on: string;
                                     ends_on: string;
                                     status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    source: "ADMIN" | "PARENT";
                                     registered_at: string;
                                 }[];
                                 version: number;
@@ -2739,6 +2956,7 @@ export interface paths {
                                     starts_on: string;
                                     ends_on: string;
                                     status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    source: "ADMIN" | "PARENT";
                                     registered_at: string;
                                 }[];
                                 version: number;

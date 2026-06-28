@@ -58,6 +58,7 @@ export const RegistrationStatusSchema = Type.Union([
   Type.Literal('WAITLISTED'),
   Type.Literal('CANCELLED'),
 ]);
+export const RegistrationSourceSchema = Type.Union([Type.Literal('ADMIN'), Type.Literal('PARENT')]);
 
 export const RegisteredCamperSchema = Type.Object(
   {
@@ -72,6 +73,7 @@ export const RegisteredCamperSchema = Type.Object(
     school_grade: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     birth_date: LocalDateSchema,
     status: RegistrationStatusSchema,
+    source: RegistrationSourceSchema,
     registered_at: UtcTimestampSchema,
   },
   { additionalProperties: false, $id: 'RegisteredCamper' },
@@ -263,6 +265,7 @@ export const ProblemResponseSchema = Type.Object(
 
 export type CatalogContext = Static<typeof CatalogContextSchema>;
 export type RegistrationStatus = Static<typeof RegistrationStatusSchema>;
+export type RegistrationSource = Static<typeof RegistrationSourceSchema>;
 export type RegisteredCamper = Static<typeof RegisteredCamperSchema>;
 export type SessionSummary = Static<typeof SessionSummarySchema>;
 export type SessionDetail = Static<typeof SessionDetailSchema>;

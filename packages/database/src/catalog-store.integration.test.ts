@@ -187,6 +187,7 @@ describe('catalog store', () => {
           family_name: 'Roster Test Family',
           gender: 'Female',
           registration_id: registrationId,
+          source: 'ADMIN',
           status: 'CONFIRMED',
         }),
         expect.objectContaining({
@@ -195,6 +196,7 @@ describe('catalog store', () => {
           family_name: 'Roster Test Family',
           gender: 'Male',
           registration_id: waitlistedRegistrationId,
+          source: 'ADMIN',
           status: 'WAITLISTED',
         }),
       ],

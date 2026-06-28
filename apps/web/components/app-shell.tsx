@@ -3,6 +3,7 @@
 import {
   CalendarDays,
   CalendarRange,
+  ClipboardPlus,
   ClipboardList,
   HeartPulse,
   Library,
@@ -16,6 +17,7 @@ import type { ReactNode } from 'react';
 
 const navigation = [
   { href: '/', icon: ClipboardList, label: 'Overview' },
+  { href: '/register', icon: ClipboardPlus, label: 'Register' },
   { href: '/sessions', icon: CalendarDays, label: 'Sessions' },
   { href: '/families', icon: Users, label: 'Families' },
   { href: '/seasons', icon: CalendarRange, label: 'Seasons' },

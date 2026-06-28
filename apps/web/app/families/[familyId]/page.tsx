@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { FamilyDetailClient } from '../../../components/family-detail-client';
-import { ApiError, getFamily } from '../../../lib/api';
+import { ApiError, getFamily, getSessions } from '../../../lib/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +15,7 @@ export default async function FamilyDetailPage({
   const { familyId } = await params;
 
   try {
-    const family = await getFamily(familyId);
+    const [family, sessionResponse] = await Promise.all([getFamily(familyId), getSessions()]);
     return (
       <>
         <Link className="backLink" href="/families">
@@ -32,7 +32,7 @@ export default async function FamilyDetailPage({
             </p>
           </div>
         </header>
-        <FamilyDetailClient initialFamily={family} />
+        <FamilyDetailClient initialFamily={family} sessions={sessionResponse.sessions} />
       </>
     );
   } catch (error) {
