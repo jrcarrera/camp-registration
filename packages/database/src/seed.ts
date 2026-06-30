@@ -14,6 +14,15 @@ interface CatalogFixture {
     name: string;
     delivery_mode: string;
     description: string;
+    default_capacity: number;
+    default_minimum_age: number;
+    default_maximum_age: number;
+    default_minimum_grade: number;
+    default_maximum_grade: number;
+    default_age_as_of: string;
+    default_price_cents: number;
+    default_deposit_cents: number;
+    default_waitlist_enabled: boolean;
   }>;
   sessions: Array<{
     id: string;
@@ -141,8 +150,23 @@ export async function seedCatalog(connectionString: string): Promise<void> {
 
     for (const program of fixture.programs) {
       await client.query(
-        `INSERT INTO programs (id, organization_id, code, name, delivery_mode, description)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO programs (
+           id,
+           organization_id,
+           code,
+           name,
+           delivery_mode,
+           description,
+           default_capacity,
+           default_minimum_age,
+           default_maximum_age,
+           default_minimum_grade,
+           default_maximum_grade,
+           default_age_as_of,
+           default_price_cents,
+           default_deposit_cents,
+           default_waitlist_enabled
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
          ON CONFLICT (id) DO NOTHING`,
         [
           program.id,
@@ -151,6 +175,15 @@ export async function seedCatalog(connectionString: string): Promise<void> {
           program.name,
           program.delivery_mode,
           program.description,
+          program.default_capacity,
+          program.default_minimum_age,
+          program.default_maximum_age,
+          program.default_minimum_grade,
+          program.default_maximum_grade,
+          program.default_age_as_of,
+          program.default_price_cents,
+          program.default_deposit_cents,
+          program.default_waitlist_enabled,
         ],
       );
     }

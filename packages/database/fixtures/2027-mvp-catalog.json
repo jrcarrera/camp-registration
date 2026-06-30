@@ -29,7 +29,16 @@
       "code": "DAY",
       "name": "Day Camp",
       "delivery_mode": "DAY",
-      "description": "Monday-Friday day camp."
+      "description": "Monday-Friday day camp.",
+      "default_capacity": 120,
+      "default_minimum_age": 5,
+      "default_maximum_age": 11,
+      "default_minimum_grade": 0,
+      "default_maximum_grade": 5,
+      "default_age_as_of": "SESSION_START",
+      "default_price_cents": 17500,
+      "default_deposit_cents": 2500,
+      "default_waitlist_enabled": true
     },
     {
       "id": "1c9d3031-9923-43ba-909f-1887f99460bb",
@@ -37,7 +46,16 @@
       "code": "ELEM",
       "name": "Elementary Camp",
       "delivery_mode": "OVERNIGHT",
-      "description": "Elementary overnight camp."
+      "description": "Elementary overnight camp.",
+      "default_capacity": 80,
+      "default_minimum_age": 7,
+      "default_maximum_age": 10,
+      "default_minimum_grade": 2,
+      "default_maximum_grade": 5,
+      "default_age_as_of": "SESSION_START",
+      "default_price_cents": 45000,
+      "default_deposit_cents": 10000,
+      "default_waitlist_enabled": true
     },
     {
       "id": "f1959086-b17d-4ba2-9837-994e47dc60e1",
@@ -45,7 +63,16 @@
       "code": "JH",
       "name": "Junior High Camp",
       "delivery_mode": "OVERNIGHT",
-      "description": "One-week co-ed overnight camp."
+      "description": "One-week co-ed overnight camp.",
+      "default_capacity": 120,
+      "default_minimum_age": 11,
+      "default_maximum_age": 14,
+      "default_minimum_grade": 6,
+      "default_maximum_grade": 8,
+      "default_age_as_of": "SESSION_START",
+      "default_price_cents": 49500,
+      "default_deposit_cents": 10000,
+      "default_waitlist_enabled": true
     },
     {
       "id": "6d75c29b-e424-4da6-8191-db70859382fd",
@@ -53,7 +80,16 @@
       "code": "HS",
       "name": "High School Camp",
       "delivery_mode": "OVERNIGHT",
-      "description": "High school overnight camp."
+      "description": "High school overnight camp.",
+      "default_capacity": 140,
+      "default_minimum_age": 14,
+      "default_maximum_age": 18,
+      "default_minimum_grade": 9,
+      "default_maximum_grade": 12,
+      "default_age_as_of": "SESSION_START",
+      "default_price_cents": 52500,
+      "default_deposit_cents": 10000,
+      "default_waitlist_enabled": true
     },
     {
       "id": "a72ef345-3476-4270-b6dc-ece7bf406059",
@@ -61,7 +97,16 @@
       "code": "WIN",
       "name": "Winter Camp",
       "delivery_mode": "OVERNIGHT",
-      "description": "Winter weekend camp."
+      "description": "Winter weekend camp.",
+      "default_capacity": 100,
+      "default_minimum_age": 5,
+      "default_maximum_age": 18,
+      "default_minimum_grade": 9,
+      "default_maximum_grade": 12,
+      "default_age_as_of": "SESSION_START",
+      "default_price_cents": 10000,
+      "default_deposit_cents": 2000,
+      "default_waitlist_enabled": true
     }
   ],
   "sessions": [

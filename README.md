@@ -59,6 +59,7 @@ coverage will be added with the registration workflow.
 
 ## Architecture
 
+- [Data flow and process flows](docs/data-flow-and-process-flows.md)
 - [Architecture decision index](docs/adr/README.md)
 - [Foundation stack decision](docs/adr/0001-foundation-stack.md)
 - [Terraform deployment boundary](infra/terraform/README.md)

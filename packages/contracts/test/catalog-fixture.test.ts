@@ -46,6 +46,9 @@ describe('2027 MVP catalog fixture', () => {
 
     for (const program of fixture.programs) {
       expect(organizationIds.has(program.organization_id)).toBe(true);
+      expect(program.default_minimum_age <= program.default_maximum_age).toBe(true);
+      expect(program.default_minimum_grade <= program.default_maximum_grade).toBe(true);
+      expect(program.default_deposit_cents <= program.default_price_cents).toBe(true);
     }
 
     for (const session of fixture.sessions) {

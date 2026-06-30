@@ -206,8 +206,9 @@ interface RegistrationSessionRow {
   id: string;
   code: string;
   name: string;
-  program_code: string;
   program_name: string;
+  minimum_grade: number;
+  maximum_grade: number;
   season_year: number;
   starts_on: string;
   status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'ARCHIVED';
@@ -284,55 +285,45 @@ function mapContact(row: ContactRow): ContactRecord {
   return { ...row, updated_at: timestamp(row.updated_at) };
 }
 
-function normalizedGrade(value: string | null): string | null {
+function normalizedGrade(value: string | null): number | null {
   if (!value) return null;
   const normalized = value.trim().toLowerCase();
   if (!normalized) return null;
 
-  const numeric = normalized.match(/\b(1[0-2]|[2-9])(?:st|nd|rd|th)?\b/);
-  if (numeric) return numeric[1] ?? null;
+  const numeric = normalized.match(/\b(1[0-2]|[0-9])(?:st|nd|rd|th)?\b/);
+  if (numeric?.[1]) return Number(numeric[1]);
 
   const aliases = new Map([
-    ['freshman', '9'],
-    ['ninth', '9'],
-    ['sophomore', '10'],
-    ['tenth', '10'],
-    ['junior', '11'],
-    ['eleventh', '11'],
-    ['senior', '12'],
-    ['twelfth', '12'],
+    ['k', 0],
+    ['kindergarten', 0],
+    ['first', 1],
+    ['second', 2],
+    ['third', 3],
+    ['fourth', 4],
+    ['fifth', 5],
+    ['sixth', 6],
+    ['seventh', 7],
+    ['eighth', 8],
+    ['freshman', 9],
+    ['ninth', 9],
+    ['sophomore', 10],
+    ['tenth', 10],
+    ['junior', 11],
+    ['eleventh', 11],
+    ['senior', 12],
+    ['twelfth', 12],
   ]);
   return aliases.get(normalized) ?? null;
 }
 
-function allowedGradesForSession(session: RegistrationSessionRow): string[] | null {
-  const code = session.code.toUpperCase();
-  const descriptor =
-    `${session.program_code} ${session.program_name} ${session.code} ${session.name}`.toLowerCase();
-  if (
-    session.program_code === 'HS' ||
-    code.startsWith('HS-') ||
-    descriptor.includes('high school')
-  ) {
-    return ['9', '10', '11', '12'];
-  }
-  if (
-    session.program_code === 'JH' ||
-    code.startsWith('JH-') ||
-    descriptor.includes('junior high') ||
-    descriptor.includes('jr high') ||
-    descriptor.includes('middle school')
-  ) {
-    return ['6', '7', '8'];
-  }
-  if (
-    session.program_code === 'ELEM' ||
-    code.startsWith('ELEM-') ||
-    descriptor.includes('elementary')
-  ) {
-    return ['2', '3', '4', '5'];
-  }
-  return null;
+function formatGrade(grade: number): string {
+  return grade === 0 ? 'K' : String(grade);
+}
+
+function formatGradeRange(minimumGrade: number, maximumGrade: number): string {
+  return minimumGrade === maximumGrade
+    ? formatGrade(minimumGrade)
+    : `${formatGrade(minimumGrade)}-${formatGrade(maximumGrade)}`;
 }
 
 function registrationResultFromFamily(
@@ -758,8 +749,9 @@ export class FamilyStore {
            s.id,
            s.code,
            s.name,
-           p.code AS program_code,
            p.name AS program_name,
+           p.default_minimum_grade AS minimum_grade,
+           p.default_maximum_grade AS maximum_grade,
            se.year AS season_year,
            s.starts_on::text,
            s.status,
@@ -853,13 +845,15 @@ export class FamilyStore {
           camper_id: 'Set the camper school grade before registering.',
         });
       }
-      const allowedGrades = allowedGradesForSession(sessionRow);
       const grade = normalizedGrade(camperRow.school_grade);
-      if (allowedGrades && (!grade || !allowedGrades.includes(grade))) {
+      if (grade === null || grade < sessionRow.minimum_grade || grade > sessionRow.maximum_grade) {
         throw new FamilyRegistrationEligibilityError(
           'Camper is not grade eligible for this session',
           {
-            camper_id: `Camper must be in grade ${allowedGrades.join(', ')}.`,
+            camper_id: `Camper must be in grade ${formatGradeRange(
+              sessionRow.minimum_grade,
+              sessionRow.maximum_grade,
+            )}.`,
           },
         );
       }

@@ -17,6 +17,15 @@ export interface CatalogContextRecord {
     name: string;
     delivery_mode: 'DAY' | 'OVERNIGHT';
     description: string;
+    default_capacity: number;
+    default_minimum_age: number;
+    default_maximum_age: number;
+    default_minimum_grade: number;
+    default_maximum_grade: number;
+    default_age_as_of: AgeAsOf;
+    default_price_cents: number;
+    default_deposit_cents: number;
+    default_waitlist_enabled: boolean;
   }>;
 }
 
@@ -51,6 +60,8 @@ export interface SessionDetailRecord extends SessionSummaryRecord {
   registration_closes_at: string;
   minimum_age: number;
   maximum_age: number;
+  minimum_grade: number;
+  maximum_grade: number;
   age_as_of: AgeAsOf;
   deposit_cents: number;
   waitlist_enabled: boolean;
@@ -93,10 +104,17 @@ export interface UpdateSessionRecord {
   status: SessionStatus;
 }
 
-export interface CreateSessionRecord extends Omit<UpdateSessionRecord, 'version'> {
+export interface CreateSessionRecord {
   id: string;
   season_id: string;
+  program_id: string;
   code: string;
+  name: string;
+  starts_on: string;
+  ends_on: string;
+  registration_opens_at: string;
+  registration_closes_at: string;
+  status: SessionStatus;
 }
 
 export interface CreateProgramRecord {
@@ -105,6 +123,30 @@ export interface CreateProgramRecord {
   name: string;
   delivery_mode: 'DAY' | 'OVERNIGHT';
   description: string;
+  default_capacity: number;
+  default_minimum_age: number;
+  default_maximum_age: number;
+  default_minimum_grade: number;
+  default_maximum_grade: number;
+  default_age_as_of: AgeAsOf;
+  default_price_cents: number;
+  default_deposit_cents: number;
+  default_waitlist_enabled: boolean;
+}
+
+export interface UpdateProgramRecord {
+  name: string;
+  delivery_mode: 'DAY' | 'OVERNIGHT';
+  description: string;
+  default_capacity: number;
+  default_minimum_age: number;
+  default_maximum_age: number;
+  default_minimum_grade: number;
+  default_maximum_grade: number;
+  default_age_as_of: AgeAsOf;
+  default_price_cents: number;
+  default_deposit_cents: number;
+  default_waitlist_enabled: boolean;
 }
 
 export interface CreateSeasonRecord {
@@ -125,6 +167,14 @@ export interface UpdateSessionContext {
   requestId: string;
   sessionId: string;
   update: UpdateSessionRecord;
+}
+
+export interface UpdateProgramContext {
+  actorId: string;
+  organizationId: string;
+  programId: string;
+  requestId: string;
+  update: UpdateProgramRecord;
 }
 
 export class CatalogNotFoundError extends Error {}
@@ -148,6 +198,8 @@ interface SessionRow {
   capacity: number;
   minimum_age: number;
   maximum_age: number;
+  minimum_grade: number;
+  maximum_grade: number;
   age_as_of: AgeAsOf;
   currency: 'USD';
   price_cents: number;
@@ -187,6 +239,8 @@ const sessionSelect = `
     s.capacity,
     s.minimum_age,
     s.maximum_age,
+    p.default_minimum_grade AS minimum_grade,
+    p.default_maximum_grade AS maximum_grade,
     s.age_as_of,
     s.currency,
     s.price_cents,
@@ -317,7 +371,22 @@ export class CatalogStore {
         [organizationId],
       );
       const programs = await client.query<CatalogContextRecord['programs'][number]>(
-        `SELECT id, organization_id, code, name, delivery_mode, description
+        `SELECT
+           id,
+           organization_id,
+           code,
+           name,
+           delivery_mode,
+           description,
+           default_capacity,
+           default_minimum_age,
+           default_maximum_age,
+           default_minimum_grade,
+           default_maximum_grade,
+           default_age_as_of,
+           default_price_cents,
+           default_deposit_cents,
+           default_waitlist_enabled
          FROM programs
          WHERE organization_id = $1
          ORDER BY name, id`,
@@ -366,9 +435,38 @@ export class CatalogStore {
       try {
         const result = await client.query<CatalogContextRecord['programs'][number]>(
           `INSERT INTO programs (
-             id, organization_id, code, name, delivery_mode, description
-           ) VALUES ($1, $2, $3, $4, $5, $6)
-           RETURNING id, organization_id, code, name, delivery_mode, description`,
+             id,
+             organization_id,
+             code,
+             name,
+             delivery_mode,
+             description,
+             default_capacity,
+             default_minimum_age,
+             default_maximum_age,
+             default_minimum_grade,
+             default_maximum_grade,
+             default_age_as_of,
+             default_price_cents,
+             default_deposit_cents,
+             default_waitlist_enabled
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+           RETURNING
+             id,
+             organization_id,
+             code,
+             name,
+             delivery_mode,
+             description,
+             default_capacity,
+             default_minimum_age,
+             default_maximum_age,
+             default_minimum_grade,
+             default_maximum_grade,
+             default_age_as_of,
+             default_price_cents,
+             default_deposit_cents,
+             default_waitlist_enabled`,
           [
             program.id,
             context.organizationId,
@@ -376,6 +474,15 @@ export class CatalogStore {
             program.name,
             program.delivery_mode,
             program.description,
+            program.default_capacity,
+            program.default_minimum_age,
+            program.default_maximum_age,
+            program.default_minimum_grade,
+            program.default_maximum_grade,
+            program.default_age_as_of,
+            program.default_price_cents,
+            program.default_deposit_cents,
+            program.default_waitlist_enabled,
           ],
         );
 
@@ -399,6 +506,127 @@ export class CatalogStore {
         }
         throw error;
       }
+    });
+  }
+
+  async updateProgram(
+    context: UpdateProgramContext,
+  ): Promise<CatalogContextRecord['programs'][number]> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const currentResult = await client.query<CatalogContextRecord['programs'][number]>(
+        `SELECT
+           id,
+           organization_id,
+           code,
+           name,
+           delivery_mode,
+           description,
+           default_capacity,
+           default_minimum_age,
+           default_maximum_age,
+           default_minimum_grade,
+           default_maximum_grade,
+           default_age_as_of,
+           default_price_cents,
+           default_deposit_cents,
+           default_waitlist_enabled
+         FROM programs
+         WHERE organization_id = $1 AND id = $2
+         FOR UPDATE`,
+        [context.organizationId, context.programId],
+      );
+      const current = currentResult.rows[0];
+      if (!current) {
+        throw new CatalogNotFoundError('Program not found');
+      }
+
+      const editableFields = [
+        'name',
+        'delivery_mode',
+        'description',
+        'default_capacity',
+        'default_minimum_age',
+        'default_maximum_age',
+        'default_minimum_grade',
+        'default_maximum_grade',
+        'default_age_as_of',
+        'default_price_cents',
+        'default_deposit_cents',
+        'default_waitlist_enabled',
+      ] as const;
+      const changedFields = editableFields.filter(
+        (field) => current[field] !== context.update[field],
+      );
+
+      const result = await client.query<CatalogContextRecord['programs'][number]>(
+        `UPDATE programs
+         SET name = $3,
+             delivery_mode = $4,
+             description = $5,
+             default_capacity = $6,
+             default_minimum_age = $7,
+             default_maximum_age = $8,
+             default_minimum_grade = $9,
+             default_maximum_grade = $10,
+             default_age_as_of = $11,
+             default_price_cents = $12,
+             default_deposit_cents = $13,
+             default_waitlist_enabled = $14,
+             updated_at = transaction_timestamp()
+         WHERE organization_id = $1 AND id = $2
+         RETURNING
+           id,
+           organization_id,
+           code,
+           name,
+           delivery_mode,
+           description,
+           default_capacity,
+           default_minimum_age,
+           default_maximum_age,
+           default_minimum_grade,
+           default_maximum_grade,
+           default_age_as_of,
+           default_price_cents,
+           default_deposit_cents,
+           default_waitlist_enabled`,
+        [
+          context.organizationId,
+          context.programId,
+          context.update.name,
+          context.update.delivery_mode,
+          context.update.description,
+          context.update.default_capacity,
+          context.update.default_minimum_age,
+          context.update.default_maximum_age,
+          context.update.default_minimum_grade,
+          context.update.default_maximum_grade,
+          context.update.default_age_as_of,
+          context.update.default_price_cents,
+          context.update.default_deposit_cents,
+          context.update.default_waitlist_enabled,
+        ],
+      );
+
+      await client.query(
+        `INSERT INTO audit_events (
+           organization_id, actor_id, action, target_type, target_id, outcome,
+           request_id, details
+         ) VALUES ($1, $2, 'program.updated', 'program', $3, 'success', $4, $5::jsonb)`,
+        [
+          context.organizationId,
+          context.actorId,
+          context.programId,
+          context.requestId,
+          JSON.stringify({ changed_fields: changedFields }),
+        ],
+      );
+
+      const updated = result.rows[0];
+      if (!updated) {
+        throw new CatalogNotFoundError('Updated program not found');
+      }
+      return updated;
     });
   }
 
@@ -444,16 +672,39 @@ export class CatalogStore {
     session: CreateSessionRecord,
   ): Promise<SessionDetailRecord> {
     return this.withTenant(context.organizationId, async (client) => {
-      const references = await client.query<{ season_exists: boolean; program_exists: boolean }>(
-        `SELECT
-           EXISTS (SELECT 1 FROM seasons WHERE organization_id = $1 AND id = $2) AS season_exists,
-           EXISTS (SELECT 1 FROM programs WHERE organization_id = $1 AND id = $3) AS program_exists`,
-        [context.organizationId, session.season_id, session.program_id],
+      const season = await client.query<{ exists: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1 FROM seasons WHERE organization_id = $1 AND id = $2
+         ) AS exists`,
+        [context.organizationId, session.season_id],
       );
-      if (!references.rows[0]?.season_exists) {
+      if (!season.rows[0]?.exists) {
         throw new CatalogReferenceError('Season does not belong to this organization');
       }
-      if (!references.rows[0]?.program_exists) {
+
+      const program = await client.query<{
+        default_age_as_of: AgeAsOf;
+        default_capacity: number;
+        default_deposit_cents: number;
+        default_maximum_age: number;
+        default_minimum_age: number;
+        default_price_cents: number;
+        default_waitlist_enabled: boolean;
+      }>(
+        `SELECT
+           default_capacity,
+           default_minimum_age,
+           default_maximum_age,
+           default_age_as_of,
+           default_price_cents,
+           default_deposit_cents,
+           default_waitlist_enabled
+         FROM programs
+         WHERE organization_id = $1 AND id = $2`,
+        [context.organizationId, session.program_id],
+      );
+      const programDefaults = program.rows[0];
+      if (!programDefaults) {
         throw new CatalogReferenceError('Program does not belong to this organization');
       }
 
@@ -479,13 +730,13 @@ export class CatalogStore {
             session.ends_on,
             session.registration_opens_at,
             session.registration_closes_at,
-            session.capacity,
-            session.minimum_age,
-            session.maximum_age,
-            session.age_as_of,
-            session.price_cents,
-            session.deposit_cents,
-            session.waitlist_enabled,
+            programDefaults.default_capacity,
+            programDefaults.default_minimum_age,
+            programDefaults.default_maximum_age,
+            programDefaults.default_age_as_of,
+            programDefaults.default_price_cents,
+            programDefaults.default_deposit_cents,
+            programDefaults.default_waitlist_enabled,
             session.status,
           ],
         );

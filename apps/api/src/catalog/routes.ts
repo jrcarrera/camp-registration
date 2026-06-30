@@ -3,6 +3,8 @@ import {
   ProblemResponseSchema,
   ProgramCreateSchema,
   ProgramFixtureSchema,
+  ProgramParamsSchema,
+  ProgramUpdateSchema,
   SeasonCreateSchema,
   SeasonFixtureSchema,
   SessionCreateSchema,
@@ -13,6 +15,8 @@ import {
   type CatalogContext,
   type ProgramCreate,
   type ProgramFixture,
+  type ProgramParams,
+  type ProgramUpdate,
   type ProblemResponse,
   type SeasonCreate,
   type SeasonFixture,
@@ -176,6 +180,36 @@ export function registerCatalogRoutes(
       try {
         const program = await service.createProgram(request.body, request.id);
         return reply.code(201).send(program);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.patch<{
+    Body: ProgramUpdate;
+    Params: ProgramParams;
+    Reply: ProgramFixture | ProblemResponse;
+  }>(
+    '/v1/programs/:programId',
+    {
+      schema: {
+        body: ProgramUpdateSchema,
+        description: 'Update editable program defaults and metadata.',
+        params: ProgramParamsSchema,
+        response: { 200: ProgramFixtureSchema, ...errorResponses },
+        tags: ['programs'],
+      },
+    },
+    async (request, reply) => {
+      if (!service) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        return await service.updateProgram(request.params.programId, request.body, request.id);
       } catch (error) {
         return sendProblem(reply, error);
       }

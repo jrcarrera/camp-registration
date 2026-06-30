@@ -361,10 +361,11 @@ describe('family store', () => {
     ).rejects.toBeInstanceOf(FamilyRegistrationDuplicateError);
   });
 
-  it('applies grade eligibility to junior high session names without program grade codes', async () => {
+  it('applies grade eligibility from explicit program grade bounds', async () => {
     const store = new FamilyStore(runtimeDatabase);
     const dates = checkoutFixtureDates();
     const sessionId = '211983fc-2221-4f9c-9949-f77d0ac7f256';
+    const programId = '4bb4487a-0670-41d4-b59b-e007b8ee773a';
     const eligibleFamilyId = '6aa4ab55-8877-45b7-a533-32eaaf38a3cc';
     const eligibleCamperId = 'd483fe70-4878-473c-b67d-6dd8662e448c';
     const ineligibleFamilyId = '54abaf22-68df-438d-8955-a6e963439c27';
@@ -377,18 +378,36 @@ describe('family store', () => {
 
     const admin = new Pool({ connectionString: migrationUrl });
     await admin.query(
+      `INSERT INTO programs (
+         id, organization_id, code, name, delivery_mode, description, default_capacity,
+         default_minimum_age, default_maximum_age, default_minimum_grade, default_maximum_grade,
+         default_age_as_of, default_price_cents, default_deposit_cents, default_waitlist_enabled
+       ) VALUES (
+         $1, $2, 'WTR-CHECKOUT', 'Winter Checkout', 'OVERNIGHT',
+         'Winter checkout test program.', 20, 5, 18, 6, 8, 'SESSION_START', 10000, 2000, true
+       )`,
+      [programId, organizationId],
+    );
+    await admin.query(
       `INSERT INTO sessions (
          id, organization_id, season_id, program_id, code, name, starts_on, ends_on,
          registration_opens_at, registration_closes_at, capacity, minimum_age,
          maximum_age, age_as_of, currency, price_cents, deposit_cents,
          waitlist_enabled, status
        ) VALUES (
-         $1, $2, 'fc94ef27-1fa6-466b-b877-312c27d00a7c',
-         'a72ef345-3476-4270-b6dc-ece7bf406059', 'SB-CHECKOUT-01',
-         'Jr High Winter Checkout', $3, $4, $5, $6, 20, 5, 18,
+         $1, $2, 'fc94ef27-1fa6-466b-b877-312c27d00a7c', $3, 'SB-CHECKOUT-01',
+         'Winter Checkout', $4, $5, $6, $7, 20, 5, 18,
          'SESSION_START', 'USD', 10000, 2000, true, 'PUBLISHED'
        )`,
-      [sessionId, organizationId, dates.startsOn, dates.endsOn, dates.opensAt, dates.closesAt],
+      [
+        sessionId,
+        organizationId,
+        programId,
+        dates.startsOn,
+        dates.endsOn,
+        dates.opensAt,
+        dates.closesAt,
+      ],
     );
     await admin.end();
 

@@ -218,41 +218,35 @@ function ageOn(birthDate: string, date: string): number | null {
   return years;
 }
 
-function normalizedGrade(value: string | null): string | null {
+function normalizedGrade(value: string | null): number | null {
   if (!value) return null;
   const normalized = value.trim().toLowerCase();
   if (!normalized) return null;
 
-  const numeric = normalized.match(/\b(1[0-2]|[2-9])(?:st|nd|rd|th)?\b/);
-  if (numeric) return numeric[1] ?? null;
+  const numeric = normalized.match(/\b(1[0-2]|[0-9])(?:st|nd|rd|th)?\b/);
+  if (numeric?.[1]) return Number(numeric[1]);
 
-  const aliases: Record<string, string> = {
-    freshman: '9',
-    ninth: '9',
-    sophomore: '10',
-    tenth: '10',
-    junior: '11',
-    eleventh: '11',
-    senior: '12',
-    twelfth: '12',
+  const aliases: Record<string, number> = {
+    eighth: 8,
+    eleventh: 11,
+    fifth: 5,
+    first: 1,
+    fourth: 4,
+    freshman: 9,
+    junior: 11,
+    k: 0,
+    kindergarten: 0,
+    ninth: 9,
+    second: 2,
+    senior: 12,
+    seventh: 7,
+    sixth: 6,
+    sophomore: 10,
+    tenth: 10,
+    third: 3,
+    twelfth: 12,
   };
   return aliases[normalized] ?? null;
-}
-
-function allowedGradesForSession(session: SessionDetail): string[] | null {
-  const code = session.code.toUpperCase();
-  const descriptor = `${session.program_name} ${session.code} ${session.name}`.toLowerCase();
-  if (code.startsWith('HS-') || descriptor.includes('high school')) return ['9', '10', '11', '12'];
-  if (
-    code.startsWith('JH-') ||
-    descriptor.includes('junior high') ||
-    descriptor.includes('jr high') ||
-    descriptor.includes('middle school')
-  ) {
-    return ['6', '7', '8'];
-  }
-  if (code.startsWith('ELEM-') || descriptor.includes('elementary')) return ['2', '3', '4', '5'];
-  return null;
 }
 
 function ageAsOfDate(session: SessionDetail, seasonYearsById: Record<string, number>): string {
@@ -272,11 +266,10 @@ function isEligibleForSession(
   const age = ageOn(camper.birth_date, ageAsOfDate(session, seasonYearsById));
   if (age === null || age < session.minimum_age || age > session.maximum_age) return false;
 
-  const allowedGrades = allowedGradesForSession(session);
-  if (!allowedGrades) return Boolean(camper.school_grade?.trim());
-
   const grade = normalizedGrade(camper.school_grade);
-  return Boolean(grade && allowedGrades.includes(grade));
+  return Boolean(
+    grade !== null && grade >= session.minimum_grade && grade <= session.maximum_grade,
+  );
 }
 
 function camperFromForm(form: CamperForm): CandidateCamper | null {

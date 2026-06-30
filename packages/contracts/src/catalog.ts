@@ -29,6 +29,12 @@ export const SeasonFixtureSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const AgeAsOfSchema = Type.Union([
+  Type.Literal('SESSION_START'),
+  Type.Literal('SEASON_START'),
+]);
+export const GradeLevelSchema = Type.Integer({ minimum: 0, maximum: 12 });
+
 export const ProgramFixtureSchema = Type.Object(
   {
     id: UuidSchema,
@@ -37,14 +43,18 @@ export const ProgramFixtureSchema = Type.Object(
     name: Type.String({ minLength: 1 }),
     delivery_mode: Type.Union([Type.Literal('DAY'), Type.Literal('OVERNIGHT')]),
     description: Type.String({ minLength: 1 }),
+    default_capacity: Type.Integer({ minimum: 1 }),
+    default_minimum_age: Type.Integer({ minimum: 0, maximum: 21 }),
+    default_maximum_age: Type.Integer({ minimum: 0, maximum: 21 }),
+    default_minimum_grade: GradeLevelSchema,
+    default_maximum_grade: GradeLevelSchema,
+    default_age_as_of: AgeAsOfSchema,
+    default_price_cents: Type.Integer({ minimum: 0 }),
+    default_deposit_cents: Type.Integer({ minimum: 0 }),
+    default_waitlist_enabled: Type.Boolean(),
   },
   { additionalProperties: false },
 );
-
-export const AgeAsOfSchema = Type.Union([
-  Type.Literal('SESSION_START'),
-  Type.Literal('SEASON_START'),
-]);
 
 export const SessionStatusSchema = Type.Union([
   Type.Literal('DRAFT'),
@@ -168,6 +178,8 @@ export const SessionDetailSchema = Type.Composite(
         registration_closes_at: UtcTimestampSchema,
         minimum_age: Type.Integer({ minimum: 0, maximum: 21 }),
         maximum_age: Type.Integer({ minimum: 0, maximum: 21 }),
+        minimum_grade: GradeLevelSchema,
+        maximum_grade: GradeLevelSchema,
         age_as_of: AgeAsOfSchema,
         deposit_cents: Type.Integer({ minimum: 0 }),
         waitlist_enabled: Type.Boolean(),
@@ -219,13 +231,6 @@ export const SessionCreateSchema = Type.Object(
     ends_on: LocalDateSchema,
     registration_opens_at: UtcTimestampSchema,
     registration_closes_at: UtcTimestampSchema,
-    capacity: Type.Integer({ minimum: 1 }),
-    minimum_age: Type.Integer({ minimum: 0, maximum: 21 }),
-    maximum_age: Type.Integer({ minimum: 0, maximum: 21 }),
-    age_as_of: AgeAsOfSchema,
-    price_cents: Type.Integer({ minimum: 0 }),
-    deposit_cents: Type.Integer({ minimum: 0 }),
-    waitlist_enabled: Type.Boolean(),
     status: SessionStatusSchema,
   },
   { additionalProperties: false, $id: 'SessionCreate' },
@@ -245,8 +250,40 @@ export const ProgramCreateSchema = Type.Object(
     name: Type.String({ minLength: 1, maxLength: 160 }),
     delivery_mode: Type.Union([Type.Literal('DAY'), Type.Literal('OVERNIGHT')]),
     description: Type.String({ minLength: 1, maxLength: 1000 }),
+    default_capacity: Type.Integer({ minimum: 1 }),
+    default_minimum_age: Type.Integer({ minimum: 0, maximum: 21 }),
+    default_maximum_age: Type.Integer({ minimum: 0, maximum: 21 }),
+    default_minimum_grade: GradeLevelSchema,
+    default_maximum_grade: GradeLevelSchema,
+    default_age_as_of: AgeAsOfSchema,
+    default_price_cents: Type.Integer({ minimum: 0 }),
+    default_deposit_cents: Type.Integer({ minimum: 0 }),
+    default_waitlist_enabled: Type.Boolean(),
   },
   { additionalProperties: false, $id: 'ProgramCreate' },
+);
+
+export const ProgramUpdateSchema = Type.Object(
+  {
+    name: Type.String({ minLength: 1, maxLength: 160 }),
+    delivery_mode: Type.Union([Type.Literal('DAY'), Type.Literal('OVERNIGHT')]),
+    description: Type.String({ minLength: 1, maxLength: 1000 }),
+    default_capacity: Type.Integer({ minimum: 1 }),
+    default_minimum_age: Type.Integer({ minimum: 0, maximum: 21 }),
+    default_maximum_age: Type.Integer({ minimum: 0, maximum: 21 }),
+    default_minimum_grade: GradeLevelSchema,
+    default_maximum_grade: GradeLevelSchema,
+    default_age_as_of: AgeAsOfSchema,
+    default_price_cents: Type.Integer({ minimum: 0 }),
+    default_deposit_cents: Type.Integer({ minimum: 0 }),
+    default_waitlist_enabled: Type.Boolean(),
+  },
+  { additionalProperties: false, $id: 'ProgramUpdate' },
+);
+
+export const ProgramParamsSchema = Type.Object(
+  { programId: UuidSchema },
+  { additionalProperties: false },
 );
 
 export const SessionParamsSchema = Type.Object(
@@ -274,5 +311,7 @@ export type SessionUpdate = Static<typeof SessionUpdateSchema>;
 export type SessionCreate = Static<typeof SessionCreateSchema>;
 export type SeasonCreate = Static<typeof SeasonCreateSchema>;
 export type ProgramCreate = Static<typeof ProgramCreateSchema>;
+export type ProgramUpdate = Static<typeof ProgramUpdateSchema>;
+export type ProgramParams = Static<typeof ProgramParamsSchema>;
 export type SessionParams = Static<typeof SessionParamsSchema>;
 export type ProblemResponse = Static<typeof ProblemResponseSchema>;

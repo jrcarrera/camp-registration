@@ -47,6 +47,15 @@ export interface paths {
                                 name: string;
                                 delivery_mode: "DAY" | "OVERNIGHT";
                                 description: string;
+                                default_capacity: number;
+                                default_minimum_age: number;
+                                default_maximum_age: number;
+                                default_minimum_grade: number;
+                                default_maximum_grade: number;
+                                default_age_as_of: "SESSION_START" | "SEASON_START";
+                                default_price_cents: number;
+                                default_deposit_cents: number;
+                                default_waitlist_enabled: boolean;
                             }[];
                         };
                     };
@@ -286,13 +295,6 @@ export interface paths {
                         ends_on: string;
                         registration_opens_at: string;
                         registration_closes_at: string;
-                        capacity: number;
-                        minimum_age: number;
-                        maximum_age: number;
-                        age_as_of: "SESSION_START" | "SEASON_START";
-                        price_cents: number;
-                        deposit_cents: number;
-                        waitlist_enabled: boolean;
                         status: "DRAFT" | "PUBLISHED" | "CANCELLED" | "ARCHIVED";
                     };
                 };
@@ -333,6 +335,8 @@ export interface paths {
                             registration_closes_at: string;
                             minimum_age: number;
                             maximum_age: number;
+                            minimum_grade: number;
+                            maximum_grade: number;
                             age_as_of: "SESSION_START" | "SEASON_START";
                             deposit_cents: number;
                             waitlist_enabled: boolean;
@@ -585,6 +589,15 @@ export interface paths {
                         name: string;
                         delivery_mode: "DAY" | "OVERNIGHT";
                         description: string;
+                        default_capacity: number;
+                        default_minimum_age: number;
+                        default_maximum_age: number;
+                        default_minimum_grade: number;
+                        default_maximum_grade: number;
+                        default_age_as_of: "SESSION_START" | "SEASON_START";
+                        default_price_cents: number;
+                        default_deposit_cents: number;
+                        default_waitlist_enabled: boolean;
                     };
                 };
             };
@@ -602,6 +615,15 @@ export interface paths {
                             name: string;
                             delivery_mode: "DAY" | "OVERNIGHT";
                             description: string;
+                            default_capacity: number;
+                            default_minimum_age: number;
+                            default_maximum_age: number;
+                            default_minimum_grade: number;
+                            default_maximum_grade: number;
+                            default_age_as_of: "SESSION_START" | "SEASON_START";
+                            default_price_cents: number;
+                            default_deposit_cents: number;
+                            default_waitlist_enabled: boolean;
                         };
                     };
                 };
@@ -688,6 +710,152 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/programs/{programId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Update editable program defaults and metadata. */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    programId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        name: string;
+                        delivery_mode: "DAY" | "OVERNIGHT";
+                        description: string;
+                        default_capacity: number;
+                        default_minimum_age: number;
+                        default_maximum_age: number;
+                        default_minimum_grade: number;
+                        default_maximum_grade: number;
+                        default_age_as_of: "SESSION_START" | "SEASON_START";
+                        default_price_cents: number;
+                        default_deposit_cents: number;
+                        default_waitlist_enabled: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            organization_id: string;
+                            code: string;
+                            name: string;
+                            delivery_mode: "DAY" | "OVERNIGHT";
+                            description: string;
+                            default_capacity: number;
+                            default_minimum_age: number;
+                            default_maximum_age: number;
+                            default_minimum_grade: number;
+                            default_maximum_grade: number;
+                            default_age_as_of: "SESSION_START" | "SEASON_START";
+                            default_price_cents: number;
+                            default_deposit_cents: number;
+                            default_waitlist_enabled: boolean;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/v1/sessions/{sessionId}": {
         parameters: {
             query?: never;
@@ -742,6 +910,8 @@ export interface paths {
                             registration_closes_at: string;
                             minimum_age: number;
                             maximum_age: number;
+                            minimum_grade: number;
+                            maximum_grade: number;
                             age_as_of: "SESSION_START" | "SEASON_START";
                             deposit_cents: number;
                             waitlist_enabled: boolean;
@@ -914,6 +1084,8 @@ export interface paths {
                             registration_closes_at: string;
                             minimum_age: number;
                             maximum_age: number;
+                            minimum_grade: number;
+                            maximum_grade: number;
                             age_as_of: "SESSION_START" | "SEASON_START";
                             deposit_cents: number;
                             waitlist_enabled: boolean;

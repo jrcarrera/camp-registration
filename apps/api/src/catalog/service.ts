@@ -5,6 +5,7 @@ import type {
   CatalogContext,
   ProgramCreate,
   ProgramFixture,
+  ProgramUpdate,
   SeasonCreate,
   SeasonFixture,
   SessionCreate,
@@ -39,6 +40,11 @@ export interface CatalogServiceApi {
   listSessions(): Promise<SessionSummary[]>;
   getSession(sessionId: string): Promise<SessionDetail>;
   createProgram(program: ProgramCreate, requestId: string): Promise<ProgramFixture>;
+  updateProgram(
+    programId: string,
+    update: ProgramUpdate,
+    requestId: string,
+  ): Promise<ProgramFixture>;
   createSeason(season: SeasonCreate, requestId: string): Promise<SeasonFixture>;
   createSession(session: SessionCreate, requestId: string): Promise<SessionDetail>;
   updateSession(
@@ -53,7 +59,7 @@ function isRealDate(value: string): boolean {
   return !Number.isNaN(parsed.valueOf()) && parsed.toISOString().startsWith(value);
 }
 
-function validateSession(update: SessionCreate | SessionUpdate): void {
+function validateSessionTiming(update: SessionCreate | SessionUpdate): Record<string, string> {
   const errors: Record<string, string> = {};
 
   if (!isRealDate(update.starts_on)) errors.starts_on = 'Enter a valid start date.';
@@ -66,21 +72,42 @@ function validateSession(update: SessionCreate | SessionUpdate): void {
   if (Date.parse(update.registration_closes_at) >= Date.parse(`${update.starts_on}T23:59:59Z`)) {
     errors.registration_closes_at = 'Registration must close before the session starts.';
   }
+  if (!update.name.trim()) errors.name = 'Enter a session name.';
+
+  return errors;
+}
+
+function validateSessionCreate(session: SessionCreate): void {
+  const errors = validateSessionTiming(session);
+  if (Object.keys(errors).length > 0) throw new CatalogValidationError(errors);
+}
+
+function validateSessionUpdate(update: SessionUpdate): void {
+  const errors = validateSessionTiming(update);
+
   if (update.minimum_age > update.maximum_age) {
     errors.maximum_age = 'Maximum age must be at least the minimum age.';
   }
   if (update.deposit_cents > update.price_cents) {
     errors.deposit_cents = 'Deposit cannot exceed tuition.';
   }
-  if (!update.name.trim()) errors.name = 'Enter a session name.';
 
   if (Object.keys(errors).length > 0) throw new CatalogValidationError(errors);
 }
 
-function validateProgram(program: ProgramCreate): void {
+function validateProgram(program: ProgramCreate | ProgramUpdate): void {
   const errors: Record<string, string> = {};
   if (!program.name.trim()) errors.name = 'Enter a program name.';
   if (!program.description.trim()) errors.description = 'Enter a program description.';
+  if (program.default_minimum_age > program.default_maximum_age) {
+    errors.default_maximum_age = 'Maximum age must be at least the minimum age.';
+  }
+  if (program.default_minimum_grade > program.default_maximum_grade) {
+    errors.default_maximum_grade = 'Maximum grade must be at least the minimum grade.';
+  }
+  if (program.default_deposit_cents > program.default_price_cents) {
+    errors.default_deposit_cents = 'Deposit cannot exceed tuition.';
+  }
   if (Object.keys(errors).length > 0) {
     throw new CatalogValidationError(errors, 'Program details are invalid');
   }
@@ -148,6 +175,26 @@ export class CatalogService implements CatalogServiceApi {
     );
   }
 
+  async updateProgram(
+    programId: string,
+    update: ProgramUpdate,
+    requestId: string,
+  ): Promise<ProgramFixture> {
+    this.authorize(editRoles);
+    validateProgram(update);
+    return this.store.updateProgram({
+      actorId: this.identity.subject,
+      organizationId: this.organizationId,
+      programId,
+      requestId,
+      update: {
+        ...update,
+        description: update.description.trim(),
+        name: update.name.trim(),
+      },
+    });
+  }
+
   async createSeason(season: SeasonCreate, requestId: string): Promise<SeasonFixture> {
     this.authorize(editRoles);
     validateSeason(season);
@@ -163,7 +210,7 @@ export class CatalogService implements CatalogServiceApi {
 
   async createSession(session: SessionCreate, requestId: string): Promise<SessionDetail> {
     this.authorize(editRoles);
-    validateSession(session);
+    validateSessionCreate(session);
     return this.store.createSession(
       {
         actorId: this.identity.subject,
@@ -180,7 +227,7 @@ export class CatalogService implements CatalogServiceApi {
     requestId: string,
   ): Promise<SessionDetail> {
     this.authorize(editRoles);
-    validateSession(update);
+    validateSessionUpdate(update);
     return this.store.updateSession({
       actorId: this.identity.subject,
       organizationId: this.organizationId,

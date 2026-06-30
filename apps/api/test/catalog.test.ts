@@ -3,6 +3,7 @@ import type {
   CatalogContext,
   ProgramCreate,
   ProgramFixture,
+  ProgramUpdate,
   SeasonCreate,
   SeasonFixture,
   SessionCreate,
@@ -52,7 +53,9 @@ const detail: SessionDetail = {
   age_as_of: 'SESSION_START',
   deposit_cents: 2500,
   maximum_age: 11,
+  maximum_grade: 5,
   minimum_age: 5,
+  minimum_grade: 0,
   organization_timezone: 'America/Chicago',
   registered_campers: [],
   registration_closes_at: '2027-06-04T05:00:00Z',
@@ -72,6 +75,15 @@ const context: CatalogContext = {
       code: 'DAY',
       delivery_mode: 'DAY',
       description: 'Monday-Friday day camp.',
+      default_age_as_of: 'SESSION_START',
+      default_capacity: 120,
+      default_deposit_cents: 2500,
+      default_maximum_age: 11,
+      default_maximum_grade: 5,
+      default_minimum_age: 5,
+      default_minimum_grade: 0,
+      default_price_cents: 17500,
+      default_waitlist_enabled: true,
       id: programId,
       name: 'Day Camp',
       organization_id: organizationId,
@@ -110,6 +122,15 @@ const programCreate: ProgramCreate = {
   code: 'TEEN',
   delivery_mode: 'OVERNIGHT',
   description: 'Leadership program for teens.',
+  default_age_as_of: 'SESSION_START',
+  default_capacity: 24,
+  default_deposit_cents: 5000,
+  default_maximum_age: 17,
+  default_maximum_grade: 12,
+  default_minimum_age: 13,
+  default_minimum_grade: 9,
+  default_price_cents: 45000,
+  default_waitlist_enabled: true,
   name: 'Teen Leadership',
 };
 
@@ -117,6 +138,26 @@ const createdProgram: ProgramFixture = {
   ...programCreate,
   id: '90e02c14-b175-4ca1-93e5-1f6ddf27bd74',
   organization_id: organizationId,
+};
+
+const programUpdate: ProgramUpdate = {
+  delivery_mode: 'OVERNIGHT',
+  description: 'Updated overnight leadership program for teens.',
+  default_age_as_of: 'SESSION_START',
+  default_capacity: 28,
+  default_deposit_cents: 7500,
+  default_maximum_age: 18,
+  default_maximum_grade: 12,
+  default_minimum_age: 14,
+  default_minimum_grade: 9,
+  default_price_cents: 50000,
+  default_waitlist_enabled: false,
+  name: 'Teen Leadership Updated',
+};
+
+const updatedProgram: ProgramFixture = {
+  ...createdProgram,
+  ...programUpdate,
 };
 
 const seasonCreate: SeasonCreate = {
@@ -131,22 +172,15 @@ const createdSeason: SeasonFixture = {
 };
 
 const sessionCreate: SessionCreate = {
-  age_as_of: 'SESSION_START',
-  capacity: 24,
   code: 'TEEN-2027-01',
-  deposit_cents: 5000,
   ends_on: '2027-07-09',
-  maximum_age: 17,
-  minimum_age: 13,
   name: 'Teen Leadership Week 1',
-  price_cents: 45000,
   program_id: programId,
   registration_closes_at: '2027-07-01T05:00:00Z',
   registration_opens_at: '2027-01-15T15:00:00Z',
   season_id: seasonId,
   starts_on: '2027-07-05',
   status: 'DRAFT',
-  waitlist_enabled: true,
 };
 
 describe('catalog routes', () => {
@@ -187,6 +221,27 @@ describe('catalog routes', () => {
 
     expect(response.statusCode).toBe(200);
     expect(service.updateSession).toHaveBeenCalledWith(sessionId, update, 'session-update-test');
+  });
+
+  it('updates a program and passes the request id to the service', async () => {
+    const service = fakeService();
+    const app = await buildApp({ catalogService: service });
+    applications.push(app);
+
+    const response = await app.inject({
+      headers: { 'x-request-id': 'program-update-test' },
+      method: 'PATCH',
+      payload: programUpdate,
+      url: `/v1/programs/${programId}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual(updatedProgram);
+    expect(service.updateProgram).toHaveBeenCalledWith(
+      programId,
+      programUpdate,
+      'program-update-test',
+    );
   });
 
   it('creates seasons, programs, and sessions through POST endpoints', async () => {
@@ -265,6 +320,33 @@ describe('catalog service validation', () => {
     });
     expect(store.updateSession).not.toHaveBeenCalled();
   });
+
+  it('rejects invalid program defaults before persistence', async () => {
+    const store = {
+      updateProgram: vi.fn(),
+    } as unknown as CatalogStore;
+    const service = new CatalogService(store, localIdentity, organizationId);
+
+    await expect(
+      service.updateProgram(
+        programId,
+        {
+          ...programUpdate,
+          default_deposit_cents: 60000,
+          default_maximum_age: 12,
+          default_maximum_grade: 8,
+        },
+        'program-validation-test',
+      ),
+    ).rejects.toMatchObject({
+      fieldErrors: {
+        default_deposit_cents: 'Deposit cannot exceed tuition.',
+        default_maximum_age: 'Maximum age must be at least the minimum age.',
+        default_maximum_grade: 'Maximum grade must be at least the minimum grade.',
+      },
+    });
+    expect(store.updateProgram).not.toHaveBeenCalled();
+  });
 });
 
 const localIdentity: RequestIdentity = {
@@ -285,6 +367,7 @@ function fakeService(): CatalogServiceApi & {
   createProgram: ReturnType<typeof vi.fn<CatalogServiceApi['createProgram']>>;
   createSeason: ReturnType<typeof vi.fn<CatalogServiceApi['createSeason']>>;
   createSession: ReturnType<typeof vi.fn<CatalogServiceApi['createSession']>>;
+  updateProgram: ReturnType<typeof vi.fn<CatalogServiceApi['updateProgram']>>;
   updateSession: ReturnType<typeof vi.fn<CatalogServiceApi['updateSession']>>;
 } {
   return {
@@ -293,7 +376,14 @@ function fakeService(): CatalogServiceApi & {
     createSession: vi.fn().mockResolvedValue({
       ...detail,
       ...sessionCreate,
-      available_count: sessionCreate.capacity,
+      available_count: 24,
+      capacity: 24,
+      deposit_cents: 5000,
+      maximum_age: 17,
+      maximum_grade: 12,
+      minimum_age: 13,
+      minimum_grade: 9,
+      price_cents: 45000,
       id: '19cacb53-2ce9-48d8-a951-664e09d36cd9',
       program_name: detail.program_name,
       updated_at: detail.updated_at,
@@ -302,6 +392,7 @@ function fakeService(): CatalogServiceApi & {
     getContext: vi.fn().mockResolvedValue(context),
     getSession: vi.fn().mockResolvedValue(detail),
     listSessions: vi.fn().mockResolvedValue([summary]),
+    updateProgram: vi.fn().mockResolvedValue(updatedProgram),
     updateSession: vi.fn().mockResolvedValue({ ...detail, version: 2 }),
   };
 }

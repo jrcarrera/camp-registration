@@ -101,7 +101,16 @@
                           "code",
                           "name",
                           "delivery_mode",
-                          "description"
+                          "description",
+                          "default_capacity",
+                          "default_minimum_age",
+                          "default_maximum_age",
+                          "default_minimum_grade",
+                          "default_maximum_grade",
+                          "default_age_as_of",
+                          "default_price_cents",
+                          "default_deposit_cents",
+                          "default_waitlist_enabled"
                         ],
                         "properties": {
                           "id": {
@@ -140,6 +149,57 @@
                           "description": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "default_capacity": {
+                            "minimum": 1,
+                            "type": "integer"
+                          },
+                          "default_minimum_age": {
+                            "minimum": 0,
+                            "maximum": 21,
+                            "type": "integer"
+                          },
+                          "default_maximum_age": {
+                            "minimum": 0,
+                            "maximum": 21,
+                            "type": "integer"
+                          },
+                          "default_minimum_grade": {
+                            "minimum": 0,
+                            "maximum": 12,
+                            "type": "integer"
+                          },
+                          "default_maximum_grade": {
+                            "minimum": 0,
+                            "maximum": 12,
+                            "type": "integer"
+                          },
+                          "default_age_as_of": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "SESSION_START"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "SEASON_START"
+                                ]
+                              }
+                            ]
+                          },
+                          "default_price_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "default_deposit_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "default_waitlist_enabled": {
+                            "type": "boolean"
                           }
                         }
                       }
@@ -661,13 +721,6 @@
                   "ends_on",
                   "registration_opens_at",
                   "registration_closes_at",
-                  "capacity",
-                  "minimum_age",
-                  "maximum_age",
-                  "age_as_of",
-                  "price_cents",
-                  "deposit_cents",
-                  "waitlist_enabled",
                   "status"
                 ],
                 "properties": {
@@ -705,47 +758,6 @@
                   "registration_closes_at": {
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
                     "type": "string"
-                  },
-                  "capacity": {
-                    "minimum": 1,
-                    "type": "integer"
-                  },
-                  "minimum_age": {
-                    "minimum": 0,
-                    "maximum": 21,
-                    "type": "integer"
-                  },
-                  "maximum_age": {
-                    "minimum": 0,
-                    "maximum": 21,
-                    "type": "integer"
-                  },
-                  "age_as_of": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "enum": [
-                          "SESSION_START"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "SEASON_START"
-                        ]
-                      }
-                    ]
-                  },
-                  "price_cents": {
-                    "minimum": 0,
-                    "type": "integer"
-                  },
-                  "deposit_cents": {
-                    "minimum": 0,
-                    "type": "integer"
-                  },
-                  "waitlist_enabled": {
-                    "type": "boolean"
                   },
                   "status": {
                     "anyOf": [
@@ -815,6 +827,8 @@
                     "registration_closes_at",
                     "minimum_age",
                     "maximum_age",
+                    "minimum_grade",
+                    "maximum_grade",
                     "age_as_of",
                     "deposit_cents",
                     "waitlist_enabled",
@@ -956,6 +970,16 @@
                     "maximum_age": {
                       "minimum": 0,
                       "maximum": 21,
+                      "type": "integer"
+                    },
+                    "minimum_grade": {
+                      "minimum": 0,
+                      "maximum": 12,
+                      "type": "integer"
+                    },
+                    "maximum_grade": {
+                      "minimum": 0,
+                      "maximum": 12,
                       "type": "integer"
                     },
                     "age_as_of": {
@@ -1529,7 +1553,16 @@
                   "code",
                   "name",
                   "delivery_mode",
-                  "description"
+                  "description",
+                  "default_capacity",
+                  "default_minimum_age",
+                  "default_maximum_age",
+                  "default_minimum_grade",
+                  "default_maximum_grade",
+                  "default_age_as_of",
+                  "default_price_cents",
+                  "default_deposit_cents",
+                  "default_waitlist_enabled"
                 ],
                 "properties": {
                   "code": {
@@ -1563,6 +1596,57 @@
                     "minLength": 1,
                     "maxLength": 1000,
                     "type": "string"
+                  },
+                  "default_capacity": {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "default_minimum_age": {
+                    "minimum": 0,
+                    "maximum": 21,
+                    "type": "integer"
+                  },
+                  "default_maximum_age": {
+                    "minimum": 0,
+                    "maximum": 21,
+                    "type": "integer"
+                  },
+                  "default_minimum_grade": {
+                    "minimum": 0,
+                    "maximum": 12,
+                    "type": "integer"
+                  },
+                  "default_maximum_grade": {
+                    "minimum": 0,
+                    "maximum": 12,
+                    "type": "integer"
+                  },
+                  "default_age_as_of": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SESSION_START"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SEASON_START"
+                        ]
+                      }
+                    ]
+                  },
+                  "default_price_cents": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "default_deposit_cents": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "default_waitlist_enabled": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -1583,7 +1667,16 @@
                     "code",
                     "name",
                     "delivery_mode",
-                    "description"
+                    "description",
+                    "default_capacity",
+                    "default_minimum_age",
+                    "default_maximum_age",
+                    "default_minimum_grade",
+                    "default_maximum_grade",
+                    "default_age_as_of",
+                    "default_price_cents",
+                    "default_deposit_cents",
+                    "default_waitlist_enabled"
                   ],
                   "properties": {
                     "id": {
@@ -1622,6 +1715,455 @@
                     "description": {
                       "minLength": 1,
                       "type": "string"
+                    },
+                    "default_capacity": {
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "default_minimum_age": {
+                      "minimum": 0,
+                      "maximum": 21,
+                      "type": "integer"
+                    },
+                    "default_maximum_age": {
+                      "minimum": 0,
+                      "maximum": 21,
+                      "type": "integer"
+                    },
+                    "default_minimum_grade": {
+                      "minimum": 0,
+                      "maximum": 12,
+                      "type": "integer"
+                    },
+                    "default_maximum_grade": {
+                      "minimum": 0,
+                      "maximum": 12,
+                      "type": "integer"
+                    },
+                    "default_age_as_of": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SESSION_START"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SEASON_START"
+                          ]
+                        }
+                      ]
+                    },
+                    "default_price_cents": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "default_deposit_cents": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "default_waitlist_enabled": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/programs/{programId}": {
+      "patch": {
+        "tags": [
+          "programs"
+        ],
+        "description": "Update editable program defaults and metadata.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "name",
+                  "delivery_mode",
+                  "description",
+                  "default_capacity",
+                  "default_minimum_age",
+                  "default_maximum_age",
+                  "default_minimum_grade",
+                  "default_maximum_grade",
+                  "default_age_as_of",
+                  "default_price_cents",
+                  "default_deposit_cents",
+                  "default_waitlist_enabled"
+                ],
+                "properties": {
+                  "name": {
+                    "minLength": 1,
+                    "maxLength": 160,
+                    "type": "string"
+                  },
+                  "delivery_mode": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "DAY"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "OVERNIGHT"
+                        ]
+                      }
+                    ]
+                  },
+                  "description": {
+                    "minLength": 1,
+                    "maxLength": 1000,
+                    "type": "string"
+                  },
+                  "default_capacity": {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "default_minimum_age": {
+                    "minimum": 0,
+                    "maximum": 21,
+                    "type": "integer"
+                  },
+                  "default_maximum_age": {
+                    "minimum": 0,
+                    "maximum": 21,
+                    "type": "integer"
+                  },
+                  "default_minimum_grade": {
+                    "minimum": 0,
+                    "maximum": 12,
+                    "type": "integer"
+                  },
+                  "default_maximum_grade": {
+                    "minimum": 0,
+                    "maximum": 12,
+                    "type": "integer"
+                  },
+                  "default_age_as_of": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SESSION_START"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SEASON_START"
+                        ]
+                      }
+                    ]
+                  },
+                  "default_price_cents": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "default_deposit_cents": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "default_waitlist_enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "programId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "organization_id",
+                    "code",
+                    "name",
+                    "delivery_mode",
+                    "description",
+                    "default_capacity",
+                    "default_minimum_age",
+                    "default_maximum_age",
+                    "default_minimum_grade",
+                    "default_maximum_grade",
+                    "default_age_as_of",
+                    "default_price_cents",
+                    "default_deposit_cents",
+                    "default_waitlist_enabled"
+                  ],
+                  "properties": {
+                    "id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "organization_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "code": {
+                      "minLength": 1,
+                      "pattern": "^[A-Z0-9-]+$",
+                      "type": "string"
+                    },
+                    "name": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "delivery_mode": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "DAY"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "OVERNIGHT"
+                          ]
+                        }
+                      ]
+                    },
+                    "description": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "default_capacity": {
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "default_minimum_age": {
+                      "minimum": 0,
+                      "maximum": 21,
+                      "type": "integer"
+                    },
+                    "default_maximum_age": {
+                      "minimum": 0,
+                      "maximum": 21,
+                      "type": "integer"
+                    },
+                    "default_minimum_grade": {
+                      "minimum": 0,
+                      "maximum": 12,
+                      "type": "integer"
+                    },
+                    "default_maximum_grade": {
+                      "minimum": 0,
+                      "maximum": 12,
+                      "type": "integer"
+                    },
+                    "default_age_as_of": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SESSION_START"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SEASON_START"
+                          ]
+                        }
+                      ]
+                    },
+                    "default_price_cents": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "default_deposit_cents": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "default_waitlist_enabled": {
+                      "type": "boolean"
                     }
                   }
                 }
@@ -1838,6 +2380,8 @@
                     "registration_closes_at",
                     "minimum_age",
                     "maximum_age",
+                    "minimum_grade",
+                    "maximum_grade",
                     "age_as_of",
                     "deposit_cents",
                     "waitlist_enabled",
@@ -1979,6 +2523,16 @@
                     "maximum_age": {
                       "minimum": 0,
                       "maximum": 21,
+                      "type": "integer"
+                    },
+                    "minimum_grade": {
+                      "minimum": 0,
+                      "maximum": 12,
+                      "type": "integer"
+                    },
+                    "maximum_grade": {
+                      "minimum": 0,
+                      "maximum": 12,
                       "type": "integer"
                     },
                     "age_as_of": {
@@ -2489,6 +3043,8 @@
                     "registration_closes_at",
                     "minimum_age",
                     "maximum_age",
+                    "minimum_grade",
+                    "maximum_grade",
                     "age_as_of",
                     "deposit_cents",
                     "waitlist_enabled",
@@ -2630,6 +3186,16 @@
                     "maximum_age": {
                       "minimum": 0,
                       "maximum": 21,
+                      "type": "integer"
+                    },
+                    "minimum_grade": {
+                      "minimum": 0,
+                      "maximum": 12,
+                      "type": "integer"
+                    },
+                    "maximum_grade": {
+                      "minimum": 0,
+                      "maximum": 12,
                       "type": "integer"
                     },
                     "age_as_of": {

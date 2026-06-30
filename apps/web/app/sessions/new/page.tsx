@@ -25,20 +25,22 @@ export default async function NewSessionPage({
   const year = season.year;
   const session: SessionDetail = {
     active_hold_count: 0,
-    age_as_of: 'SESSION_START',
-    available_count: 20,
-    capacity: 20,
+    age_as_of: program.default_age_as_of,
+    available_count: program.default_capacity,
+    capacity: program.default_capacity,
     code: '',
     currency: 'USD',
-    deposit_cents: 0,
+    deposit_cents: program.default_deposit_cents,
     ends_on: `${year}-06-07`,
     id: '00000000-0000-4000-8000-000000000000',
-    maximum_age: 18,
-    minimum_age: 5,
+    maximum_age: program.default_maximum_age,
+    maximum_grade: program.default_maximum_grade,
+    minimum_age: program.default_minimum_age,
+    minimum_grade: program.default_minimum_grade,
     name: '',
     organization_id: catalog.organization.id,
     organization_timezone: catalog.organization.timezone,
-    price_cents: 0,
+    price_cents: program.default_price_cents,
     program_id: program.id,
     program_name: program.name,
     registered_campers: [],
@@ -55,7 +57,7 @@ export default async function NewSessionPage({
     waitlisted_count: 0,
     waitlisted_female_count: 0,
     waitlisted_male_count: 0,
-    waitlist_enabled: true,
+    waitlist_enabled: program.default_waitlist_enabled,
   };
 
   return (

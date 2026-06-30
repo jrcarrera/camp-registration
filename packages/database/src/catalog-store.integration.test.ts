@@ -226,37 +226,82 @@ describe('catalog store', () => {
       code: 'TEEN',
       delivery_mode: 'OVERNIGHT',
       description: 'Leadership program for teens.',
+      default_age_as_of: 'SESSION_START',
+      default_capacity: 24,
+      default_deposit_cents: 5000,
+      default_maximum_age: 17,
+      default_maximum_grade: 12,
+      default_minimum_age: 13,
+      default_minimum_grade: 9,
+      default_price_cents: 45000,
+      default_waitlist_enabled: true,
       id: programId,
       name: 'Teen Leadership',
     });
+    const updatedProgram = await store.updateProgram({
+      ...context,
+      programId,
+      requestId: 'catalog-update-program-request',
+      update: {
+        delivery_mode: 'OVERNIGHT',
+        description: 'Updated leadership program for teens.',
+        default_age_as_of: 'SESSION_START',
+        default_capacity: 28,
+        default_deposit_cents: 7500,
+        default_maximum_age: 18,
+        default_maximum_grade: 12,
+        default_minimum_age: 14,
+        default_minimum_grade: 9,
+        default_price_cents: 50000,
+        default_waitlist_enabled: false,
+        name: 'Teen Leadership Updated',
+      },
+    });
     const session = await store.createSession(context, {
-      age_as_of: 'SESSION_START',
-      capacity: 24,
       code: 'TEEN-2030-01',
-      deposit_cents: 5000,
       ends_on: '2030-07-09',
       id: sessionId,
-      maximum_age: 17,
-      minimum_age: 13,
       name: 'Teen Leadership Week 1',
-      price_cents: 45000,
       program_id: programId,
       registration_closes_at: '2030-07-01T05:00:00Z',
       registration_opens_at: '2030-01-15T15:00:00Z',
       season_id: seasonId,
       starts_on: '2030-07-05',
       status: 'DRAFT',
-      waitlist_enabled: true,
     });
 
     expect(season).toMatchObject({ id: seasonId, organization_id: organizationId, year: 2030 });
     expect(program).toMatchObject({ id: programId, organization_id: organizationId });
+    expect(updatedProgram).toMatchObject({
+      default_capacity: 28,
+      default_deposit_cents: 7500,
+      default_maximum_age: 18,
+      default_maximum_grade: 12,
+      default_minimum_age: 14,
+      default_minimum_grade: 9,
+      default_price_cents: 50000,
+      default_waitlist_enabled: false,
+      id: programId,
+      name: 'Teen Leadership Updated',
+      organization_id: organizationId,
+    });
     expect(session).toMatchObject({
       id: sessionId,
       organization_id: organizationId,
-      program_name: 'Teen Leadership',
+      program_name: 'Teen Leadership Updated',
       season_id: seasonId,
       version: 1,
+    });
+    expect(session).toMatchObject({
+      age_as_of: 'SESSION_START',
+      capacity: 28,
+      deposit_cents: 7500,
+      maximum_age: 18,
+      maximum_grade: 12,
+      minimum_age: 14,
+      minimum_grade: 9,
+      price_cents: 50000,
+      waitlist_enabled: false,
     });
     await expect(store.getSession(otherOrganizationId, sessionId)).resolves.toBeNull();
 
@@ -268,6 +313,7 @@ describe('catalog store', () => {
     await admin.end();
     expect(audit.rows).toEqual([
       { action: 'program.created' },
+      { action: 'program.updated' },
       { action: 'season.created' },
       { action: 'session.created' },
     ]);

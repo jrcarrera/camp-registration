@@ -17,7 +17,9 @@ interface FormState {
   code: string;
   deposit: string;
   ends_on: string;
+  maximum_grade: string;
   maximum_age: string;
+  minimum_grade: string;
   minimum_age: string;
   name: string;
   price: string;
@@ -80,7 +82,9 @@ function fromSession(session: SessionDetail): FormState {
     deposit: (session.deposit_cents / 100).toFixed(2),
     ends_on: session.ends_on,
     maximum_age: String(session.maximum_age),
+    maximum_grade: String(session.maximum_grade),
     minimum_age: String(session.minimum_age),
+    minimum_grade: String(session.minimum_grade),
     name: session.name,
     price: (session.price_cents / 100).toFixed(2),
     program_id: session.program_id,
@@ -104,6 +108,37 @@ function moneyToCents(value: string): number {
   return Math.round(Number(value) * 100);
 }
 
+function money(cents: number): string {
+  return new Intl.NumberFormat('en-US', { currency: 'USD', style: 'currency' }).format(cents / 100);
+}
+
+function programDefaults(
+  program: CatalogContext['programs'][number],
+): Pick<
+  FormState,
+  | 'age_as_of'
+  | 'capacity'
+  | 'deposit'
+  | 'maximum_age'
+  | 'maximum_grade'
+  | 'minimum_age'
+  | 'minimum_grade'
+  | 'price'
+  | 'waitlist_enabled'
+> {
+  return {
+    age_as_of: program.default_age_as_of,
+    capacity: String(program.default_capacity),
+    deposit: (program.default_deposit_cents / 100).toFixed(2),
+    maximum_age: String(program.default_maximum_age),
+    maximum_grade: String(program.default_maximum_grade),
+    minimum_age: String(program.default_minimum_age),
+    minimum_grade: String(program.default_minimum_grade),
+    price: (program.default_price_cents / 100).toFixed(2),
+    waitlist_enabled: program.default_waitlist_enabled,
+  };
+}
+
 export function SessionEditor({
   mode = 'edit',
   programs,
@@ -122,6 +157,10 @@ export function SessionEditor({
   const [message, setMessage] = useState<{ tone: 'error' | 'success'; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(baseline), [baseline, form]);
+  const selectedProgram = useMemo(
+    () => programs.find((program) => program.id === form.program_id),
+    [form.program_id, programs],
+  );
 
   useEffect(() => {
     const beforeUnload = (event: BeforeUnloadEvent) => {
@@ -147,6 +186,19 @@ export function SessionEditor({
     setForm((current) => ({ ...current, [key]: value }));
     setFieldErrors((current) =>
       Object.fromEntries(Object.entries(current).filter(([field]) => field !== key)),
+    );
+    setMessage(null);
+  };
+
+  const setProgram = (programId: string) => {
+    const program = programs.find((candidate) => candidate.id === programId);
+    setForm((current) => ({
+      ...current,
+      ...(mode === 'create' && program ? programDefaults(program) : {}),
+      program_id: programId,
+    }));
+    setFieldErrors((current) =>
+      Object.fromEntries(Object.entries(current).filter(([field]) => field !== 'program_id')),
     );
     setMessage(null);
   };
@@ -179,22 +231,15 @@ export function SessionEditor({
   const buildCreate = (): SessionCreate => {
     const update = buildUpdate();
     return {
-      age_as_of: update.age_as_of,
-      capacity: update.capacity,
       code: form.code.trim().toUpperCase(),
-      deposit_cents: update.deposit_cents,
       ends_on: update.ends_on,
-      maximum_age: update.maximum_age,
-      minimum_age: update.minimum_age,
       name: update.name,
-      price_cents: update.price_cents,
       program_id: update.program_id,
       registration_closes_at: update.registration_closes_at,
       registration_opens_at: update.registration_opens_at,
       season_id: form.season_id,
       starts_on: update.starts_on,
       status: update.status,
-      waitlist_enabled: update.waitlist_enabled,
     };
   };
 
@@ -292,7 +337,7 @@ export function SessionEditor({
             <select
               name="program_id"
               value={form.program_id}
-              onChange={(event) => set('program_id', event.target.value)}
+              onChange={(event) => setProgram(event.target.value)}
             >
               {programs.map((program) => (
                 <option key={program.id} value={program.id}>
@@ -376,104 +421,156 @@ export function SessionEditor({
 
       <section className="editorSection" aria-labelledby="eligibility-capacity">
         <div className="editorSectionHeading">
-          <h2 id="eligibility-capacity">Eligibility and capacity</h2>
-          <p>Enrollment totals are calculated from confirmed registrations and active holds.</p>
+          <h2 id="eligibility-capacity">
+            {mode === 'create' ? 'Program defaults' : 'Eligibility and capacity'}
+          </h2>
+          <p>
+            {mode === 'create'
+              ? 'New sessions inherit eligibility, capacity, pricing, and waitlist settings from the selected program.'
+              : 'Enrollment totals are calculated from confirmed registrations and active holds.'}
+          </p>
         </div>
-        <div className="fieldGrid fieldGridThree">
-          <Field label="Minimum age" error={fieldErrors.minimum_age}>
-            <input
-              name="minimum_age"
-              type="number"
-              min="0"
-              max="21"
-              value={form.minimum_age}
-              onChange={(event) => set('minimum_age', event.target.value)}
-              required
-            />
-          </Field>
-          <Field label="Maximum age" error={fieldErrors.maximum_age}>
-            <input
-              name="maximum_age"
-              type="number"
-              min="0"
-              max="21"
-              value={form.maximum_age}
-              onChange={(event) => set('maximum_age', event.target.value)}
-              required
-            />
-          </Field>
-          <Field label="Age evaluated on" error={fieldErrors.age_as_of}>
-            <select
-              name="age_as_of"
-              value={form.age_as_of}
-              onChange={(event) => set('age_as_of', event.target.value as FormState['age_as_of'])}
-            >
-              <option value="SESSION_START">Session start</option>
-              <option value="SEASON_START">Season start</option>
-            </select>
-          </Field>
-          <Field label="Capacity" error={fieldErrors.capacity}>
-            <input
-              name="capacity"
-              type="number"
-              min={session.registered_count + session.active_hold_count || 1}
-              value={form.capacity}
-              onChange={(event) => set('capacity', event.target.value)}
-              required
-            />
-          </Field>
-          <div className="readOnlyMetric">
-            <span>Registered</span>
-            <strong>{session.registered_count}</strong>
+        {mode === 'create' ? (
+          <div className="fieldGrid fieldGridThree">
+            <div className="readOnlyMetric">
+              <span>Age range</span>
+              <strong>
+                {form.minimum_age}-{form.maximum_age}
+              </strong>
+            </div>
+            <div className="readOnlyMetric">
+              <span>Grade range</span>
+              <strong>
+                {form.minimum_grade === '0' ? 'K' : form.minimum_grade}-
+                {form.maximum_grade === '0' ? 'K' : form.maximum_grade}
+              </strong>
+            </div>
+            <div className="readOnlyMetric">
+              <span>Age evaluated on</span>
+              <strong>
+                {form.age_as_of === 'SESSION_START' ? 'Session start' : 'Season start'}
+              </strong>
+            </div>
+            <div className="readOnlyMetric">
+              <span>Capacity</span>
+              <strong>{form.capacity}</strong>
+            </div>
+            <div className="readOnlyMetric">
+              <span>Tuition</span>
+              <strong>
+                {selectedProgram ? money(selectedProgram.default_price_cents) : '$0.00'}
+              </strong>
+            </div>
+            <div className="readOnlyMetric">
+              <span>Deposit</span>
+              <strong>
+                {selectedProgram ? money(selectedProgram.default_deposit_cents) : '$0.00'}
+              </strong>
+            </div>
+            <div className="readOnlyMetric">
+              <span>Waitlist</span>
+              <strong>{form.waitlist_enabled ? 'Enabled' : 'Disabled'}</strong>
+            </div>
           </div>
-          <div className="readOnlyMetric">
-            <span>Active holds</span>
-            <strong>{session.active_hold_count}</strong>
+        ) : (
+          <div className="fieldGrid fieldGridThree">
+            <Field label="Minimum age" error={fieldErrors.minimum_age}>
+              <input
+                name="minimum_age"
+                type="number"
+                min="0"
+                max="21"
+                value={form.minimum_age}
+                onChange={(event) => set('minimum_age', event.target.value)}
+                required
+              />
+            </Field>
+            <Field label="Maximum age" error={fieldErrors.maximum_age}>
+              <input
+                name="maximum_age"
+                type="number"
+                min="0"
+                max="21"
+                value={form.maximum_age}
+                onChange={(event) => set('maximum_age', event.target.value)}
+                required
+              />
+            </Field>
+            <Field label="Age evaluated on" error={fieldErrors.age_as_of}>
+              <select
+                name="age_as_of"
+                value={form.age_as_of}
+                onChange={(event) => set('age_as_of', event.target.value as FormState['age_as_of'])}
+              >
+                <option value="SESSION_START">Session start</option>
+                <option value="SEASON_START">Season start</option>
+              </select>
+            </Field>
+            <Field label="Capacity" error={fieldErrors.capacity}>
+              <input
+                name="capacity"
+                type="number"
+                min={session.registered_count + session.active_hold_count || 1}
+                value={form.capacity}
+                onChange={(event) => set('capacity', event.target.value)}
+                required
+              />
+            </Field>
+            <div className="readOnlyMetric">
+              <span>Registered</span>
+              <strong>{session.registered_count}</strong>
+            </div>
+            <div className="readOnlyMetric">
+              <span>Active holds</span>
+              <strong>{session.active_hold_count}</strong>
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
-      <section className="editorSection" aria-labelledby="pricing-waitlist">
-        <div className="editorSectionHeading">
-          <h2 id="pricing-waitlist">Pricing and waitlist</h2>
-          <p>Amounts are stored as USD cents and displayed as dollars.</p>
-        </div>
-        <div className="fieldGrid">
-          <Field label="Tuition" error={fieldErrors.price_cents} prefix="$">
-            <input
-              name="price"
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.price}
-              onChange={(event) => set('price', event.target.value)}
-              required
-            />
-          </Field>
-          <Field label="Deposit" error={fieldErrors.deposit_cents} prefix="$">
-            <input
-              name="deposit"
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.deposit}
-              onChange={(event) => set('deposit', event.target.value)}
-              required
-            />
-          </Field>
-          <label className="toggleField fieldWide">
-            <input
-              type="checkbox"
-              checked={form.waitlist_enabled}
-              onChange={(event) => set('waitlist_enabled', event.target.checked)}
-            />
-            <span>
-              <strong>Enable waitlist</strong>
-              <small>Allow families to join an ordered waitlist when capacity is full.</small>
-            </span>
-          </label>
-        </div>
-      </section>
+      {mode === 'edit' && (
+        <section className="editorSection" aria-labelledby="pricing-waitlist">
+          <div className="editorSectionHeading">
+            <h2 id="pricing-waitlist">Pricing and waitlist</h2>
+            <p>Amounts are stored as USD cents and displayed as dollars.</p>
+          </div>
+          <div className="fieldGrid">
+            <Field label="Tuition" error={fieldErrors.price_cents} prefix="$">
+              <input
+                name="price"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.price}
+                onChange={(event) => set('price', event.target.value)}
+                required
+              />
+            </Field>
+            <Field label="Deposit" error={fieldErrors.deposit_cents} prefix="$">
+              <input
+                name="deposit"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.deposit}
+                onChange={(event) => set('deposit', event.target.value)}
+                required
+              />
+            </Field>
+            <label className="toggleField fieldWide">
+              <input
+                type="checkbox"
+                checked={form.waitlist_enabled}
+                onChange={(event) => set('waitlist_enabled', event.target.checked)}
+              />
+              <span>
+                <strong>Enable waitlist</strong>
+                <small>Allow families to join an ordered waitlist when capacity is full.</small>
+              </span>
+            </label>
+          </div>
+        </section>
+      )}
 
       <div className="editorActions">
         <span className="dirtyIndicator" aria-live="polite">
