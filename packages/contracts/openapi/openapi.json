@@ -156,12 +156,12 @@
                           },
                           "default_minimum_age": {
                             "minimum": 0,
-                            "maximum": 21,
+                            "maximum": 120,
                             "type": "integer"
                           },
                           "default_maximum_age": {
                             "minimum": 0,
-                            "maximum": 21,
+                            "maximum": 120,
                             "type": "integer"
                           },
                           "default_minimum_grade": {
@@ -964,12 +964,12 @@
                     },
                     "minimum_age": {
                       "minimum": 0,
-                      "maximum": 21,
+                      "maximum": 120,
                       "type": "integer"
                     },
                     "maximum_age": {
                       "minimum": 0,
-                      "maximum": 21,
+                      "maximum": 120,
                       "type": "integer"
                     },
                     "minimum_grade": {
@@ -1603,12 +1603,12 @@
                   },
                   "default_minimum_age": {
                     "minimum": 0,
-                    "maximum": 21,
+                    "maximum": 120,
                     "type": "integer"
                   },
                   "default_maximum_age": {
                     "minimum": 0,
-                    "maximum": 21,
+                    "maximum": 120,
                     "type": "integer"
                   },
                   "default_minimum_grade": {
@@ -1722,12 +1722,12 @@
                     },
                     "default_minimum_age": {
                       "minimum": 0,
-                      "maximum": 21,
+                      "maximum": 120,
                       "type": "integer"
                     },
                     "default_maximum_age": {
                       "minimum": 0,
-                      "maximum": 21,
+                      "maximum": 120,
                       "type": "integer"
                     },
                     "default_minimum_grade": {
@@ -1990,12 +1990,12 @@
                   },
                   "default_minimum_age": {
                     "minimum": 0,
-                    "maximum": 21,
+                    "maximum": 120,
                     "type": "integer"
                   },
                   "default_maximum_age": {
                     "minimum": 0,
-                    "maximum": 21,
+                    "maximum": 120,
                     "type": "integer"
                   },
                   "default_minimum_grade": {
@@ -2120,12 +2120,12 @@
                     },
                     "default_minimum_age": {
                       "minimum": 0,
-                      "maximum": 21,
+                      "maximum": 120,
                       "type": "integer"
                     },
                     "default_maximum_age": {
                       "minimum": 0,
-                      "maximum": 21,
+                      "maximum": 120,
                       "type": "integer"
                     },
                     "default_minimum_grade": {
@@ -2517,12 +2517,12 @@
                     },
                     "minimum_age": {
                       "minimum": 0,
-                      "maximum": 21,
+                      "maximum": 120,
                       "type": "integer"
                     },
                     "maximum_age": {
                       "minimum": 0,
-                      "maximum": 21,
+                      "maximum": 120,
                       "type": "integer"
                     },
                     "minimum_grade": {
@@ -2929,12 +2929,12 @@
                   },
                   "minimum_age": {
                     "minimum": 0,
-                    "maximum": 21,
+                    "maximum": 120,
                     "type": "integer"
                   },
                   "maximum_age": {
                     "minimum": 0,
-                    "maximum": 21,
+                    "maximum": 120,
                     "type": "integer"
                   },
                   "age_as_of": {
@@ -3180,12 +3180,12 @@
                     },
                     "minimum_age": {
                       "minimum": 0,
-                      "maximum": 21,
+                      "maximum": 120,
                       "type": "integer"
                     },
                     "maximum_age": {
                       "minimum": 0,
-                      "maximum": 21,
+                      "maximum": 120,
                       "type": "integer"
                     },
                     "minimum_grade": {
@@ -3846,6 +3846,7 @@
                           "identity_subject",
                           "first_name",
                           "last_name",
+                          "birth_date",
                           "email",
                           "phone",
                           "account_owner",
@@ -3889,6 +3890,17 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "email": {
                             "anyOf": [
@@ -3955,9 +3967,11 @@
                           "id",
                           "organization_id",
                           "family_id",
+                          "adult_id",
                           "first_name",
                           "last_name",
                           "birth_date",
+                          "email",
                           "preferred_name",
                           "gender",
                           "school_grade",
@@ -3980,6 +3994,17 @@
                             "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "type": "string"
                           },
+                          "adult_id": {
+                            "anyOf": [
+                              {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "first_name": {
                             "minLength": 1,
                             "type": "string"
@@ -3991,6 +4016,18 @@
                           "birth_date": {
                             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                             "type": "string"
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "preferred_name": {
                             "anyOf": [
@@ -4174,6 +4211,8 @@
                           "family_id",
                           "first_name",
                           "last_name",
+                          "birth_date",
+                          "email",
                           "phone",
                           "relationship",
                           "emergency_contact",
@@ -4203,6 +4242,29 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "phone": {
                             "minLength": 1,
@@ -4489,6 +4551,7 @@
                           "identity_subject",
                           "first_name",
                           "last_name",
+                          "birth_date",
                           "email",
                           "phone",
                           "account_owner",
@@ -4532,6 +4595,17 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "email": {
                             "anyOf": [
@@ -4597,9 +4671,11 @@
                           "id",
                           "organization_id",
                           "family_id",
+                          "adult_id",
                           "first_name",
                           "last_name",
                           "birth_date",
+                          "email",
                           "preferred_name",
                           "gender",
                           "school_grade",
@@ -4622,6 +4698,17 @@
                             "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "type": "string"
                           },
+                          "adult_id": {
+                            "anyOf": [
+                              {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "first_name": {
                             "minLength": 1,
                             "type": "string"
@@ -4633,6 +4720,18 @@
                           "birth_date": {
                             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                             "type": "string"
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "preferred_name": {
                             "anyOf": [
@@ -4814,6 +4913,8 @@
                           "family_id",
                           "first_name",
                           "last_name",
+                          "birth_date",
+                          "email",
                           "phone",
                           "relationship",
                           "emergency_contact",
@@ -4843,6 +4944,29 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "phone": {
                             "minLength": 1,
@@ -5152,6 +5276,7 @@
                           "identity_subject",
                           "first_name",
                           "last_name",
+                          "birth_date",
                           "email",
                           "phone",
                           "account_owner",
@@ -5195,6 +5320,17 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "email": {
                             "anyOf": [
@@ -5260,9 +5396,11 @@
                           "id",
                           "organization_id",
                           "family_id",
+                          "adult_id",
                           "first_name",
                           "last_name",
                           "birth_date",
+                          "email",
                           "preferred_name",
                           "gender",
                           "school_grade",
@@ -5285,6 +5423,17 @@
                             "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "type": "string"
                           },
+                          "adult_id": {
+                            "anyOf": [
+                              {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "first_name": {
                             "minLength": 1,
                             "type": "string"
@@ -5296,6 +5445,18 @@
                           "birth_date": {
                             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                             "type": "string"
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "preferred_name": {
                             "anyOf": [
@@ -5477,6 +5638,8 @@
                           "family_id",
                           "first_name",
                           "last_name",
+                          "birth_date",
+                          "email",
                           "phone",
                           "relationship",
                           "emergency_contact",
@@ -5506,6 +5669,29 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "phone": {
                             "minLength": 1,
@@ -5744,6 +5930,17 @@
                     "maxLength": 100,
                     "type": "string"
                   },
+                  "birth_date": {
+                    "anyOf": [
+                      {
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "email": {
                     "anyOf": [
                       {
@@ -5870,6 +6067,7 @@
                           "identity_subject",
                           "first_name",
                           "last_name",
+                          "birth_date",
                           "email",
                           "phone",
                           "account_owner",
@@ -5913,6 +6111,17 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "email": {
                             "anyOf": [
@@ -5978,9 +6187,11 @@
                           "id",
                           "organization_id",
                           "family_id",
+                          "adult_id",
                           "first_name",
                           "last_name",
                           "birth_date",
+                          "email",
                           "preferred_name",
                           "gender",
                           "school_grade",
@@ -6003,6 +6214,17 @@
                             "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "type": "string"
                           },
+                          "adult_id": {
+                            "anyOf": [
+                              {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "first_name": {
                             "minLength": 1,
                             "type": "string"
@@ -6014,6 +6236,18 @@
                           "birth_date": {
                             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                             "type": "string"
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "preferred_name": {
                             "anyOf": [
@@ -6195,6 +6429,8 @@
                           "family_id",
                           "first_name",
                           "last_name",
+                          "birth_date",
+                          "email",
                           "phone",
                           "relationship",
                           "emergency_contact",
@@ -6224,6 +6460,29 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "phone": {
                             "minLength": 1,
@@ -6462,6 +6721,17 @@
                     "maxLength": 100,
                     "type": "string"
                   },
+                  "birth_date": {
+                    "anyOf": [
+                      {
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "email": {
                     "anyOf": [
                       {
@@ -6601,6 +6871,7 @@
                           "identity_subject",
                           "first_name",
                           "last_name",
+                          "birth_date",
                           "email",
                           "phone",
                           "account_owner",
@@ -6644,6 +6915,17 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "email": {
                             "anyOf": [
@@ -6709,9 +6991,11 @@
                           "id",
                           "organization_id",
                           "family_id",
+                          "adult_id",
                           "first_name",
                           "last_name",
                           "birth_date",
+                          "email",
                           "preferred_name",
                           "gender",
                           "school_grade",
@@ -6734,6 +7018,17 @@
                             "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "type": "string"
                           },
+                          "adult_id": {
+                            "anyOf": [
+                              {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "first_name": {
                             "minLength": 1,
                             "type": "string"
@@ -6745,6 +7040,18 @@
                           "birth_date": {
                             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                             "type": "string"
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "preferred_name": {
                             "anyOf": [
@@ -6926,6 +7233,8 @@
                           "family_id",
                           "first_name",
                           "last_name",
+                          "birth_date",
+                          "email",
                           "phone",
                           "relationship",
                           "emergency_contact",
@@ -6955,6 +7264,29 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "phone": {
                             "minLength": 1,
@@ -7177,6 +7509,17 @@
                   "birth_date"
                 ],
                 "properties": {
+                  "adult_id": {
+                    "anyOf": [
+                      {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "first_name": {
                     "minLength": 1,
                     "maxLength": 100,
@@ -7190,6 +7533,18 @@
                   "birth_date": {
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                     "type": "string"
+                  },
+                  "email": {
+                    "anyOf": [
+                      {
+                        "maxLength": 254,
+                        "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "preferred_name": {
                     "anyOf": [
@@ -7343,6 +7698,7 @@
                           "identity_subject",
                           "first_name",
                           "last_name",
+                          "birth_date",
                           "email",
                           "phone",
                           "account_owner",
@@ -7386,6 +7742,17 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "email": {
                             "anyOf": [
@@ -7451,9 +7818,11 @@
                           "id",
                           "organization_id",
                           "family_id",
+                          "adult_id",
                           "first_name",
                           "last_name",
                           "birth_date",
+                          "email",
                           "preferred_name",
                           "gender",
                           "school_grade",
@@ -7476,6 +7845,17 @@
                             "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "type": "string"
                           },
+                          "adult_id": {
+                            "anyOf": [
+                              {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "first_name": {
                             "minLength": 1,
                             "type": "string"
@@ -7487,6 +7867,18 @@
                           "birth_date": {
                             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                             "type": "string"
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "preferred_name": {
                             "anyOf": [
@@ -7668,6 +8060,8 @@
                           "family_id",
                           "first_name",
                           "last_name",
+                          "birth_date",
+                          "email",
                           "phone",
                           "relationship",
                           "emergency_contact",
@@ -7697,6 +8091,29 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "phone": {
                             "minLength": 1,
@@ -7919,6 +8336,17 @@
                   "version"
                 ],
                 "properties": {
+                  "adult_id": {
+                    "anyOf": [
+                      {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "first_name": {
                     "minLength": 1,
                     "maxLength": 100,
@@ -7932,6 +8360,18 @@
                   "birth_date": {
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                     "type": "string"
+                  },
+                  "email": {
+                    "anyOf": [
+                      {
+                        "maxLength": 254,
+                        "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "preferred_name": {
                     "anyOf": [
@@ -8098,6 +8538,7 @@
                           "identity_subject",
                           "first_name",
                           "last_name",
+                          "birth_date",
                           "email",
                           "phone",
                           "account_owner",
@@ -8141,6 +8582,17 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "email": {
                             "anyOf": [
@@ -8206,9 +8658,11 @@
                           "id",
                           "organization_id",
                           "family_id",
+                          "adult_id",
                           "first_name",
                           "last_name",
                           "birth_date",
+                          "email",
                           "preferred_name",
                           "gender",
                           "school_grade",
@@ -8231,6 +8685,17 @@
                             "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "type": "string"
                           },
+                          "adult_id": {
+                            "anyOf": [
+                              {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "first_name": {
                             "minLength": 1,
                             "type": "string"
@@ -8242,6 +8707,18 @@
                           "birth_date": {
                             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                             "type": "string"
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "preferred_name": {
                             "anyOf": [
@@ -8423,6 +8900,8 @@
                           "family_id",
                           "first_name",
                           "last_name",
+                          "birth_date",
+                          "email",
                           "phone",
                           "relationship",
                           "emergency_contact",
@@ -8452,6 +8931,29 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "phone": {
                             "minLength": 1,
@@ -8788,6 +9290,7 @@
                               "identity_subject",
                               "first_name",
                               "last_name",
+                              "birth_date",
                               "email",
                               "phone",
                               "account_owner",
@@ -8831,6 +9334,17 @@
                               "last_name": {
                                 "minLength": 1,
                                 "type": "string"
+                              },
+                              "birth_date": {
+                                "anyOf": [
+                                  {
+                                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
                               },
                               "email": {
                                 "anyOf": [
@@ -8896,9 +9410,11 @@
                               "id",
                               "organization_id",
                               "family_id",
+                              "adult_id",
                               "first_name",
                               "last_name",
                               "birth_date",
+                              "email",
                               "preferred_name",
                               "gender",
                               "school_grade",
@@ -8921,6 +9437,17 @@
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               },
+                              "adult_id": {
+                                "anyOf": [
+                                  {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
                               "first_name": {
                                 "minLength": 1,
                                 "type": "string"
@@ -8932,6 +9459,18 @@
                               "birth_date": {
                                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                                 "type": "string"
+                              },
+                              "email": {
+                                "anyOf": [
+                                  {
+                                    "maxLength": 254,
+                                    "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
                               },
                               "preferred_name": {
                                 "anyOf": [
@@ -9113,6 +9652,8 @@
                               "family_id",
                               "first_name",
                               "last_name",
+                              "birth_date",
+                              "email",
                               "phone",
                               "relationship",
                               "emergency_contact",
@@ -9142,6 +9683,29 @@
                               "last_name": {
                                 "minLength": 1,
                                 "type": "string"
+                              },
+                              "birth_date": {
+                                "anyOf": [
+                                  {
+                                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "email": {
+                                "anyOf": [
+                                  {
+                                    "maxLength": 254,
+                                    "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
                               },
                               "phone": {
                                 "minLength": 1,
@@ -9469,6 +10033,29 @@
                     "maxLength": 100,
                     "type": "string"
                   },
+                  "birth_date": {
+                    "anyOf": [
+                      {
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "email": {
+                    "anyOf": [
+                      {
+                        "maxLength": 254,
+                        "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "phone": {
                     "minLength": 1,
                     "maxLength": 40,
@@ -9580,6 +10167,7 @@
                           "identity_subject",
                           "first_name",
                           "last_name",
+                          "birth_date",
                           "email",
                           "phone",
                           "account_owner",
@@ -9623,6 +10211,17 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "email": {
                             "anyOf": [
@@ -9688,9 +10287,11 @@
                           "id",
                           "organization_id",
                           "family_id",
+                          "adult_id",
                           "first_name",
                           "last_name",
                           "birth_date",
+                          "email",
                           "preferred_name",
                           "gender",
                           "school_grade",
@@ -9713,6 +10314,17 @@
                             "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "type": "string"
                           },
+                          "adult_id": {
+                            "anyOf": [
+                              {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "first_name": {
                             "minLength": 1,
                             "type": "string"
@@ -9724,6 +10336,18 @@
                           "birth_date": {
                             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                             "type": "string"
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "preferred_name": {
                             "anyOf": [
@@ -9905,6 +10529,8 @@
                           "family_id",
                           "first_name",
                           "last_name",
+                          "birth_date",
+                          "email",
                           "phone",
                           "relationship",
                           "emergency_contact",
@@ -9934,6 +10560,29 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "phone": {
                             "minLength": 1,
@@ -10170,6 +10819,29 @@
                     "maxLength": 100,
                     "type": "string"
                   },
+                  "birth_date": {
+                    "anyOf": [
+                      {
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "email": {
+                    "anyOf": [
+                      {
+                        "maxLength": 254,
+                        "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "phone": {
                     "minLength": 1,
                     "maxLength": 40,
@@ -10294,6 +10966,7 @@
                           "identity_subject",
                           "first_name",
                           "last_name",
+                          "birth_date",
                           "email",
                           "phone",
                           "account_owner",
@@ -10337,6 +11010,17 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "email": {
                             "anyOf": [
@@ -10402,9 +11086,11 @@
                           "id",
                           "organization_id",
                           "family_id",
+                          "adult_id",
                           "first_name",
                           "last_name",
                           "birth_date",
+                          "email",
                           "preferred_name",
                           "gender",
                           "school_grade",
@@ -10427,6 +11113,17 @@
                             "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "type": "string"
                           },
+                          "adult_id": {
+                            "anyOf": [
+                              {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "first_name": {
                             "minLength": 1,
                             "type": "string"
@@ -10438,6 +11135,18 @@
                           "birth_date": {
                             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                             "type": "string"
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "preferred_name": {
                             "anyOf": [
@@ -10619,6 +11328,8 @@
                           "family_id",
                           "first_name",
                           "last_name",
+                          "birth_date",
+                          "email",
                           "phone",
                           "relationship",
                           "emergency_contact",
@@ -10648,6 +11359,29 @@
                           "last_name": {
                             "minLength": 1,
                             "type": "string"
+                          },
+                          "birth_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "maxLength": 254,
+                                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "phone": {
                             "minLength": 1,

@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createDatabaseClient, type DatabaseClient } from './client.js';
 import {
   FamilyConflictError,
+  FamilyDuplicateError,
   FamilyRegistrationDuplicateError,
   FamilyRegistrationEligibilityError,
   FamilyStore,
@@ -91,6 +92,7 @@ describe('family store', () => {
     const withAdult = await store.createAdult(context, {
       account_owner: true,
       authorized_pickup: true,
+      birth_date: '1984-05-12',
       can_make_payments: true,
       can_manage_family: true,
       can_register: true,
@@ -115,8 +117,11 @@ describe('family store', () => {
 
     const withCamper = await store.createCamper(context, {
       accessibility_needs: null,
+      adult_id: null,
       birth_date: '2017-03-08',
       cabin_preference: null,
+      email: 'avery.smith@example.test',
+      email_normalized: 'avery.smith@example.test',
       family_id: familyId,
       first_name: 'Avery',
       gender: 'Female',
@@ -133,6 +138,9 @@ describe('family store', () => {
 
     const withContact = await store.createContact(context, {
       authorized_pickup: true,
+      birth_date: '1979-11-20',
+      email: 'taylor.jones@example.test',
+      email_normalized: 'taylor.jones@example.test',
       emergency_contact: true,
       emergency_priority: 1,
       family_id: familyId,
@@ -205,6 +213,7 @@ describe('family store', () => {
     await store.createAdult(context, {
       account_owner: true,
       authorized_pickup: true,
+      birth_date: null,
       can_make_payments: true,
       can_manage_family: true,
       can_register: true,
@@ -223,6 +232,7 @@ describe('family store', () => {
     const withSecondOwner = await store.createAdult(context, {
       account_owner: true,
       authorized_pickup: true,
+      birth_date: null,
       can_make_payments: true,
       can_manage_family: true,
       can_register: true,
@@ -286,8 +296,11 @@ describe('family store', () => {
     });
     await store.createCamper(context, {
       accessibility_needs: null,
+      adult_id: null,
       birth_date: dates.birthDate,
       cabin_preference: null,
+      email: null,
+      email_normalized: null,
       family_id: firstFamilyId,
       first_name: 'Jordan',
       gender: 'Female',
@@ -302,8 +315,11 @@ describe('family store', () => {
     });
     await store.createCamper(context, {
       accessibility_needs: null,
+      adult_id: null,
       birth_date: dates.birthDate,
       cabin_preference: null,
+      email: null,
+      email_normalized: null,
       family_id: secondFamilyId,
       first_name: 'Sam',
       gender: 'Male',
@@ -417,8 +433,11 @@ describe('family store', () => {
     });
     await store.createCamper(context, {
       accessibility_needs: null,
+      adult_id: null,
       birth_date: `${new Date(dates.startsOn).getUTCFullYear() - 12}-04-12`,
       cabin_preference: null,
+      email: null,
+      email_normalized: null,
       family_id: eligibleFamilyId,
       first_name: 'Riley',
       gender: 'Female',
@@ -433,8 +452,11 @@ describe('family store', () => {
     });
     await store.createCamper(context, {
       accessibility_needs: null,
+      adult_id: null,
       birth_date: `${new Date(dates.startsOn).getUTCFullYear() - 12}-04-12`,
       cabin_preference: null,
+      email: null,
+      email_normalized: null,
       family_id: ineligibleFamilyId,
       first_name: 'Avery',
       gender: 'Male',
@@ -467,6 +489,118 @@ describe('family store', () => {
         source: 'PARENT',
       }),
     ).rejects.toBeInstanceOf(FamilyRegistrationEligibilityError);
+  });
+
+  it('registers adult-linked campers by age without requiring school grade', async () => {
+    const store = new FamilyStore(runtimeDatabase);
+    const dates = checkoutFixtureDates();
+    const sessionId = '7b143604-3d83-4e02-ab0c-d3b8c8d35132';
+    const familyId = '60ae5ff2-e6d6-4d29-9c67-8b12782723f7';
+    const adultId = '388db955-6e22-4f58-a9c4-a0cda183fbdd';
+    const camperId = 'be74c981-c9a8-44ad-875b-0eb6dfb55c54';
+    const duplicateCamperId = '13f8a5b5-2e02-4b13-b47d-8f0fa02d316f';
+    const registrationId = '1c841302-9324-48f8-ab20-06f5e4ad65e6';
+    const adultBirthDate = `${new Date(dates.startsOn).getUTCFullYear() - 42}-04-12`;
+    const context = {
+      actorId: 'integration-admin',
+      organizationId,
+      requestId: 'adult-camper-registration-test',
+    };
+
+    const admin = new Pool({ connectionString: migrationUrl });
+    await admin.query(
+      `INSERT INTO sessions (
+         id, organization_id, season_id, program_id, code, name, starts_on, ends_on,
+         registration_opens_at, registration_closes_at, capacity, minimum_age,
+         maximum_age, age_as_of, currency, price_cents, deposit_cents,
+         waitlist_enabled, status
+       ) VALUES (
+         $1, $2, 'd5d8a8b7-c4ff-43be-a849-60cbd5914c85',
+         '6d75c29b-e424-4da6-8191-db70859382fd', 'FAM-CHECKOUT-01',
+         'Family Camp Checkout Test', $3, $4, $5, $6, 20, 18, 99,
+         'SESSION_START', 'USD', 52500, 10000, true, 'PUBLISHED'
+       )`,
+      [sessionId, organizationId, dates.startsOn, dates.endsOn, dates.opensAt, dates.closesAt],
+    );
+    await admin.end();
+
+    await store.createFamily(context, { family_name: 'Adult Camper Family', id: familyId });
+    await store.createAdult(context, {
+      account_owner: true,
+      authorized_pickup: true,
+      birth_date: adultBirthDate,
+      can_make_payments: true,
+      can_manage_family: true,
+      can_register: true,
+      email: 'morgan.parent@example.test',
+      email_normalized: 'morgan.parent@example.test',
+      emergency_contact: true,
+      family_id: familyId,
+      first_name: 'Morgan',
+      id: adultId,
+      identity_subject: null,
+      last_name: 'Parent',
+      phone: '555-0142',
+      receives_operational_communication: true,
+    });
+    await store.createCamper(context, {
+      accessibility_needs: null,
+      adult_id: adultId,
+      birth_date: adultBirthDate,
+      cabin_preference: null,
+      email: 'morgan.parent@example.test',
+      email_normalized: 'morgan.parent@example.test',
+      family_id: familyId,
+      first_name: 'Morgan',
+      gender: null,
+      id: camperId,
+      last_name: 'Parent',
+      preferred_name: null,
+      school_grade: null,
+    });
+
+    await expect(
+      store.createCamper(context, {
+        accessibility_needs: null,
+        adult_id: adultId,
+        birth_date: adultBirthDate,
+        cabin_preference: null,
+        email: 'morgan.parent@example.test',
+        email_normalized: 'morgan.parent@example.test',
+        family_id: familyId,
+        first_name: 'Morgan',
+        gender: null,
+        id: duplicateCamperId,
+        last_name: 'Parent',
+        preferred_name: null,
+        school_grade: null,
+      }),
+    ).rejects.toBeInstanceOf(FamilyDuplicateError);
+
+    await expect(
+      store.createRegistration(context, {
+        camper_id: camperId,
+        family_id: familyId,
+        id: registrationId,
+        session_id: sessionId,
+        source: 'PARENT',
+      }),
+    ).resolves.toMatchObject({
+      family: {
+        campers: [
+          expect.objectContaining({
+            adult_id: adultId,
+            email: 'morgan.parent@example.test',
+            school_grade: null,
+          }),
+        ],
+      },
+      registration: {
+        registration_id: registrationId,
+        session_id: sessionId,
+        status: 'CONFIRMED',
+      },
+    });
   });
 
   it('rejects parent registration outside the registration window', async () => {
@@ -508,8 +642,11 @@ describe('family store', () => {
     await store.createFamily(context, { family_name: 'Window Family', id: familyId });
     await store.createCamper(context, {
       accessibility_needs: null,
+      adult_id: null,
       birth_date: dates.birthDate,
       cabin_preference: null,
+      email: null,
+      email_normalized: null,
       family_id: familyId,
       first_name: 'Avery',
       gender: 'Female',
@@ -550,8 +687,11 @@ describe('family store', () => {
     });
     await store.createCamper(context, {
       accessibility_needs: null,
+      adult_id: null,
       birth_date: '2010-04-12',
       cabin_preference: null,
+      email: null,
+      email_normalized: null,
       family_id: familyId,
       first_name: 'Riley',
       gender: 'Female',

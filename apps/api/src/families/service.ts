@@ -87,6 +87,11 @@ function nullable(value: string | null | undefined): string | null {
   return normalized ? normalized : null;
 }
 
+function nullableDate(value: string | null | undefined): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
 function nullableGender(
   value: CamperCreate['gender'] | CamperUpdate['gender'],
 ): CamperGender | null {
@@ -102,6 +107,22 @@ function isRealDate(value: string): boolean {
   return !Number.isNaN(parsed.valueOf()) && parsed.toISOString().startsWith(value);
 }
 
+function validateNullableBirthDate(
+  value: string | null | undefined,
+  errors: Record<string, string>,
+): void {
+  const birthDate = nullableDate(value);
+  if (!birthDate) return;
+  const realBirthDate = isRealDate(birthDate);
+  if (!realBirthDate) {
+    errors.birth_date = 'Enter a valid birth date.';
+    return;
+  }
+  if (birthDate > new Date().toISOString().slice(0, 10)) {
+    errors.birth_date = 'Birth date cannot be in the future.';
+  }
+}
+
 function validateFamily(family: FamilyCreate | FamilyUpdate): void {
   const errors: Record<string, string> = {};
   if (!family.family_name.trim()) errors.family_name = 'Enter a family name.';
@@ -112,6 +133,7 @@ function validateAdult(adult: AdultCreate | AdultUpdate): void {
   const errors: Record<string, string> = {};
   if (!adult.first_name.trim()) errors.first_name = 'Enter a first name.';
   if (!adult.last_name.trim()) errors.last_name = 'Enter a last name.';
+  validateNullableBirthDate(adult.birth_date, errors);
   if (Object.keys(errors).length > 0) {
     throw new FamilyValidationError(errors, 'Adult details are invalid');
   }
@@ -142,6 +164,7 @@ function validateContact(contact: ContactCreate | ContactUpdate): void {
   const errors: Record<string, string> = {};
   if (!contact.first_name.trim()) errors.first_name = 'Enter a first name.';
   if (!contact.last_name.trim()) errors.last_name = 'Enter a last name.';
+  validateNullableBirthDate(contact.birth_date, errors);
   if (!contact.phone.trim()) errors.phone = 'Enter a phone number.';
   if (!contact.relationship.trim()) errors.relationship = 'Enter a relationship.';
   if (
@@ -238,6 +261,7 @@ export class FamilyService implements FamilyServiceApi {
     return this.store.createAdult(this.context(requestId), {
       account_owner: adult.account_owner,
       authorized_pickup: adult.authorized_pickup,
+      birth_date: nullableDate(adult.birth_date),
       can_make_payments: adult.can_make_payments,
       can_manage_family: adult.can_manage_family,
       can_register: adult.can_register,
@@ -270,6 +294,7 @@ export class FamilyService implements FamilyServiceApi {
       update: {
         account_owner: adult.account_owner,
         authorized_pickup: adult.authorized_pickup,
+        birth_date: nullableDate(adult.birth_date),
         can_make_payments: adult.can_make_payments,
         can_manage_family: adult.can_manage_family,
         can_register: adult.can_register,
@@ -292,10 +317,14 @@ export class FamilyService implements FamilyServiceApi {
   ): Promise<FamilyDetail> {
     this.authorize(editRoles);
     validateCamper(camper);
+    const email = nullable(camper.email);
     return this.store.createCamper(this.context(requestId), {
       accessibility_needs: nullable(camper.accessibility_needs),
+      adult_id: camper.adult_id ?? null,
       birth_date: camper.birth_date,
       cabin_preference: nullable(camper.cabin_preference),
+      email,
+      email_normalized: normalizedEmail(email),
       family_id: familyId,
       first_name: trimmed(camper.first_name),
       gender: nullableGender(camper.gender),
@@ -314,14 +343,18 @@ export class FamilyService implements FamilyServiceApi {
   ): Promise<FamilyDetail> {
     this.authorize(editRoles);
     validateCamper(camper);
+    const email = nullable(camper.email);
     return this.store.updateCamper({
       ...this.context(requestId),
       camperId,
       familyId,
       update: {
         accessibility_needs: nullable(camper.accessibility_needs),
+        adult_id: camper.adult_id ?? null,
         birth_date: camper.birth_date,
         cabin_preference: nullable(camper.cabin_preference),
+        email,
+        email_normalized: normalizedEmail(email),
         first_name: trimmed(camper.first_name),
         gender: nullableGender(camper.gender),
         last_name: trimmed(camper.last_name),
@@ -339,8 +372,12 @@ export class FamilyService implements FamilyServiceApi {
   ): Promise<FamilyDetail> {
     this.authorize(editRoles);
     validateContact(contact);
+    const email = nullable(contact.email);
     return this.store.createContact(this.context(requestId), {
       authorized_pickup: contact.authorized_pickup,
+      birth_date: nullableDate(contact.birth_date),
+      email,
+      email_normalized: normalizedEmail(email),
       emergency_contact: contact.emergency_contact,
       emergency_priority: contact.emergency_contact ? (contact.emergency_priority ?? null) : null,
       family_id: familyId,
@@ -361,12 +398,16 @@ export class FamilyService implements FamilyServiceApi {
   ): Promise<FamilyDetail> {
     this.authorize(editRoles);
     validateContact(contact);
+    const email = nullable(contact.email);
     return this.store.updateContact({
       ...this.context(requestId),
       contactId,
       familyId,
       update: {
         authorized_pickup: contact.authorized_pickup,
+        birth_date: nullableDate(contact.birth_date),
+        email,
+        email_normalized: normalizedEmail(email),
         emergency_contact: contact.emergency_contact,
         emergency_priority: contact.emergency_contact ? (contact.emergency_priority ?? null) : null,
         first_name: trimmed(contact.first_name),

@@ -69,6 +69,7 @@ export const AdultSchema = Type.Object(
     identity_subject: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     first_name: Type.String({ minLength: 1 }),
     last_name: Type.String({ minLength: 1 }),
+    birth_date: Type.Union([LocalDateSchema, Type.Null()]),
     email: Type.Union([EmailSchema, Type.Null()]),
     phone: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     account_owner: Type.Boolean(),
@@ -89,9 +90,11 @@ export const CamperSchema = Type.Object(
     id: UuidSchema,
     organization_id: UuidSchema,
     family_id: UuidSchema,
+    adult_id: Type.Union([UuidSchema, Type.Null()]),
     first_name: Type.String({ minLength: 1 }),
     last_name: Type.String({ minLength: 1 }),
     birth_date: LocalDateSchema,
+    email: Type.Union([EmailSchema, Type.Null()]),
     preferred_name: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     gender: Type.Union([GenderSchema, Type.Null()]),
     school_grade: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
@@ -111,6 +114,8 @@ export const ContactSchema = Type.Object(
     family_id: UuidSchema,
     first_name: Type.String({ minLength: 1 }),
     last_name: Type.String({ minLength: 1 }),
+    birth_date: Type.Union([LocalDateSchema, Type.Null()]),
+    email: Type.Union([EmailSchema, Type.Null()]),
     phone: Type.String({ minLength: 1 }),
     relationship: Type.String({ minLength: 1 }),
     emergency_contact: Type.Boolean(),
@@ -181,6 +186,7 @@ export const AdultCreateSchema = Type.Object(
   {
     first_name: Type.String({ minLength: 1, maxLength: 100 }),
     last_name: Type.String({ minLength: 1, maxLength: 100 }),
+    birth_date: Type.Optional(Type.Union([LocalDateSchema, Type.Null()])),
     email: Type.Optional(Type.Union([EmailSchema, Type.Null()])),
     phone: Type.Optional(Type.Union([Type.String({ minLength: 1, maxLength: 40 }), Type.Null()])),
     account_owner: Type.Boolean(),
@@ -204,9 +210,11 @@ export const AdultUpdateSchema = Type.Composite(
 
 export const CamperCreateSchema = Type.Object(
   {
+    adult_id: Type.Optional(Type.Union([UuidSchema, Type.Null()])),
     first_name: Type.String({ minLength: 1, maxLength: 100 }),
     last_name: Type.String({ minLength: 1, maxLength: 100 }),
     birth_date: LocalDateSchema,
+    email: Type.Optional(Type.Union([EmailSchema, Type.Null()])),
     preferred_name: Type.Optional(
       Type.Union([Type.String({ minLength: 1, maxLength: 100 }), Type.Null()]),
     ),
@@ -236,6 +244,8 @@ export const ContactCreateSchema = Type.Object(
   {
     first_name: Type.String({ minLength: 1, maxLength: 100 }),
     last_name: Type.String({ minLength: 1, maxLength: 100 }),
+    birth_date: Type.Optional(Type.Union([LocalDateSchema, Type.Null()])),
+    email: Type.Optional(Type.Union([EmailSchema, Type.Null()])),
     phone: Type.String({ minLength: 1, maxLength: 40 }),
     relationship: Type.String({ minLength: 1, maxLength: 80 }),
     emergency_contact: Type.Boolean(),

@@ -104,6 +104,7 @@ function camperPayload(form: CamperForm): CamperCreate {
 }
 
 interface CandidateCamper {
+  adult_id: string | null;
   birth_date: string;
   school_grade: string | null;
 }
@@ -265,6 +266,7 @@ function isEligibleForSession(
   if (!camper?.birth_date) return false;
   const age = ageOn(camper.birth_date, ageAsOfDate(session, seasonYearsById));
   if (age === null || age < session.minimum_age || age > session.maximum_age) return false;
+  if (camper.adult_id) return true;
 
   const grade = normalizedGrade(camper.school_grade);
   return Boolean(
@@ -275,6 +277,7 @@ function isEligibleForSession(
 function camperFromForm(form: CamperForm): CandidateCamper | null {
   if (!form.birth_date) return null;
   return {
+    adult_id: null,
     birth_date: form.birth_date,
     school_grade: nullable(form.school_grade),
   };
@@ -466,7 +469,7 @@ export function RegistrationCheckoutClient({
       {candidateSessions.length > 0 && selectedCamper && eligibleSessions.length === 0 && (
         <div className="notice noticeError" role="status">
           <AlertCircle size={18} aria-hidden="true" />
-          This camper does not match the age and grade rules for a current or future session.
+          This camper does not match the eligibility rules for a current or future session.
         </div>
       )}
       {selectedSession && !isRegistrationOpen(selectedSession, now) && (

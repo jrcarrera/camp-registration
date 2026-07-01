@@ -24,6 +24,7 @@ export interface AdultRecord {
   identity_subject: string | null;
   first_name: string;
   last_name: string;
+  birth_date: string | null;
   email: string | null;
   phone: string | null;
   account_owner: boolean;
@@ -41,9 +42,11 @@ export interface CamperRecord {
   id: string;
   organization_id: string;
   family_id: string;
+  adult_id: string | null;
   first_name: string;
   last_name: string;
   birth_date: string;
+  email: string | null;
   preferred_name: string | null;
   gender: CamperGender | null;
   school_grade: string | null;
@@ -73,6 +76,8 @@ export interface ContactRecord {
   family_id: string;
   first_name: string;
   last_name: string;
+  birth_date: string | null;
+  email: string | null;
   phone: string;
   relationship: string;
   emergency_contact: boolean;
@@ -111,6 +116,7 @@ export interface CreateAdultRecord {
   identity_subject: string | null;
   first_name: string;
   last_name: string;
+  birth_date: string | null;
   email: string | null;
   email_normalized: string | null;
   phone: string | null;
@@ -133,9 +139,12 @@ export interface UpdateAdultRecord extends Omit<
 export interface CreateCamperRecord {
   id: string;
   family_id: string;
+  adult_id: string | null;
   first_name: string;
   last_name: string;
   birth_date: string;
+  email: string | null;
+  email_normalized: string | null;
   preferred_name: string | null;
   gender: CamperGender | null;
   school_grade: string | null;
@@ -152,6 +161,9 @@ export interface CreateContactRecord {
   family_id: string;
   first_name: string;
   last_name: string;
+  birth_date: string | null;
+  email: string | null;
+  email_normalized: string | null;
   phone: string;
   relationship: string;
   emergency_contact: boolean;
@@ -224,6 +236,7 @@ interface RegistrationSessionRow {
 interface RegistrationCamperRow {
   id: string;
   family_id: string;
+  adult_id: string | null;
   school_grade: string | null;
   age_years: number;
 }
@@ -441,10 +454,12 @@ export class FamilyStore {
         await client.query(
           `INSERT INTO adults (
              id, organization_id, family_id, identity_subject, first_name, last_name,
-             email, email_normalized, phone, account_owner, can_manage_family,
+             birth_date, email, email_normalized, phone, account_owner, can_manage_family,
              can_register, can_make_payments, emergency_contact, authorized_pickup,
              receives_operational_communication
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+           ) VALUES (
+             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+           )`,
           [
             adult.id,
             context.organizationId,
@@ -452,6 +467,7 @@ export class FamilyStore {
             adult.identity_subject,
             adult.first_name,
             adult.last_name,
+            adult.birth_date,
             adult.email,
             adult.email_normalized,
             adult.phone,
@@ -493,16 +509,17 @@ export class FamilyStore {
           `UPDATE adults
            SET first_name = $4,
                last_name = $5,
-               email = $6,
-               email_normalized = $7,
-               phone = $8,
-               account_owner = $9,
-               can_manage_family = $10,
-               can_register = $11,
-               can_make_payments = $12,
-               emergency_contact = $13,
-               authorized_pickup = $14,
-               receives_operational_communication = $15,
+               birth_date = $6,
+               email = $7,
+               email_normalized = $8,
+               phone = $9,
+               account_owner = $10,
+               can_manage_family = $11,
+               can_register = $12,
+               can_make_payments = $13,
+               emergency_contact = $14,
+               authorized_pickup = $15,
+               receives_operational_communication = $16,
                version = version + 1,
                updated_at = transaction_timestamp()
            WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
@@ -512,6 +529,7 @@ export class FamilyStore {
             context.adultId,
             context.update.first_name,
             context.update.last_name,
+            context.update.birth_date,
             context.update.email,
             context.update.email_normalized,
             context.update.phone,
@@ -528,9 +546,35 @@ export class FamilyStore {
         this.mapUniqueViolation(error);
       }
 
+      await client.query(
+        `UPDATE campers
+         SET first_name = $4,
+             last_name = $5,
+             email = $6,
+             email_normalized = $7,
+             birth_date = COALESCE($8::date, birth_date),
+             version = version + 1,
+             updated_at = transaction_timestamp()
+         WHERE organization_id = $1
+           AND family_id = $2
+           AND adult_id = $3
+           AND archived_at IS NULL`,
+        [
+          context.organizationId,
+          context.familyId,
+          context.adultId,
+          context.update.first_name,
+          context.update.last_name,
+          context.update.email,
+          context.update.email_normalized,
+          context.update.birth_date,
+        ],
+      );
+
       const fields = [
         'first_name',
         'last_name',
+        'birth_date',
         'email',
         'phone',
         'account_owner',
@@ -554,26 +598,33 @@ export class FamilyStore {
   ): Promise<FamilyDetailRecord> {
     return this.withTenant(context.organizationId, async (client) => {
       await this.ensureFamilyExists(client, context.organizationId, camper.family_id);
-      await client.query(
-        `INSERT INTO campers (
-           id, organization_id, family_id, first_name, last_name, birth_date,
-           preferred_name, gender, school_grade,
-           cabin_preference, accessibility_needs
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-        [
-          camper.id,
-          context.organizationId,
-          camper.family_id,
-          camper.first_name,
-          camper.last_name,
-          camper.birth_date,
-          camper.preferred_name,
-          camper.gender,
-          camper.school_grade,
-          camper.cabin_preference,
-          camper.accessibility_needs,
-        ],
-      );
+      try {
+        await client.query(
+          `INSERT INTO campers (
+             id, organization_id, family_id, adult_id, first_name, last_name, birth_date,
+             email, email_normalized, preferred_name, gender, school_grade,
+             cabin_preference, accessibility_needs
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+          [
+            camper.id,
+            context.organizationId,
+            camper.family_id,
+            camper.adult_id,
+            camper.first_name,
+            camper.last_name,
+            camper.birth_date,
+            camper.email,
+            camper.email_normalized,
+            camper.preferred_name,
+            camper.gender,
+            camper.school_grade,
+            camper.cabin_preference,
+            camper.accessibility_needs,
+          ],
+        );
+      } catch (error) {
+        this.mapUniqueViolation(error);
+      }
       await this.insertAudit(client, context, 'camper.created', 'camper', camper.id, {});
       return this.requireFamilyInTenant(client, context.organizationId, camper.family_id);
     });
@@ -597,37 +648,49 @@ export class FamilyStore {
         throw new FamilyConflictError('Camper was updated by another request');
       }
 
-      await client.query(
-        `UPDATE campers
-         SET first_name = $4,
-             last_name = $5,
-             birth_date = $6,
-             preferred_name = $7,
-             gender = $8,
-             school_grade = $9,
-             cabin_preference = $10,
-             accessibility_needs = $11,
-             version = version + 1,
-             updated_at = transaction_timestamp()
-         WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
-        [
-          context.organizationId,
-          context.familyId,
-          context.camperId,
-          context.update.first_name,
-          context.update.last_name,
-          context.update.birth_date,
-          context.update.preferred_name,
-          context.update.gender,
-          context.update.school_grade,
-          context.update.cabin_preference,
-          context.update.accessibility_needs,
-        ],
-      );
+      try {
+        await client.query(
+          `UPDATE campers
+           SET first_name = $4,
+               last_name = $5,
+               birth_date = $6,
+               adult_id = $7,
+               email = $8,
+               email_normalized = $9,
+               preferred_name = $10,
+               gender = $11,
+               school_grade = $12,
+               cabin_preference = $13,
+               accessibility_needs = $14,
+               version = version + 1,
+               updated_at = transaction_timestamp()
+           WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
+          [
+            context.organizationId,
+            context.familyId,
+            context.camperId,
+            context.update.first_name,
+            context.update.last_name,
+            context.update.birth_date,
+            context.update.adult_id,
+            context.update.email,
+            context.update.email_normalized,
+            context.update.preferred_name,
+            context.update.gender,
+            context.update.school_grade,
+            context.update.cabin_preference,
+            context.update.accessibility_needs,
+          ],
+        );
+      } catch (error) {
+        this.mapUniqueViolation(error);
+      }
       const fields = [
         'first_name',
         'last_name',
         'birth_date',
+        'adult_id',
+        'email',
         'preferred_name',
         'gender',
         'school_grade',
@@ -649,16 +712,20 @@ export class FamilyStore {
       await this.ensureFamilyExists(client, context.organizationId, contact.family_id);
       await client.query(
         `INSERT INTO contacts (
-           id, organization_id, family_id, first_name, last_name, phone,
+           id, organization_id, family_id, first_name, last_name, birth_date, email,
+           email_normalized, phone,
            relationship, emergency_contact, authorized_pickup,
            receives_operational_communication, emergency_priority
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
         [
           contact.id,
           context.organizationId,
           contact.family_id,
           contact.first_name,
           contact.last_name,
+          contact.birth_date,
+          contact.email,
+          contact.email_normalized,
           contact.phone,
           contact.relationship,
           contact.emergency_contact,
@@ -697,12 +764,15 @@ export class FamilyStore {
         `UPDATE contacts
          SET first_name = $4,
              last_name = $5,
-             phone = $6,
-             relationship = $7,
-             emergency_contact = $8,
-             authorized_pickup = $9,
-             receives_operational_communication = $10,
-             emergency_priority = $11,
+             birth_date = $6,
+             email = $7,
+             email_normalized = $8,
+             phone = $9,
+             relationship = $10,
+             emergency_contact = $11,
+             authorized_pickup = $12,
+             receives_operational_communication = $13,
+             emergency_priority = $14,
              version = version + 1,
              updated_at = transaction_timestamp()
          WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
@@ -712,6 +782,9 @@ export class FamilyStore {
           context.contactId,
           context.update.first_name,
           context.update.last_name,
+          context.update.birth_date,
+          context.update.email,
+          context.update.email_normalized,
           context.update.phone,
           context.update.relationship,
           context.update.emergency_contact,
@@ -723,6 +796,8 @@ export class FamilyStore {
       const fields = [
         'first_name',
         'last_name',
+        'birth_date',
+        'email',
         'phone',
         'relationship',
         'emergency_contact',
@@ -813,6 +888,7 @@ export class FamilyStore {
         `SELECT
            c.id,
            c.family_id,
+           c.adult_id,
            c.school_grade,
            date_part('year', age($4::date, c.birth_date))::integer AS age_years
          FROM campers c
@@ -840,22 +916,31 @@ export class FamilyStore {
         );
       }
 
-      if (!camperRow.school_grade?.trim()) {
-        throw new FamilyRegistrationEligibilityError('Camper grade is required for registration', {
-          camper_id: 'Set the camper school grade before registering.',
-        });
-      }
-      const grade = normalizedGrade(camperRow.school_grade);
-      if (grade === null || grade < sessionRow.minimum_grade || grade > sessionRow.maximum_grade) {
-        throw new FamilyRegistrationEligibilityError(
-          'Camper is not grade eligible for this session',
-          {
-            camper_id: `Camper must be in grade ${formatGradeRange(
-              sessionRow.minimum_grade,
-              sessionRow.maximum_grade,
-            )}.`,
-          },
-        );
+      if (!camperRow.adult_id) {
+        if (!camperRow.school_grade?.trim()) {
+          throw new FamilyRegistrationEligibilityError(
+            'Camper grade is required for registration',
+            {
+              camper_id: 'Set the camper school grade before registering.',
+            },
+          );
+        }
+        const grade = normalizedGrade(camperRow.school_grade);
+        if (
+          grade === null ||
+          grade < sessionRow.minimum_grade ||
+          grade > sessionRow.maximum_grade
+        ) {
+          throw new FamilyRegistrationEligibilityError(
+            'Camper is not grade eligible for this session',
+            {
+              camper_id: `Camper must be in grade ${formatGradeRange(
+                sessionRow.minimum_grade,
+                sessionRow.maximum_grade,
+              )}.`,
+            },
+          );
+        }
       }
 
       const duplicate = await client.query(
@@ -959,7 +1044,7 @@ export class FamilyStore {
 
     const adults = await client.query<AdultRow>(
       `SELECT id, organization_id, family_id, identity_subject, first_name, last_name,
-              email, phone, account_owner, can_manage_family, can_register,
+              birth_date::text, email, phone, account_owner, can_manage_family, can_register,
               can_make_payments, emergency_contact, authorized_pickup,
               receives_operational_communication, version, updated_at
        FROM adults
@@ -968,8 +1053,8 @@ export class FamilyStore {
       [organizationId, familyId],
     );
     const campers = await client.query<CamperRow>(
-      `SELECT id, organization_id, family_id, first_name, last_name, birth_date::text,
-              preferred_name, gender, school_grade,
+      `SELECT id, organization_id, family_id, adult_id, first_name, last_name, birth_date::text,
+              email, preferred_name, gender, school_grade,
               cabin_preference, accessibility_needs, version, updated_at
        FROM campers
        WHERE organization_id = $1 AND family_id = $2 AND archived_at IS NULL
@@ -977,7 +1062,8 @@ export class FamilyStore {
       [organizationId, familyId],
     );
     const contacts = await client.query<ContactRow>(
-      `SELECT id, organization_id, family_id, first_name, last_name, phone,
+      `SELECT id, organization_id, family_id, first_name, last_name, birth_date::text,
+              email, phone,
               relationship, emergency_contact, authorized_pickup,
               receives_operational_communication, emergency_priority, version, updated_at
        FROM contacts
@@ -1033,7 +1119,7 @@ export class FamilyStore {
   ): Promise<AdultRecord> {
     const result = await client.query<AdultRow>(
       `SELECT id, organization_id, family_id, identity_subject, first_name, last_name,
-              email, phone, account_owner, can_manage_family, can_register,
+              birth_date::text, email, phone, account_owner, can_manage_family, can_register,
               can_make_payments, emergency_contact, authorized_pickup,
               receives_operational_communication, version, updated_at
        FROM adults
@@ -1108,8 +1194,8 @@ export class FamilyStore {
     camperId: string,
   ): Promise<CamperRecord> {
     const result = await client.query<CamperRow>(
-      `SELECT id, organization_id, family_id, first_name, last_name, birth_date::text,
-              preferred_name, gender, school_grade,
+      `SELECT id, organization_id, family_id, adult_id, first_name, last_name, birth_date::text,
+              email, preferred_name, gender, school_grade,
               cabin_preference, accessibility_needs, version, updated_at
        FROM campers
        WHERE organization_id = $1 AND family_id = $2 AND id = $3 AND archived_at IS NULL
@@ -1127,7 +1213,8 @@ export class FamilyStore {
     contactId: string,
   ): Promise<ContactRecord> {
     const result = await client.query<ContactRow>(
-      `SELECT id, organization_id, family_id, first_name, last_name, phone,
+      `SELECT id, organization_id, family_id, first_name, last_name, birth_date::text,
+              email, phone,
               relationship, emergency_contact, authorized_pickup,
               receives_operational_communication, emergency_priority, version, updated_at
        FROM contacts
@@ -1169,6 +1256,9 @@ export class FamilyStore {
     if (pgError.code === '23505') {
       if (pgError.constraint === 'adults_family_email_normalized_idx') {
         throw new FamilyDuplicateError('This adult email is already used in the family');
+      }
+      if (pgError.constraint === 'campers_family_adult_id_idx') {
+        throw new FamilyDuplicateError('This adult is already linked to a camper profile');
       }
       throw new FamilyDuplicateError('Family record already exists');
     }

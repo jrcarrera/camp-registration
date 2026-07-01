@@ -1340,6 +1340,7 @@ export interface paths {
                                 identity_subject: string | null;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
                                 email: string | null;
                                 phone: string | null;
                                 account_owner: boolean;
@@ -1356,9 +1357,11 @@ export interface paths {
                                 id: string;
                                 organization_id: string;
                                 family_id: string;
+                                adult_id: string | null;
                                 first_name: string;
                                 last_name: string;
                                 birth_date: string;
+                                email: string | null;
                                 preferred_name: string | null;
                                 gender: ("Female" | "Male") | null;
                                 school_grade: string | null;
@@ -1385,6 +1388,8 @@ export interface paths {
                                 family_id: string;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
+                                email: string | null;
                                 phone: string;
                                 relationship: string;
                                 emergency_contact: boolean;
@@ -1521,6 +1526,7 @@ export interface paths {
                                 identity_subject: string | null;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
                                 email: string | null;
                                 phone: string | null;
                                 account_owner: boolean;
@@ -1537,9 +1543,11 @@ export interface paths {
                                 id: string;
                                 organization_id: string;
                                 family_id: string;
+                                adult_id: string | null;
                                 first_name: string;
                                 last_name: string;
                                 birth_date: string;
+                                email: string | null;
                                 preferred_name: string | null;
                                 gender: ("Female" | "Male") | null;
                                 school_grade: string | null;
@@ -1566,6 +1574,8 @@ export interface paths {
                                 family_id: string;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
+                                email: string | null;
                                 phone: string;
                                 relationship: string;
                                 emergency_contact: boolean;
@@ -1701,6 +1711,7 @@ export interface paths {
                                 identity_subject: string | null;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
                                 email: string | null;
                                 phone: string | null;
                                 account_owner: boolean;
@@ -1717,9 +1728,11 @@ export interface paths {
                                 id: string;
                                 organization_id: string;
                                 family_id: string;
+                                adult_id: string | null;
                                 first_name: string;
                                 last_name: string;
                                 birth_date: string;
+                                email: string | null;
                                 preferred_name: string | null;
                                 gender: ("Female" | "Male") | null;
                                 school_grade: string | null;
@@ -1746,6 +1759,8 @@ export interface paths {
                                 family_id: string;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
+                                email: string | null;
                                 phone: string;
                                 relationship: string;
                                 emergency_contact: boolean;
@@ -1861,6 +1876,7 @@ export interface paths {
                     "application/json": {
                         first_name: string;
                         last_name: string;
+                        birth_date?: string | null;
                         email?: string | null;
                         phone?: string | null;
                         account_owner: boolean;
@@ -1896,6 +1912,7 @@ export interface paths {
                                 identity_subject: string | null;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
                                 email: string | null;
                                 phone: string | null;
                                 account_owner: boolean;
@@ -1912,9 +1929,11 @@ export interface paths {
                                 id: string;
                                 organization_id: string;
                                 family_id: string;
+                                adult_id: string | null;
                                 first_name: string;
                                 last_name: string;
                                 birth_date: string;
+                                email: string | null;
                                 preferred_name: string | null;
                                 gender: ("Female" | "Male") | null;
                                 school_grade: string | null;
@@ -1941,6 +1960,8 @@ export interface paths {
                                 family_id: string;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
+                                email: string | null;
                                 phone: string;
                                 relationship: string;
                                 emergency_contact: boolean;
@@ -2065,6 +2086,7 @@ export interface paths {
                     "application/json": {
                         first_name: string;
                         last_name: string;
+                        birth_date?: string | null;
                         email?: string | null;
                         phone?: string | null;
                         account_owner: boolean;
@@ -2101,6 +2123,7 @@ export interface paths {
                                 identity_subject: string | null;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
                                 email: string | null;
                                 phone: string | null;
                                 account_owner: boolean;
@@ -2117,9 +2140,11 @@ export interface paths {
                                 id: string;
                                 organization_id: string;
                                 family_id: string;
+                                adult_id: string | null;
                                 first_name: string;
                                 last_name: string;
                                 birth_date: string;
+                                email: string | null;
                                 preferred_name: string | null;
                                 gender: ("Female" | "Male") | null;
                                 school_grade: string | null;
@@ -2146,6 +2171,8 @@ export interface paths {
                                 family_id: string;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
+                                email: string | null;
                                 phone: string;
                                 relationship: string;
                                 emergency_contact: boolean;
@@ -2259,9 +2286,11 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        adult_id?: string | null;
                         first_name: string;
                         last_name: string;
                         birth_date: string;
+                        email?: string | null;
                         preferred_name?: string | null;
                         gender?: ("Female" | "Male") | null;
                         school_grade?: string | null;
@@ -2293,6 +2322,7 @@ export interface paths {
                                 identity_subject: string | null;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
                                 email: string | null;
                                 phone: string | null;
                                 account_owner: boolean;
@@ -2309,9 +2339,11 @@ export interface paths {
                                 id: string;
                                 organization_id: string;
                                 family_id: string;
+                                adult_id: string | null;
                                 first_name: string;
                                 last_name: string;
                                 birth_date: string;
+                                email: string | null;
                                 preferred_name: string | null;
                                 gender: ("Female" | "Male") | null;
                                 school_grade: string | null;
@@ -2338,6 +2370,8 @@ export interface paths {
                                 family_id: string;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
+                                email: string | null;
                                 phone: string;
                                 relationship: string;
                                 emergency_contact: boolean;
@@ -2460,9 +2494,11 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        adult_id?: string | null;
                         first_name: string;
                         last_name: string;
                         birth_date: string;
+                        email?: string | null;
                         preferred_name?: string | null;
                         gender?: ("Female" | "Male") | null;
                         school_grade?: string | null;
@@ -2495,6 +2531,7 @@ export interface paths {
                                 identity_subject: string | null;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
                                 email: string | null;
                                 phone: string | null;
                                 account_owner: boolean;
@@ -2511,9 +2548,11 @@ export interface paths {
                                 id: string;
                                 organization_id: string;
                                 family_id: string;
+                                adult_id: string | null;
                                 first_name: string;
                                 last_name: string;
                                 birth_date: string;
+                                email: string | null;
                                 preferred_name: string | null;
                                 gender: ("Female" | "Male") | null;
                                 school_grade: string | null;
@@ -2540,6 +2579,8 @@ export interface paths {
                                 family_id: string;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
+                                email: string | null;
                                 phone: string;
                                 relationship: string;
                                 emergency_contact: boolean;
@@ -2684,6 +2725,7 @@ export interface paths {
                                     identity_subject: string | null;
                                     first_name: string;
                                     last_name: string;
+                                    birth_date: string | null;
                                     email: string | null;
                                     phone: string | null;
                                     account_owner: boolean;
@@ -2700,9 +2742,11 @@ export interface paths {
                                     id: string;
                                     organization_id: string;
                                     family_id: string;
+                                    adult_id: string | null;
                                     first_name: string;
                                     last_name: string;
                                     birth_date: string;
+                                    email: string | null;
                                     preferred_name: string | null;
                                     gender: ("Female" | "Male") | null;
                                     school_grade: string | null;
@@ -2729,6 +2773,8 @@ export interface paths {
                                     family_id: string;
                                     first_name: string;
                                     last_name: string;
+                                    birth_date: string | null;
+                                    email: string | null;
                                     phone: string;
                                     relationship: string;
                                     emergency_contact: boolean;
@@ -2861,6 +2907,8 @@ export interface paths {
                     "application/json": {
                         first_name: string;
                         last_name: string;
+                        birth_date?: string | null;
+                        email?: string | null;
                         phone: string;
                         relationship: string;
                         emergency_contact: boolean;
@@ -2893,6 +2941,7 @@ export interface paths {
                                 identity_subject: string | null;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
                                 email: string | null;
                                 phone: string | null;
                                 account_owner: boolean;
@@ -2909,9 +2958,11 @@ export interface paths {
                                 id: string;
                                 organization_id: string;
                                 family_id: string;
+                                adult_id: string | null;
                                 first_name: string;
                                 last_name: string;
                                 birth_date: string;
+                                email: string | null;
                                 preferred_name: string | null;
                                 gender: ("Female" | "Male") | null;
                                 school_grade: string | null;
@@ -2938,6 +2989,8 @@ export interface paths {
                                 family_id: string;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
+                                email: string | null;
                                 phone: string;
                                 relationship: string;
                                 emergency_contact: boolean;
@@ -3062,6 +3115,8 @@ export interface paths {
                     "application/json": {
                         first_name: string;
                         last_name: string;
+                        birth_date?: string | null;
+                        email?: string | null;
                         phone: string;
                         relationship: string;
                         emergency_contact: boolean;
@@ -3095,6 +3150,7 @@ export interface paths {
                                 identity_subject: string | null;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
                                 email: string | null;
                                 phone: string | null;
                                 account_owner: boolean;
@@ -3111,9 +3167,11 @@ export interface paths {
                                 id: string;
                                 organization_id: string;
                                 family_id: string;
+                                adult_id: string | null;
                                 first_name: string;
                                 last_name: string;
                                 birth_date: string;
+                                email: string | null;
                                 preferred_name: string | null;
                                 gender: ("Female" | "Male") | null;
                                 school_grade: string | null;
@@ -3140,6 +3198,8 @@ export interface paths {
                                 family_id: string;
                                 first_name: string;
                                 last_name: string;
+                                birth_date: string | null;
+                                email: string | null;
                                 phone: string;
                                 relationship: string;
                                 emergency_contact: boolean;

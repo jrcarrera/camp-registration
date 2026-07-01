@@ -41,6 +41,24 @@ function nullable(value: string): string | null {
   return trimmed ? trimmed : null;
 }
 
+function ageFromBirthDate(birthDate: string | null): number | null {
+  if (!birthDate) return null;
+  const birth = new Date(`${birthDate}T00:00:00Z`);
+  if (Number.isNaN(birth.valueOf())) return null;
+  const today = new Date();
+  let years = today.getUTCFullYear() - birth.getUTCFullYear();
+  const monthDelta = today.getUTCMonth() - birth.getUTCMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && today.getUTCDate() < birth.getUTCDate())) {
+    years -= 1;
+  }
+  return years >= 0 ? years : null;
+}
+
+function roleLabel(label: string, birthDate: string | null): string {
+  const age = ageFromBirthDate(birthDate);
+  return age === null ? label : `${label} - Age ${age}`;
+}
+
 function problemMessage(problem: ProblemResponse): SaveState {
   return {
     fieldErrors: problem.field_errors ?? {},
@@ -229,9 +247,18 @@ export function FamilyDetailClient({ initialFamily, sessions }: FamilyDetailClie
           <p>Adults hold account access and family permissions.</p>
         </div>
         <div className="recordStack">
-          {family.adults.map((adult) => (
-            <AdultEditor key={adult.id} adult={adult} familyId={family.id} onSaved={saveFamily} />
-          ))}
+          {family.adults.map((adult) => {
+            const linkedCamper = family.campers.find((camper) => camper.adult_id === adult.id);
+            return (
+              <AdultEditor
+                key={adult.id}
+                adult={adult}
+                familyId={family.id}
+                linkedCamper={linkedCamper}
+                onSaved={saveFamily}
+              />
+            );
+          })}
           <AdultCreatePanel
             familyId={family.id}
             isFirstAdult={family.adults.length === 0}
@@ -339,6 +366,7 @@ function FamilyNameForm({
 interface AdultForm {
   account_owner: boolean;
   authorized_pickup: boolean;
+  birth_date: string;
   can_make_payments: boolean;
   can_manage_family: boolean;
   can_register: boolean;
@@ -355,6 +383,7 @@ function adultForm(adult?: Adult, isFirstAdult = false): AdultForm {
   return {
     account_owner: adult?.account_owner ?? isFirstAdult,
     authorized_pickup: adult?.authorized_pickup ?? false,
+    birth_date: adult?.birth_date ?? '',
     can_make_payments: adult?.can_make_payments ?? isFirstAdult,
     can_manage_family: adult?.can_manage_family ?? isFirstAdult,
     can_register: adult?.can_register ?? isFirstAdult,
@@ -372,6 +401,7 @@ function adultCreatePayload(form: AdultForm): AdultCreate {
   return {
     account_owner: form.account_owner,
     authorized_pickup: form.authorized_pickup,
+    birth_date: nullable(form.birth_date),
     can_make_payments: form.can_make_payments,
     can_manage_family: form.can_manage_family,
     can_register: form.can_register,
@@ -423,6 +453,13 @@ function AdultFields({
             required
           />
         </Field>
+        <Field label="Birth date" error={state.fieldErrors.birth_date}>
+          <input
+            type="date"
+            value={form.birth_date}
+            onChange={(event) => set('birth_date', event.target.value)}
+          />
+        </Field>
         <Field label="Email" error={state.fieldErrors.email}>
           <input
             value={form.email}
@@ -448,10 +485,12 @@ function AdultFields({
 function AdultEditor({
   adult,
   familyId,
+  linkedCamper,
   onSaved,
 }: {
   adult: Adult;
   familyId: string;
+  linkedCamper: Camper | undefined;
   onSaved: (family: FamilyDetail) => void;
 }) {
   const [form, setForm] = useState(() => adultForm(adult));
@@ -459,6 +498,38 @@ function AdultEditor({
   const set = <Key extends keyof AdultForm>(key: Key, value: AdultForm[Key]) => {
     setForm((current) => ({ ...current, [key]: value }));
     setState(cleanState);
+  };
+
+  const addAsCamper = async () => {
+    if (!form.birth_date) {
+      setState({
+        fieldErrors: { birth_date: 'Set a birth date before adding this adult as a camper.' },
+        message: 'Birth date is required to add this adult as a camper.',
+        saving: false,
+        tone: 'error',
+      });
+      return;
+    }
+    setState({ ...cleanState, saving: true });
+    const payload: CamperCreate = {
+      accessibility_needs: null,
+      adult_id: adult.id,
+      birth_date: form.birth_date,
+      cabin_preference: null,
+      email: nullable(form.email),
+      first_name: form.first_name.trim(),
+      gender: null,
+      last_name: form.last_name.trim(),
+      preferred_name: null,
+      school_grade: null,
+    };
+    const result = await writeFamily(`/api/v1/families/${familyId}/campers`, 'POST', payload);
+    if ('field_errors' in result || 'code' in result) {
+      setState(problemMessage(result));
+      return;
+    }
+    onSaved(result);
+    setState({ ...cleanState, message: 'Adult added as camper.' });
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -485,11 +556,31 @@ function AdultEditor({
         <strong>
           {adult.first_name} {adult.last_name}
         </strong>
-        <span>{adult.account_owner ? 'Owner' : 'Adult'}</span>
+        <span>
+          {roleLabel(
+            linkedCamper ? 'Adult camper' : adult.account_owner ? 'Owner' : 'Adult',
+            adult.birth_date,
+          )}
+        </span>
       </div>
       <Message state={state} />
       <AdultFields form={form} state={state} set={set} />
       <div className="inlineActions">
+        {linkedCamper ? (
+          <Link className="buttonSecondary" href={`#camper-${linkedCamper.id}`}>
+            Camper profile
+          </Link>
+        ) : (
+          <button
+            className="buttonSecondary"
+            type="button"
+            disabled={state.saving}
+            onClick={addAsCamper}
+          >
+            <Plus size={17} aria-hidden="true" />
+            Add as camper
+          </button>
+        )}
         <button className="buttonSecondary" type="submit" disabled={state.saving}>
           <Save size={17} aria-hidden="true" />
           {state.saving ? 'Saving...' : 'Save adult'}
@@ -552,8 +643,10 @@ function AdultCreatePanel({
 
 interface CamperForm {
   accessibility_needs: string;
+  adult_id: string;
   birth_date: string;
   cabin_preference: string;
+  email: string;
   first_name: string;
   gender: CamperGenderValue;
   last_name: string;
@@ -565,8 +658,10 @@ interface CamperForm {
 function camperForm(camper?: Camper): CamperForm {
   return {
     accessibility_needs: camper?.accessibility_needs ?? '',
+    adult_id: camper?.adult_id ?? '',
     birth_date: camper?.birth_date ?? '',
     cabin_preference: camper?.cabin_preference ?? '',
+    email: camper?.email ?? '',
     first_name: camper?.first_name ?? '',
     gender: camper?.gender ?? '',
     last_name: camper?.last_name ?? '',
@@ -579,8 +674,10 @@ function camperForm(camper?: Camper): CamperForm {
 function camperCreatePayload(form: CamperForm): CamperCreate {
   return {
     accessibility_needs: nullable(form.accessibility_needs),
+    adult_id: nullable(form.adult_id),
     birth_date: form.birth_date,
     cabin_preference: nullable(form.cabin_preference),
+    email: nullable(form.email),
     first_name: form.first_name.trim(),
     gender: nullableGender(form.gender),
     last_name: form.last_name.trim(),
@@ -626,6 +723,14 @@ function CamperFields({
           value={form.birth_date}
           onChange={(event) => set('birth_date', event.target.value)}
           required
+        />
+      </Field>
+      <Field label="Email" error={state.fieldErrors.email}>
+        <input
+          value={form.email}
+          onChange={(event) => set('email', event.target.value)}
+          inputMode="email"
+          maxLength={254}
         />
       </Field>
       <Field label="Preferred name">
@@ -710,7 +815,7 @@ function CamperEditor({
         <strong>
           {camper.first_name} {camper.last_name}
         </strong>
-        <span>Camper</span>
+        <span>{roleLabel(camper.adult_id ? 'Adult camper' : 'Camper', camper.birth_date)}</span>
       </div>
       <Message state={state} />
       <CamperRegistrations camper={camper} />
@@ -905,6 +1010,8 @@ function CamperCreatePanel({
 
 interface ContactForm {
   authorized_pickup: boolean;
+  birth_date: string;
+  email: string;
   emergency_contact: boolean;
   emergency_priority: string;
   first_name: string;
@@ -918,6 +1025,8 @@ interface ContactForm {
 function contactForm(contact?: Contact): ContactForm {
   return {
     authorized_pickup: contact?.authorized_pickup ?? true,
+    birth_date: contact?.birth_date ?? '',
+    email: contact?.email ?? '',
     emergency_contact: contact?.emergency_contact ?? true,
     emergency_priority: contact?.emergency_priority ? String(contact.emergency_priority) : '',
     first_name: contact?.first_name ?? '',
@@ -932,6 +1041,8 @@ function contactForm(contact?: Contact): ContactForm {
 function contactCreatePayload(form: ContactForm): ContactCreate {
   return {
     authorized_pickup: form.authorized_pickup,
+    birth_date: nullable(form.birth_date),
+    email: nullable(form.email),
     emergency_contact: form.emergency_contact,
     emergency_priority: form.emergency_priority ? Number(form.emergency_priority) : null,
     first_name: form.first_name.trim(),
@@ -972,6 +1083,21 @@ function ContactFields({
             onChange={(event) => set('last_name', event.target.value)}
             maxLength={100}
             required
+          />
+        </Field>
+        <Field label="Birth date" error={state.fieldErrors.birth_date}>
+          <input
+            type="date"
+            value={form.birth_date}
+            onChange={(event) => set('birth_date', event.target.value)}
+          />
+        </Field>
+        <Field label="Email" error={state.fieldErrors.email}>
+          <input
+            value={form.email}
+            onChange={(event) => set('email', event.target.value)}
+            inputMode="email"
+            maxLength={254}
           />
         </Field>
         <Field label="Phone" error={state.fieldErrors.phone}>
@@ -1047,7 +1173,7 @@ function ContactEditor({
         <strong>
           {contact.first_name} {contact.last_name}
         </strong>
-        <span>Contact</span>
+        <span>{roleLabel('Contact', contact.birth_date)}</span>
       </div>
       <Message state={state} />
       <ContactFields form={form} state={state} set={set} />

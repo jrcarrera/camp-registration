@@ -479,7 +479,7 @@ export function SessionEditor({
                 name="minimum_age"
                 type="number"
                 min="0"
-                max="21"
+                max="120"
                 value={form.minimum_age}
                 onChange={(event) => set('minimum_age', event.target.value)}
                 required
@@ -490,7 +490,7 @@ export function SessionEditor({
                 name="maximum_age"
                 type="number"
                 min="0"
-                max="21"
+                max="120"
                 value={form.maximum_age}
                 onChange={(event) => set('maximum_age', event.target.value)}
                 required

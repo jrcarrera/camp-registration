@@ -247,7 +247,7 @@ export function ProgramEditor({
             <input
               type="number"
               min="0"
-              max="21"
+              max="120"
               value={form.default_minimum_age}
               onChange={(event) => set('default_minimum_age', event.target.value)}
               required
@@ -259,7 +259,7 @@ export function ProgramEditor({
             <input
               type="number"
               min="0"
-              max="21"
+              max="120"
               value={form.default_maximum_age}
               onChange={(event) => set('default_maximum_age', event.target.value)}
               required

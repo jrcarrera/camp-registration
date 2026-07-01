@@ -67,6 +67,7 @@ interface AdultFixture {
   identity_subject: string | null;
   first_name: string;
   last_name: string;
+  birth_date?: string | null;
   email: string | null;
   phone: string | null;
   account_owner: boolean;
@@ -80,9 +81,11 @@ interface AdultFixture {
 
 interface CamperFixture {
   id: string;
+  adult_id?: string | null;
   first_name: string;
   last_name: string;
   birth_date: string;
+  email?: string | null;
   preferred_name: string | null;
   gender: 'Female' | 'Male' | null;
   school_grade: string | null;
@@ -94,6 +97,8 @@ interface ContactFixture {
   id: string;
   first_name: string;
   last_name: string;
+  birth_date?: string | null;
+  email?: string | null;
   phone: string;
   relationship: string;
   emergency_contact: boolean;
@@ -268,10 +273,10 @@ export async function seedFamilyFixture(
         await client.query(
           `INSERT INTO adults (
              id, organization_id, family_id, identity_subject, first_name, last_name,
-             email, email_normalized, phone, account_owner, can_manage_family,
+             birth_date, email, email_normalized, phone, account_owner, can_manage_family,
              can_register, can_make_payments, emergency_contact, authorized_pickup,
              receives_operational_communication
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
            ON CONFLICT (id) DO NOTHING`,
           [
             adult.id,
@@ -280,6 +285,7 @@ export async function seedFamilyFixture(
             adult.identity_subject,
             adult.first_name,
             adult.last_name,
+            adult.birth_date ?? null,
             adult.email,
             normalizedEmail(adult.email),
             adult.phone,
@@ -297,17 +303,21 @@ export async function seedFamilyFixture(
       for (const camper of family.campers) {
         await client.query(
           `INSERT INTO campers (
-             id, organization_id, family_id, first_name, last_name, birth_date,
-             preferred_name, gender, school_grade, cabin_preference, accessibility_needs
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+             id, organization_id, family_id, adult_id, first_name, last_name, birth_date,
+             email, email_normalized, preferred_name, gender, school_grade,
+             cabin_preference, accessibility_needs
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
            ON CONFLICT (id) DO NOTHING`,
           [
             camper.id,
             family.organization_id,
             family.id,
+            camper.adult_id ?? null,
             camper.first_name,
             camper.last_name,
             camper.birth_date,
+            camper.email ?? null,
+            normalizedEmail(camper.email ?? null),
             camper.preferred_name,
             camper.gender,
             camper.school_grade,
@@ -320,10 +330,10 @@ export async function seedFamilyFixture(
       for (const contact of family.contacts) {
         await client.query(
           `INSERT INTO contacts (
-             id, organization_id, family_id, first_name, last_name, phone, relationship,
-             emergency_contact, authorized_pickup, receives_operational_communication,
-             emergency_priority
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+             id, organization_id, family_id, first_name, last_name, birth_date, email,
+             email_normalized, phone, relationship, emergency_contact, authorized_pickup,
+             receives_operational_communication, emergency_priority
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
            ON CONFLICT (id) DO NOTHING`,
           [
             contact.id,
@@ -331,6 +341,9 @@ export async function seedFamilyFixture(
             family.id,
             contact.first_name,
             contact.last_name,
+            contact.birth_date ?? null,
+            contact.email ?? null,
+            normalizedEmail(contact.email ?? null),
             contact.phone,
             contact.relationship,
             contact.emergency_contact,
