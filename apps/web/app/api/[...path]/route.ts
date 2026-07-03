@@ -9,12 +9,16 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   const target = new URL(path.join('/'), `${apiBaseUrl.replace(/\/$/, '')}/`);
   target.search = request.nextUrl.search;
 
-  const body = request.method === 'GET' || request.method === 'HEAD' ? null : await request.text();
+  const requestBody =
+    request.method === 'GET' || request.method === 'HEAD' ? null : await request.text();
+  const body = requestBody && requestBody.length > 0 ? requestBody : null;
   const headers = new Headers({
     accept: request.headers.get('accept') ?? 'application/json',
-    'content-type': request.headers.get('content-type') ?? 'application/json',
     'x-request-id': request.headers.get('x-request-id') ?? crypto.randomUUID(),
   });
+  if (body !== null) {
+    headers.set('content-type', request.headers.get('content-type') ?? 'application/json');
+  }
   for (const header of [
     'x-local-actor-id',
     'x-local-email',
