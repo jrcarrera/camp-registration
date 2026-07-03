@@ -1,4 +1,4 @@
-import type { RequestIdentity } from '@camp-registration/auth';
+import { platformRoles, type PlatformRole, type RequestIdentity } from '@camp-registration/auth';
 import { createDatabaseClient } from '@camp-registration/database';
 
 import { buildApp, type BuildAppOptions } from './app.js';
@@ -10,28 +10,48 @@ const database = databaseUrl ? createDatabaseClient({ connectionString: database
 const localAuthEnabled = process.env.LOCAL_AUTH_ENABLED === 'true';
 const organizationId = process.env.LOCAL_ORGANIZATION_ID;
 const actorId = process.env.LOCAL_ACTOR_ID ?? 'local-camp-admin';
-const identity: RequestIdentity | undefined =
+const defaultRoles = rolesFrom(process.env.LOCAL_ROLES ?? 'organization_admin');
+
+function headerValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function rolesFrom(value: string): PlatformRole[] {
+  const roles = value
+    .split(',')
+    .map((role) => role.trim())
+    .filter((role): role is PlatformRole => platformRoles.includes(role as PlatformRole));
+  return roles.length > 0 ? roles : ['organization_admin'];
+}
+
+const localRequestContext: BuildAppOptions['requestContext'] | undefined =
   localAuthEnabled && organizationId
-    ? {
-        email: 'admin@local.camp.test',
-        emailVerified: true,
-        memberships: [
-          {
-            campIds: [],
-            organizationId,
-            roles: ['organization_admin'],
-          },
-        ],
-        mfaVerified: true,
-        subject: actorId,
+    ? (request) => {
+        const activeOrganizationId =
+          headerValue(request.headers['x-local-organization-id']) ?? organizationId;
+        const identity: RequestIdentity = {
+          email: headerValue(request.headers['x-local-email']) ?? 'admin@local.camp.test',
+          emailVerified: headerValue(request.headers['x-local-email-verified']) !== 'false',
+          memberships: [
+            {
+              campIds: [],
+              organizationId: activeOrganizationId,
+              roles: rolesFrom(
+                headerValue(request.headers['x-local-roles']) ?? defaultRoles.join(','),
+              ),
+            },
+          ],
+          mfaVerified: headerValue(request.headers['x-local-mfa-verified']) !== 'false',
+          subject: headerValue(request.headers['x-local-actor-id']) ?? actorId,
+        };
+        return { identity, organizationId: activeOrganizationId };
       }
     : undefined;
 
 const appOptions: BuildAppOptions = {
   logger: true,
   ...(database ? { database } : {}),
-  ...(identity ? { identity } : {}),
-  ...(organizationId ? { organizationId } : {}),
+  ...(localRequestContext ? { requestContext: localRequestContext } : {}),
 };
 const app = await buildApp(appOptions);
 

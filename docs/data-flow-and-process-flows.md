@@ -29,7 +29,7 @@ that exists today, not from the full product roadmap.
 | Web proxy for form writes      | `apps/web/app/api/[...path]/route.ts`                                                                                                                                                                                    |
 | Dashboard                      | `apps/web/app/page.tsx`                                                                                                                                                                                                  |
 | Families UI                    | `apps/web/app/families/**`, `apps/web/components/family-*.tsx`                                                                                                                                                           |
-| Parent-style checkout UI       | `apps/web/app/register/page.tsx`, `apps/web/components/registration-checkout-client.tsx`                                                                                                                                 |
+| Parent portal UI               | `apps/web/app/portal/**`, `apps/web/components/registration-checkout-client.tsx`                                                                                                                                         |
 | Programs, seasons, sessions UI | `apps/web/app/programs/**`, `apps/web/app/seasons/**`, `apps/web/app/sessions/**`, `apps/web/components/program-create-form.tsx`, `apps/web/components/season-create-form.tsx`, `apps/web/components/session-editor.tsx` |
 | API composition                | `apps/api/src/app.ts`, `apps/api/src/server.ts`                                                                                                                                                                          |
 | Catalog API                    | `apps/api/src/catalog/routes.ts`, `apps/api/src/catalog/service.ts`                                                                                                                                                      |
@@ -142,12 +142,13 @@ Read examples:
 - The dashboard loads catalog and sessions, then computes visible counts.
 - The sessions page loads catalog and sessions, then filters by selected season.
 - The family detail page loads one family plus all session summaries.
-- The registration page loads catalog, all families, all session summaries, then
-  fetches detail for each session so the client can filter by eligibility.
+- The parent registration page loads catalog, parent-linked families, all
+  session summaries, then fetches detail for each session so the client can
+  filter by eligibility.
 
-Current implementation note: `/register` fetches detail for every session. That
-is fine for local seed data, but a larger production catalog will need a more
-targeted registration-availability endpoint.
+Current implementation note: `/portal/register` fetches detail for every
+session. That is fine for local seed data, but a larger production catalog will
+need a more targeted registration-availability endpoint.
 
 ## Write Flow
 
@@ -579,40 +580,40 @@ Admin-specific behavior:
 - Admin registrations do not check the public registration open/close window.
 - The database still enforces age, grade, duplicate, tenant, and capacity rules.
 
-## Parent-Style Checkout Flow
+## Parent Portal Checkout Flow
 
-The `/register` page is a current parent-style registration flow. It is not yet
-a full authenticated parent portal.
+The `/portal/register` page is the current parent registration flow. It resolves
+family access from the linked adult identity and does not expose a family
+selector to parents.
 
 ```mermaid
 flowchart TD
-    page["Open /register"]
-    preload["Server loads catalog, families, session summaries, and session details"]
-    family["Choose family account"]
-    fetchFamily["Client fetches selected FamilyDetail"]
+    page["Open /portal/register"]
+    preload["Server loads catalog, parent-linked families, session summaries, and session details"]
+    family["Resolve family from linked adult identity and optional camperId"]
     mode{"Existing camper or new camper?"}
     existing["Choose existing camper"]
     newCamper["Enter new camper profile"]
     filter["Client filters sessions by published status, future dates, open window, age, and grade"]
     choose["Choose eligible open session"]
     submit["Submit registration"]
-    createCamper{"New camper mode?"}
-    camperPost["POST /families/:id/campers"]
-    regPost["POST /families/:id/registrations with source PARENT"]
+    checkout["POST /families/:id/checkout"]
+    tx["FamilyStore transaction"]
+    createCamper{"New camper in checkout?"}
+    insertCamper["Insert camper profile"]
     apiChecks["API repeats authoritative session, window, age, grade, duplicate, capacity checks"]
     saved["Registration confirmed or waitlisted"]
     error["ProblemResponse shown"]
 
-    page --> preload --> family --> fetchFamily --> mode
+    page --> preload --> family --> mode
     mode -->|"existing"| existing --> filter
     mode -->|"new"| newCamper --> filter
-    filter --> choose --> submit --> createCamper
-    createCamper -->|"yes"| camperPost --> regPost
-    createCamper -->|"no"| regPost
-    regPost --> apiChecks
+    filter --> choose --> submit --> checkout --> tx --> createCamper
+    createCamper -->|"yes"| insertCamper --> apiChecks
+    createCamper -->|"no"| apiChecks
     apiChecks -->|"success"| saved
     apiChecks -->|"failure"| error
-    camperPost -->|"camper validation failure"| error
+    insertCamper -->|"camper validation failure"| error
 ```
 
 Parent-source behavior:
@@ -626,13 +627,9 @@ Parent-source behavior:
 - If capacity is full and waitlist is enabled, the registration is `WAITLISTED`.
 - If capacity is full and waitlist is disabled, the API returns
   `capacity_full`.
-
-Current implementation caveat:
-
-- If checkout creates a new camper and then registration fails, the new camper
-  remains saved because camper creation and registration are two separate API
-  calls. Future payment-backed or multi-camper checkout should make the desired
-  atomic behavior explicit.
+- When checkout includes a new camper, camper creation and registration happen in
+  one database transaction. If registration fails, the new camper insert rolls
+  back with it.
 
 ## Registration Capacity And Waitlist Flow
 
@@ -680,8 +677,11 @@ What is not implemented yet:
 - There is no `holds` table.
 - There is no payment step.
 - There is no multi-camper atomic sibling checkout.
-- There is no waitlist promotion workflow.
-- There is no registration cancellation endpoint.
+- Waitlist promotion is currently a staff/admin action that promotes the next
+  waitlisted registration by `registered_at, id`; there are no waitlist offers,
+  expiration notices, or payment-before-promotion steps yet.
+- Registration cancellation is implemented as a status change to `CANCELLED`;
+  refund rules and cancellation fees are not implemented yet.
 
 ## Error Flow
 
@@ -717,20 +717,27 @@ Current role checks:
 | -------------------------- | ------------------------------------------------------------------- |
 | Read catalog and sessions  | `camp_staff`, `camp_admin`, `organization_admin`                    |
 | Edit catalog and sessions  | `camp_admin`, `organization_admin`                                  |
-| Read family records        | `camp_staff`, `camp_admin`, `organization_admin`                    |
+| Read family records        | Staff/admin roles; parents for linked owned families                |
 | Edit family records        | `camp_staff`, `camp_admin`, `organization_admin`                    |
 | Admin registration         | `camp_staff`, `camp_admin`, `organization_admin`                    |
-| Parent-source registration | `parent_guardian`, `camp_staff`, `camp_admin`, `organization_admin` |
+| Parent-source registration | Staff/admin roles; linked parents with `can_register` or owner flag |
 
-Important current limitation:
+Current parent ownership behavior:
 
-- Parent/guardian object-level ownership is not implemented yet. The service
-  checks roles in the active organization, but it does not yet prove that a
-  parent owns the specific family being registered.
+- Parent access is derived from an active adult record whose `identity_subject`
+  matches the authenticated actor.
+- Parent family lists are filtered to owned families.
+- Parent reads and parent-source checkout/cancellation require object-level
+  family authorization.
+- Adult identity claim exists for local/domain testing: a parent identity with a
+  verified matching email can claim an unlinked adult record. Full invite,
+  passwordless login, recovery, and provider-backed account management are not
+  implemented yet.
 
 Tenant isolation is still enforced in depth:
 
-- Service constructors receive one active `organizationId`.
+- API services are constructed per request from the active identity and
+  `organizationId`.
 - Services find the actor membership for that organization.
 - Store methods require organization scope.
 - Store transactions set `app.organization_id`.
@@ -799,23 +806,23 @@ Seed data:
 
 ## Implemented Versus Planned
 
-| Workflow or component                     | Current state                 |
-| ----------------------------------------- | ----------------------------- |
-| Catalog programs, seasons, sessions       | Implemented                   |
-| Family, adult, camper, contact management | Implemented                   |
-| Direct admin registration                 | Implemented                   |
-| Parent-style direct registration          | Implemented as local workflow |
-| Waitlist insertion when full              | Implemented                   |
-| Waitlist promotion                        | Not implemented               |
-| Capacity holds                            | Not implemented               |
-| Payments and Stripe webhooks              | Not implemented               |
-| Health forms and medical data             | Not implemented               |
-| Email delivery                            | Not implemented               |
-| File uploads/object storage               | Not implemented               |
-| Real authentication provider              | Not implemented               |
-| Parent object ownership checks            | Not implemented               |
-| Registration cancellation                 | Not implemented               |
-| Multi-camper atomic checkout              | Not implemented               |
+| Workflow or component                     | Current state                                            |
+| ----------------------------------------- | -------------------------------------------------------- |
+| Catalog programs, seasons, sessions       | Implemented                                              |
+| Family, adult, camper, contact management | Implemented                                              |
+| Direct admin registration                 | Implemented                                              |
+| Parent-style direct registration          | Implemented as local workflow                            |
+| Waitlist insertion when full              | Implemented                                              |
+| Waitlist promotion                        | Not implemented                                          |
+| Capacity holds                            | Not implemented                                          |
+| Payments and Stripe webhooks              | Not implemented                                          |
+| Health forms and medical data             | Not implemented                                          |
+| Email delivery                            | Not implemented                                          |
+| File uploads/object storage               | Not implemented                                          |
+| Real authentication provider              | Not implemented                                          |
+| Parent object ownership checks            | Implemented for family reads, checkout, and cancellation |
+| Registration cancellation                 | Implemented                                              |
+| Multi-camper atomic checkout              | Not implemented                                          |
 
 ## How To Trace A Bug
 

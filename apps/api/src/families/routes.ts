@@ -12,10 +12,13 @@ import {
   FamilyDetailSchema,
   FamilyListResponseSchema,
   FamilyParamsSchema,
+  FamilyRegistrationParamsSchema,
   FamilyRegistrationCreateSchema,
   FamilyRegistrationResultSchema,
   FamilyUpdateSchema,
+  ParentCheckoutCreateSchema,
   ProblemResponseSchema,
+  SessionParamsSchema,
   type AdultCreate,
   type AdultParams,
   type AdultUpdate,
@@ -29,12 +32,15 @@ import {
   type FamilyDetail,
   type FamilyListResponse,
   type FamilyParams,
+  type FamilyRegistrationParams,
   type FamilyRegistrationCreate,
   type FamilyRegistrationResult,
   type FamilyUpdate,
+  type ParentCheckoutCreate,
   type ProblemResponse,
+  type SessionParams,
 } from '@camp-registration/contracts';
-import type { FastifyInstance, FastifyReply } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import {
   FamilyAuthorizationError,
@@ -47,6 +53,18 @@ import {
   FamilyValidationError,
   type FamilyServiceApi,
 } from './service.js';
+
+type FamilyServiceSource =
+  | FamilyServiceApi
+  | ((request: FastifyRequest) => FamilyServiceApi | undefined)
+  | undefined;
+
+function resolveFamilyService(
+  source: FamilyServiceSource,
+  request: FastifyRequest,
+): FamilyServiceApi | undefined {
+  return typeof source === 'function' ? source(request) : source;
+}
 
 function sendProblem(reply: FastifyReply, error: unknown) {
   if (error instanceof FamilyValidationError) {
@@ -99,10 +117,7 @@ function unavailable(reply: FastifyReply) {
   });
 }
 
-export function registerFamilyRoutes(
-  app: FastifyInstance,
-  service: FamilyServiceApi | undefined,
-): void {
+export function registerFamilyRoutes(app: FastifyInstance, service: FamilyServiceSource): void {
   app.get<{ Reply: FamilyListResponse | ProblemResponse }>(
     '/v1/families',
     {
@@ -112,10 +127,11 @@ export function registerFamilyRoutes(
         tags: ['families'],
       },
     },
-    async (_request, reply) => {
-      if (!service) return unavailable(reply);
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
       try {
-        return { families: await service.listFamilies() };
+        return { families: await familyService.listFamilies() };
       } catch (error) {
         return sendProblem(reply, error);
       }
@@ -133,9 +149,10 @@ export function registerFamilyRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) return unavailable(reply);
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
       try {
-        const family = await service.createFamily(request.body, request.id);
+        const family = await familyService.createFamily(request.body, request.id);
         return reply.code(201).send(family);
       } catch (error) {
         return sendProblem(reply, error);
@@ -154,9 +171,10 @@ export function registerFamilyRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) return unavailable(reply);
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
       try {
-        return await service.getFamily(request.params.familyId);
+        return await familyService.getFamily(request.params.familyId);
       } catch (error) {
         return sendProblem(reply, error);
       }
@@ -175,9 +193,10 @@ export function registerFamilyRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) return unavailable(reply);
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
       try {
-        return await service.updateFamily(request.params.familyId, request.body, request.id);
+        return await familyService.updateFamily(request.params.familyId, request.body, request.id);
       } catch (error) {
         return sendProblem(reply, error);
       }
@@ -196,9 +215,14 @@ export function registerFamilyRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) return unavailable(reply);
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
       try {
-        const family = await service.createAdult(request.params.familyId, request.body, request.id);
+        const family = await familyService.createAdult(
+          request.params.familyId,
+          request.body,
+          request.id,
+        );
         return reply.code(201).send(family);
       } catch (error) {
         return sendProblem(reply, error);
@@ -218,12 +242,38 @@ export function registerFamilyRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) return unavailable(reply);
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
       try {
-        return await service.updateAdult(
+        return await familyService.updateAdult(
           request.params.familyId,
           request.params.adultId,
           request.body,
+          request.id,
+        );
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{ Params: AdultParams; Reply: FamilyDetail | ProblemResponse }>(
+    '/v1/families/:familyId/adults/:adultId/claim-identity',
+    {
+      schema: {
+        description: 'Claim an adult record for the authenticated identity.',
+        params: AdultParamsSchema,
+        response: { 200: FamilyDetailSchema, ...errorResponses },
+        tags: ['families'],
+      },
+    },
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
+      try {
+        return await familyService.claimAdultIdentity(
+          request.params.familyId,
+          request.params.adultId,
           request.id,
         );
       } catch (error) {
@@ -244,9 +294,10 @@ export function registerFamilyRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) return unavailable(reply);
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
       try {
-        const family = await service.createCamper(
+        const family = await familyService.createCamper(
           request.params.familyId,
           request.body,
           request.id,
@@ -270,9 +321,10 @@ export function registerFamilyRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) return unavailable(reply);
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
       try {
-        return await service.updateCamper(
+        return await familyService.updateCamper(
           request.params.familyId,
           request.params.camperId,
           request.body,
@@ -300,14 +352,98 @@ export function registerFamilyRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) return unavailable(reply);
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
       try {
-        const result = await service.createRegistration(
+        const result = await familyService.createRegistration(
           request.params.familyId,
           request.body,
           request.id,
         );
         return reply.code(201).send(result);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Body: ParentCheckoutCreate;
+    Params: FamilyParams;
+    Reply: FamilyRegistrationResult | ProblemResponse;
+  }>(
+    '/v1/families/:familyId/checkout',
+    {
+      schema: {
+        body: ParentCheckoutCreateSchema,
+        description: 'Create a parent registration in one transaction.',
+        params: FamilyParamsSchema,
+        response: { 201: FamilyRegistrationResultSchema, ...errorResponses },
+        tags: ['families', 'registrations'],
+      },
+    },
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
+      try {
+        const result = await familyService.createParentCheckout(
+          request.params.familyId,
+          request.body,
+          request.id,
+        );
+        return reply.code(201).send(result);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Params: FamilyRegistrationParams;
+    Reply: FamilyRegistrationResult | ProblemResponse;
+  }>(
+    '/v1/families/:familyId/registrations/:registrationId/cancel',
+    {
+      schema: {
+        description: 'Cancel an active registration for this family.',
+        params: FamilyRegistrationParamsSchema,
+        response: { 200: FamilyRegistrationResultSchema, ...errorResponses },
+        tags: ['families', 'registrations'],
+      },
+    },
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
+      try {
+        return await familyService.cancelRegistration(
+          request.params.familyId,
+          request.params.registrationId,
+          request.id,
+        );
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{ Params: SessionParams; Reply: FamilyRegistrationResult | ProblemResponse }>(
+    '/v1/sessions/:sessionId/waitlist/promote',
+    {
+      schema: {
+        description: 'Promote the next waitlisted registration for a session.',
+        params: SessionParamsSchema,
+        response: { 200: FamilyRegistrationResultSchema, ...errorResponses },
+        tags: ['registrations', 'sessions'],
+      },
+    },
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
+      try {
+        return await familyService.promoteNextWaitlistRegistration(
+          request.params.sessionId,
+          request.id,
+        );
       } catch (error) {
         return sendProblem(reply, error);
       }
@@ -326,9 +462,10 @@ export function registerFamilyRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) return unavailable(reply);
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
       try {
-        const family = await service.createContact(
+        const family = await familyService.createContact(
           request.params.familyId,
           request.body,
           request.id,
@@ -352,9 +489,10 @@ export function registerFamilyRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) return unavailable(reply);
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
       try {
-        return await service.updateContact(
+        return await familyService.updateContact(
           request.params.familyId,
           request.params.contactId,
           request.body,

@@ -41,7 +41,11 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     command:
-      ['sh', '-c', 'node packages/database/dist/migrate.js && node packages/database/dist/seed.js']
+      [
+        'sh',
+        '-c',
+        'node packages/database/dist/migrate.js && node packages/database/dist/seed.js --winter-families',
+      ]
     depends_on:
       postgres:
         condition: service_healthy

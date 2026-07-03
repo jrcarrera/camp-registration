@@ -9,6 +9,8 @@ import type {
 
 const apiBaseUrl = process.env.API_INTERNAL_BASE_URL ?? 'http://127.0.0.1:3001';
 
+export type ApiHeaders = Record<string, string>;
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -18,8 +20,10 @@ export class ApiError extends Error {
   }
 }
 
-async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(new URL(path, apiBaseUrl), { cache: 'no-store' });
+async function getJson<T>(path: string, headers?: ApiHeaders): Promise<T> {
+  const init: RequestInit = { cache: 'no-store' };
+  if (headers) init.headers = headers;
+  const response = await fetch(new URL(path, apiBaseUrl), init);
   if (!response.ok) {
     const problem = (await response.json().catch(() => null)) as ProblemResponse | null;
     throw new ApiError(problem?.message ?? 'The API request failed.', response.status);
@@ -27,22 +31,65 @@ async function getJson<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+export function getParentApiHeaders(): ApiHeaders {
+  const headers: ApiHeaders = {
+    'x-local-actor-id': process.env.LOCAL_PARENT_ACTOR_ID ?? 'local-parent-avery',
+    'x-local-email': process.env.LOCAL_PARENT_EMAIL ?? 'winter.family001.adult1@example.test',
+    'x-local-email-verified': 'true',
+    'x-local-roles': 'parent_guardian',
+  };
+  if (process.env.LOCAL_ORGANIZATION_ID) {
+    headers['x-local-organization-id'] = process.env.LOCAL_ORGANIZATION_ID;
+  }
+  return headers;
+}
+
 export async function getCatalog(): Promise<CatalogContext> {
   return getJson('/v1/catalog');
+}
+
+export async function getParentCatalog(headers = getParentApiHeaders()): Promise<CatalogContext> {
+  return getJson('/v1/catalog', headers);
 }
 
 export async function getSessions(): Promise<SessionListResponse> {
   return getJson('/v1/sessions');
 }
 
+export async function getParentSessions(
+  headers = getParentApiHeaders(),
+): Promise<SessionListResponse> {
+  return getJson('/v1/sessions', headers);
+}
+
 export async function getSession(sessionId: string): Promise<SessionDetail> {
   return getJson(`/v1/sessions/${encodeURIComponent(sessionId)}`);
+}
+
+export async function getParentSession(
+  sessionId: string,
+  headers = getParentApiHeaders(),
+): Promise<SessionDetail> {
+  return getJson(`/v1/sessions/${encodeURIComponent(sessionId)}`, headers);
 }
 
 export async function getFamilies(): Promise<FamilyListResponse> {
   return getJson('/v1/families');
 }
 
+export async function getParentFamilies(
+  headers = getParentApiHeaders(),
+): Promise<FamilyListResponse> {
+  return getJson('/v1/families', headers);
+}
+
 export async function getFamily(familyId: string): Promise<FamilyDetail> {
   return getJson(`/v1/families/${encodeURIComponent(familyId)}`);
+}
+
+export async function getParentFamily(
+  familyId: string,
+  headers = getParentApiHeaders(),
+): Promise<FamilyDetail> {
+  return getJson(`/v1/families/${encodeURIComponent(familyId)}`, headers);
 }

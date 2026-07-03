@@ -4,8 +4,11 @@ An open-source platform for camp registration and camp operations.
 
 ## Status
 
-The project has an initial local-first application foundation. Product workflows
-are not implemented yet.
+The project has a local-first MVP foundation with implemented catalog, family,
+camper, admin registration, parent portal dashboard, parent checkout,
+cancellation, and waitlist promotion workflows. Authentication is still
+local-development oriented; the domain layer already enforces linked-adult
+family ownership for parent actions.
 
 ## Planned Scope
 
@@ -13,7 +16,7 @@ are not implemented yet.
 - Camp programs and sessions
 - Registration forms and electronic waivers
 - Payments, discounts, and waitlists
-- Parent portal and administrative dashboard
+- Parent portal enhancements and administrative dashboard
 - Rosters, health records, attendance, and communications
 
 ## Local Development
@@ -38,9 +41,9 @@ The local services are:
 - PostgreSQL: `localhost:5432`
 
 For faster host-based application development, start the supporting services
-with `pnpm infra:up`, run `pnpm db:migrate` and `pnpm db:seed`, then run
-`pnpm dev`. The root `.env` must provide the runtime and migration database URLs
-shown in `.env.example`.
+with `pnpm infra:up`, run `pnpm db:migrate` and
+`pnpm db:seed:winter-families`, then run `pnpm dev`. The root `.env` must
+provide the runtime and migration database URLs shown in `.env.example`.
 
 ## Quality Checks
 

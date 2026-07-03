@@ -184,6 +184,14 @@ export interface CreateRegistrationRecord {
   source: FamilyRegistrationSource;
 }
 
+export interface CreateParentCheckoutRecord {
+  family_id: string;
+  new_camper: CreateCamperRecord | null;
+  registration_id: string;
+  selected_camper_id: string | null;
+  session_id: string;
+}
+
 export interface FamilyRegistrationResultRecord {
   family: FamilyDetailRecord;
   registration: CamperSessionRegistrationRecord;
@@ -213,6 +221,15 @@ type CamperRow = Omit<CamperRecord, 'registrations' | 'updated_at'> & Timestampe
 type CamperSessionRegistrationRow = Omit<CamperSessionRegistrationRecord, 'registered_at'> &
   Timestamped & { camper_id: string };
 type ContactRow = Omit<ContactRecord, 'updated_at'> & Timestamped;
+
+interface RegistrationRow {
+  id: string;
+  family_id: string;
+  camper_id: string;
+  session_id: string;
+  status: FamilyRegistrationStatus;
+  source: FamilyRegistrationSource;
+}
 
 interface RegistrationSessionRow {
   id: string;
@@ -392,9 +409,69 @@ export class FamilyStore {
     });
   }
 
+  async listFamiliesForAdultIdentity(
+    organizationId: string,
+    identitySubject: string,
+  ): Promise<FamilySummaryRecord[]> {
+    return this.withTenant(organizationId, async (client) => {
+      const result = await client.query<FamilySummaryRow>(
+        `${familySummarySelect}
+         WHERE f.organization_id = $1
+           AND f.archived_at IS NULL
+           AND EXISTS (
+             SELECT 1
+             FROM adults a
+             WHERE a.organization_id = f.organization_id
+               AND a.family_id = f.id
+               AND a.identity_subject = $2
+               AND a.archived_at IS NULL
+           )
+         ORDER BY lower(f.family_name), f.id`,
+        [organizationId, identitySubject],
+      );
+      return result.rows.map(mapFamilySummary);
+    });
+  }
+
   async getFamily(organizationId: string, familyId: string): Promise<FamilyDetailRecord | null> {
     return this.withTenant(organizationId, (client) =>
       this.getFamilyInTenant(client, organizationId, familyId),
+    );
+  }
+
+  async adultIdentityCanAccessFamily(
+    organizationId: string,
+    familyId: string,
+    identitySubject: string,
+  ): Promise<boolean> {
+    return this.withTenant(organizationId, (client) =>
+      this.adultIdentityHasFamilyPermission(client, organizationId, familyId, identitySubject),
+    );
+  }
+
+  async adultIdentityCanRegisterFamily(
+    organizationId: string,
+    familyId: string,
+    identitySubject: string,
+  ): Promise<boolean> {
+    return this.withTenant(organizationId, (client) =>
+      this.adultIdentityHasFamilyPermission(client, organizationId, familyId, identitySubject, [
+        'account_owner',
+        'can_register',
+      ]),
+    );
+  }
+
+  async adultIdentityCanManageFamily(
+    organizationId: string,
+    familyId: string,
+    identitySubject: string,
+  ): Promise<boolean> {
+    return this.withTenant(organizationId, (client) =>
+      this.adultIdentityHasFamilyPermission(client, organizationId, familyId, identitySubject, [
+        'account_owner',
+        'can_manage_family',
+      ]),
     );
   }
 
@@ -589,6 +666,51 @@ export class FamilyStore {
         changed_fields: changedFields(current, context.update, fields),
       });
       return this.requireFamilyInTenant(client, context.organizationId, context.familyId);
+    });
+  }
+
+  async claimAdultIdentity(
+    context: FamilyWriteContext,
+    familyId: string,
+    adultId: string,
+    emailNormalized: string,
+  ): Promise<FamilyDetailRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const current = await client.query<{
+        email_normalized: string | null;
+        identity_subject: string | null;
+      }>(
+        `SELECT email_normalized, identity_subject
+         FROM adults
+         WHERE organization_id = $1
+           AND family_id = $2
+           AND id = $3
+           AND archived_at IS NULL
+         FOR UPDATE`,
+        [context.organizationId, familyId, adultId],
+      );
+      const adult = current.rows[0];
+      if (!adult) throw new FamilyNotFoundError('Adult not found');
+      if (adult.email_normalized !== emailNormalized) {
+        throw new FamilyNotFoundError('Adult not found');
+      }
+      if (adult.identity_subject && adult.identity_subject !== context.actorId) {
+        throw new FamilyConflictError('Adult is already linked to another identity');
+      }
+
+      if (!adult.identity_subject) {
+        await client.query(
+          `UPDATE adults
+           SET identity_subject = $4,
+               version = version + 1,
+               updated_at = transaction_timestamp()
+           WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
+          [context.organizationId, familyId, adultId, context.actorId],
+        );
+        await this.insertAudit(client, context, 'adult.identity_claimed', 'adult', adultId, {});
+      }
+
+      return this.requireFamilyInTenant(client, context.organizationId, familyId);
     });
   }
 
@@ -816,37 +938,108 @@ export class FamilyStore {
     context: FamilyWriteContext,
     registration: CreateRegistrationRecord,
   ): Promise<FamilyRegistrationResultRecord> {
-    return this.withTenant(context.organizationId, async (client) => {
-      await this.ensureFamilyExists(client, context.organizationId, registration.family_id);
+    return this.withTenant(context.organizationId, (client) =>
+      this.createRegistrationInTenant(client, context, registration),
+    );
+  }
 
-      const session = await client.query<RegistrationSessionRow>(
-        `SELECT
-           s.id,
-           s.code,
-           s.name,
-           p.name AS program_name,
-           p.default_minimum_grade AS minimum_grade,
-           p.default_maximum_grade AS maximum_grade,
-           se.year AS season_year,
-           s.starts_on::text,
-           s.status,
-           s.registration_opens_at,
-           s.registration_closes_at,
-           s.capacity,
-           s.minimum_age,
-           s.maximum_age,
-           s.age_as_of,
-           s.waitlist_enabled
-         FROM sessions s
-         JOIN programs p
-           ON p.organization_id = s.organization_id
-          AND p.id = s.program_id
-         JOIN seasons se
-           ON se.organization_id = s.organization_id
-          AND se.id = s.season_id
-         WHERE s.organization_id = $1 AND s.id = $2
-         FOR UPDATE OF s`,
-        [context.organizationId, registration.session_id],
+  async createParentCheckout(
+    context: FamilyWriteContext,
+    checkout: CreateParentCheckoutRecord,
+  ): Promise<FamilyRegistrationResultRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      await this.ensureFamilyExists(client, context.organizationId, checkout.family_id);
+      let camperId = checkout.selected_camper_id;
+
+      if (checkout.new_camper) {
+        if (checkout.new_camper.family_id !== checkout.family_id) {
+          throw new FamilyRegistrationEligibilityError('Camper family does not match checkout', {
+            camper_id: 'Create the camper in the selected family.',
+          });
+        }
+        await this.insertCamperInTenant(client, context, checkout.new_camper);
+        camperId = checkout.new_camper.id;
+      }
+
+      if (!camperId) {
+        throw new FamilyRegistrationEligibilityError('Select a camper for registration', {
+          camper_id: 'Select an existing camper or enter a new camper.',
+        });
+      }
+
+      return this.createRegistrationInTenant(client, context, {
+        camper_id: camperId,
+        family_id: checkout.family_id,
+        id: checkout.registration_id,
+        session_id: checkout.session_id,
+        source: 'PARENT',
+      });
+    });
+  }
+
+  async cancelRegistration(
+    context: FamilyWriteContext,
+    familyId: string,
+    registrationId: string,
+  ): Promise<FamilyRegistrationResultRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      await this.ensureFamilyExists(client, context.organizationId, familyId);
+      const current = await client.query<RegistrationRow>(
+        `SELECT id, family_id, camper_id, session_id, status, source
+         FROM registrations
+         WHERE organization_id = $1 AND family_id = $2 AND id = $3
+         FOR UPDATE`,
+        [context.organizationId, familyId, registrationId],
+      );
+      const registration = current.rows[0];
+      if (!registration) throw new FamilyNotFoundError('Registration not found');
+      if (registration.status === 'CANCELLED') {
+        throw new FamilyConflictError('Registration is already cancelled');
+      }
+
+      await client.query(
+        `UPDATE registrations
+         SET status = 'CANCELLED',
+             updated_at = transaction_timestamp()
+         WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
+        [context.organizationId, familyId, registrationId],
+      );
+      await this.insertAudit(
+        client,
+        context,
+        'registration.cancelled',
+        'registration',
+        registrationId,
+        {
+          previous_status: registration.status,
+          camper_id: registration.camper_id,
+          session_id: registration.session_id,
+          source: registration.source,
+        },
+      );
+
+      return {
+        family: await this.requireFamilyInTenant(client, context.organizationId, familyId),
+        registration: await this.getRegistrationInTenant(
+          client,
+          context.organizationId,
+          registrationId,
+        ),
+      };
+    });
+  }
+
+  async promoteNextWaitlistRegistration(
+    context: FamilyWriteContext,
+    sessionId: string,
+  ): Promise<FamilyRegistrationResultRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const session = await client.query<{ id: string; capacity: number; status: string }>(
+        `SELECT id, capacity, status
+         FROM sessions
+         WHERE organization_id = $1 AND id = $2
+         FOR UPDATE`,
+        [context.organizationId, sessionId],
       );
       const sessionRow = session.rows[0];
       if (!sessionRow) {
@@ -854,111 +1047,10 @@ export class FamilyStore {
           session_id: 'Select a valid session.',
         });
       }
-
-      if (registration.source === 'PARENT') {
-        if (sessionRow.status !== 'PUBLISHED') {
-          throw new FamilyRegistrationEligibilityError('Session is not open for registration', {
-            session_id: 'Select a published session.',
-          });
-        }
-        const window = await client.query<{ is_open: boolean }>(
-          `SELECT transaction_timestamp() >= $1::timestamptz
-              AND transaction_timestamp() < $2::timestamptz AS is_open`,
-          [sessionRow.registration_opens_at, sessionRow.registration_closes_at],
-        );
-        if (!window.rows[0]?.is_open) {
-          throw new FamilyRegistrationEligibilityError(
-            'Registration is not open for this session',
-            {
-              session_id: 'Select a session with open registration.',
-            },
-          );
-        }
-      } else if (['CANCELLED', 'ARCHIVED'].includes(sessionRow.status)) {
-        throw new FamilyRegistrationEligibilityError('Session is not available for registration', {
+      if (['CANCELLED', 'ARCHIVED'].includes(sessionRow.status)) {
+        throw new FamilyRegistrationEligibilityError('Session is not available for promotion', {
           session_id: 'Select an active session.',
         });
-      }
-
-      const ageAsOfDate =
-        sessionRow.age_as_of === 'SEASON_START'
-          ? `${sessionRow.season_year}-01-01`
-          : sessionRow.starts_on;
-      const camper = await client.query<RegistrationCamperRow>(
-        `SELECT
-           c.id,
-           c.family_id,
-           c.adult_id,
-           c.school_grade,
-           date_part('year', age($4::date, c.birth_date))::integer AS age_years
-         FROM campers c
-         WHERE c.organization_id = $1
-           AND c.family_id = $2
-           AND c.id = $3
-           AND c.archived_at IS NULL`,
-        [context.organizationId, registration.family_id, registration.camper_id, ageAsOfDate],
-      );
-      const camperRow = camper.rows[0];
-      if (!camperRow) {
-        throw new FamilyRegistrationEligibilityError('Camper not found', {
-          camper_id: 'Select a camper in this family.',
-        });
-      }
-      if (
-        camperRow.age_years < sessionRow.minimum_age ||
-        camperRow.age_years > sessionRow.maximum_age
-      ) {
-        throw new FamilyRegistrationEligibilityError(
-          'Camper is not age eligible for this session',
-          {
-            camper_id: `Camper must be age ${sessionRow.minimum_age}-${sessionRow.maximum_age}.`,
-          },
-        );
-      }
-
-      if (!camperRow.adult_id) {
-        if (!camperRow.school_grade?.trim()) {
-          throw new FamilyRegistrationEligibilityError(
-            'Camper grade is required for registration',
-            {
-              camper_id: 'Set the camper school grade before registering.',
-            },
-          );
-        }
-        const grade = normalizedGrade(camperRow.school_grade);
-        if (
-          grade === null ||
-          grade < sessionRow.minimum_grade ||
-          grade > sessionRow.maximum_grade
-        ) {
-          throw new FamilyRegistrationEligibilityError(
-            'Camper is not grade eligible for this session',
-            {
-              camper_id: `Camper must be in grade ${formatGradeRange(
-                sessionRow.minimum_grade,
-                sessionRow.maximum_grade,
-              )}.`,
-            },
-          );
-        }
-      }
-
-      const duplicate = await client.query(
-        `SELECT id
-         FROM registrations
-         WHERE organization_id = $1
-           AND session_id = $2
-           AND family_id = $3
-           AND camper_id = $4`,
-        [
-          context.organizationId,
-          registration.session_id,
-          registration.family_id,
-          registration.camper_id,
-        ],
-      );
-      if (duplicate.rows[0]) {
-        throw new FamilyRegistrationDuplicateError('Camper is already registered for this session');
       }
 
       const confirmed = await client.query<{ count: number }>(
@@ -967,66 +1059,305 @@ export class FamilyStore {
          WHERE organization_id = $1
            AND session_id = $2
            AND status = 'CONFIRMED'`,
-        [context.organizationId, registration.session_id],
+        [context.organizationId, sessionId],
       );
-      const confirmedCount = confirmed.rows[0]?.count ?? 0;
-      const status: FamilyRegistrationStatus =
-        confirmedCount < sessionRow.capacity
-          ? 'CONFIRMED'
-          : sessionRow.waitlist_enabled
-            ? 'WAITLISTED'
-            : 'CANCELLED';
-      if (status === 'CANCELLED') {
+      if ((confirmed.rows[0]?.count ?? 0) >= sessionRow.capacity) {
         throw new FamilyRegistrationCapacityError('Session capacity is full');
       }
 
-      try {
-        await client.query(
-          `INSERT INTO registrations (
-             id, organization_id, session_id, family_id, camper_id, status, source
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [
-            registration.id,
-            context.organizationId,
-            registration.session_id,
-            registration.family_id,
-            registration.camper_id,
-            status,
-            registration.source,
-          ],
-        );
-      } catch (error) {
-        if ((error as { code?: string }).code === '23505') {
-          throw new FamilyRegistrationDuplicateError(
-            'Camper is already registered for this session',
-          );
-        }
-        throw error;
-      }
+      const waitlist = await client.query<RegistrationRow>(
+        `SELECT id, family_id, camper_id, session_id, status, source
+         FROM registrations
+         WHERE organization_id = $1
+           AND session_id = $2
+           AND status = 'WAITLISTED'
+         ORDER BY registered_at, id
+         LIMIT 1
+         FOR UPDATE`,
+        [context.organizationId, sessionId],
+      );
+      const next = waitlist.rows[0];
+      if (!next) throw new FamilyNotFoundError('No waitlisted registration is available');
 
-      await this.insertAudit(
-        client,
-        context,
-        'registration.created',
-        'registration',
-        registration.id,
-        {
-          camper_id: registration.camper_id,
-          session_id: registration.session_id,
-          source: registration.source,
-          status,
-        },
+      await client.query(
+        `UPDATE registrations
+         SET status = 'CONFIRMED',
+             updated_at = transaction_timestamp()
+         WHERE organization_id = $1 AND id = $2`,
+        [context.organizationId, next.id],
       );
-      const family = await this.requireFamilyInTenant(
-        client,
-        context.organizationId,
-        registration.family_id,
-      );
+      await this.insertAudit(client, context, 'registration.promoted', 'registration', next.id, {
+        camper_id: next.camper_id,
+        session_id: next.session_id,
+        source: next.source,
+      });
+
       return {
-        family,
-        registration: registrationResultFromFamily(family, registration.id),
+        family: await this.requireFamilyInTenant(client, context.organizationId, next.family_id),
+        registration: await this.getRegistrationInTenant(client, context.organizationId, next.id),
       };
     });
+  }
+
+  private async createRegistrationInTenant(
+    client: PoolClient,
+    context: FamilyWriteContext,
+    registration: CreateRegistrationRecord,
+  ): Promise<FamilyRegistrationResultRecord> {
+    await this.ensureFamilyExists(client, context.organizationId, registration.family_id);
+
+    const session = await client.query<RegistrationSessionRow>(
+      `SELECT
+         s.id,
+         s.code,
+         s.name,
+         p.name AS program_name,
+         p.default_minimum_grade AS minimum_grade,
+         p.default_maximum_grade AS maximum_grade,
+         se.year AS season_year,
+         s.starts_on::text,
+         s.status,
+         s.registration_opens_at,
+         s.registration_closes_at,
+         s.capacity,
+         s.minimum_age,
+         s.maximum_age,
+         s.age_as_of,
+         s.waitlist_enabled
+       FROM sessions s
+       JOIN programs p
+         ON p.organization_id = s.organization_id
+        AND p.id = s.program_id
+       JOIN seasons se
+         ON se.organization_id = s.organization_id
+        AND se.id = s.season_id
+       WHERE s.organization_id = $1 AND s.id = $2
+       FOR UPDATE OF s`,
+      [context.organizationId, registration.session_id],
+    );
+    const sessionRow = session.rows[0];
+    if (!sessionRow) {
+      throw new FamilyRegistrationEligibilityError('Session not found', {
+        session_id: 'Select a valid session.',
+      });
+    }
+
+    if (registration.source === 'PARENT') {
+      if (sessionRow.status !== 'PUBLISHED') {
+        throw new FamilyRegistrationEligibilityError('Session is not open for registration', {
+          session_id: 'Select a published session.',
+        });
+      }
+      const window = await client.query<{ is_open: boolean }>(
+        `SELECT transaction_timestamp() >= $1::timestamptz
+            AND transaction_timestamp() < $2::timestamptz AS is_open`,
+        [sessionRow.registration_opens_at, sessionRow.registration_closes_at],
+      );
+      if (!window.rows[0]?.is_open) {
+        throw new FamilyRegistrationEligibilityError('Registration is not open for this session', {
+          session_id: 'Select a session with open registration.',
+        });
+      }
+    } else if (['CANCELLED', 'ARCHIVED'].includes(sessionRow.status)) {
+      throw new FamilyRegistrationEligibilityError('Session is not available for registration', {
+        session_id: 'Select an active session.',
+      });
+    }
+
+    const ageAsOfDate =
+      sessionRow.age_as_of === 'SEASON_START'
+        ? `${sessionRow.season_year}-01-01`
+        : sessionRow.starts_on;
+    const camper = await client.query<RegistrationCamperRow>(
+      `SELECT
+         c.id,
+         c.family_id,
+         c.adult_id,
+         c.school_grade,
+         date_part('year', age($4::date, c.birth_date))::integer AS age_years
+       FROM campers c
+       WHERE c.organization_id = $1
+         AND c.family_id = $2
+         AND c.id = $3
+         AND c.archived_at IS NULL`,
+      [context.organizationId, registration.family_id, registration.camper_id, ageAsOfDate],
+    );
+    const camperRow = camper.rows[0];
+    if (!camperRow) {
+      throw new FamilyRegistrationEligibilityError('Camper not found', {
+        camper_id: 'Select a camper in this family.',
+      });
+    }
+    if (
+      camperRow.age_years < sessionRow.minimum_age ||
+      camperRow.age_years > sessionRow.maximum_age
+    ) {
+      throw new FamilyRegistrationEligibilityError('Camper is not age eligible for this session', {
+        camper_id: `Camper must be age ${sessionRow.minimum_age}-${sessionRow.maximum_age}.`,
+      });
+    }
+
+    if (!camperRow.adult_id) {
+      if (!camperRow.school_grade?.trim()) {
+        throw new FamilyRegistrationEligibilityError('Camper grade is required for registration', {
+          camper_id: 'Set the camper school grade before registering.',
+        });
+      }
+      const grade = normalizedGrade(camperRow.school_grade);
+      if (grade === null || grade < sessionRow.minimum_grade || grade > sessionRow.maximum_grade) {
+        throw new FamilyRegistrationEligibilityError(
+          'Camper is not grade eligible for this session',
+          {
+            camper_id: `Camper must be in grade ${formatGradeRange(
+              sessionRow.minimum_grade,
+              sessionRow.maximum_grade,
+            )}.`,
+          },
+        );
+      }
+    }
+
+    const duplicate = await client.query(
+      `SELECT id
+       FROM registrations
+       WHERE organization_id = $1
+         AND session_id = $2
+         AND family_id = $3
+         AND camper_id = $4`,
+      [
+        context.organizationId,
+        registration.session_id,
+        registration.family_id,
+        registration.camper_id,
+      ],
+    );
+    if (duplicate.rows[0]) {
+      throw new FamilyRegistrationDuplicateError('Camper is already registered for this session');
+    }
+
+    const confirmed = await client.query<{ count: number }>(
+      `SELECT count(*)::integer
+       FROM registrations
+       WHERE organization_id = $1
+         AND session_id = $2
+         AND status = 'CONFIRMED'`,
+      [context.organizationId, registration.session_id],
+    );
+    const confirmedCount = confirmed.rows[0]?.count ?? 0;
+    const status: FamilyRegistrationStatus =
+      confirmedCount < sessionRow.capacity
+        ? 'CONFIRMED'
+        : sessionRow.waitlist_enabled
+          ? 'WAITLISTED'
+          : 'CANCELLED';
+    if (status === 'CANCELLED') {
+      throw new FamilyRegistrationCapacityError('Session capacity is full');
+    }
+
+    try {
+      await client.query(
+        `INSERT INTO registrations (
+           id, organization_id, session_id, family_id, camper_id, status, source
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          registration.id,
+          context.organizationId,
+          registration.session_id,
+          registration.family_id,
+          registration.camper_id,
+          status,
+          registration.source,
+        ],
+      );
+    } catch (error) {
+      if ((error as { code?: string }).code === '23505') {
+        throw new FamilyRegistrationDuplicateError('Camper is already registered for this session');
+      }
+      throw error;
+    }
+
+    await this.insertAudit(
+      client,
+      context,
+      'registration.created',
+      'registration',
+      registration.id,
+      {
+        camper_id: registration.camper_id,
+        session_id: registration.session_id,
+        source: registration.source,
+        status,
+      },
+    );
+    const family = await this.requireFamilyInTenant(
+      client,
+      context.organizationId,
+      registration.family_id,
+    );
+    return {
+      family,
+      registration: registrationResultFromFamily(family, registration.id),
+    };
+  }
+
+  private async insertCamperInTenant(
+    client: PoolClient,
+    context: FamilyWriteContext,
+    camper: CreateCamperRecord,
+  ): Promise<void> {
+    try {
+      await client.query(
+        `INSERT INTO campers (
+           id, organization_id, family_id, adult_id, first_name, last_name, birth_date,
+           email, email_normalized, preferred_name, gender, school_grade,
+           cabin_preference, accessibility_needs
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        [
+          camper.id,
+          context.organizationId,
+          camper.family_id,
+          camper.adult_id,
+          camper.first_name,
+          camper.last_name,
+          camper.birth_date,
+          camper.email,
+          camper.email_normalized,
+          camper.preferred_name,
+          camper.gender,
+          camper.school_grade,
+          camper.cabin_preference,
+          camper.accessibility_needs,
+        ],
+      );
+    } catch (error) {
+      this.mapUniqueViolation(error);
+    }
+    await this.insertAudit(client, context, 'camper.created', 'camper', camper.id, {});
+  }
+
+  private async adultIdentityHasFamilyPermission(
+    client: PoolClient,
+    organizationId: string,
+    familyId: string,
+    identitySubject: string,
+    permissions: readonly ('account_owner' | 'can_manage_family' | 'can_register')[] = [],
+  ): Promise<boolean> {
+    const permissionClause =
+      permissions.length === 0
+        ? ''
+        : `AND (${permissions.map((permission) => `a.${permission}`).join(' OR ')})`;
+    const result = await client.query(
+      `SELECT 1
+       FROM adults a
+       WHERE a.organization_id = $1
+         AND a.family_id = $2
+         AND a.identity_subject = $3
+         AND a.archived_at IS NULL
+         ${permissionClause}
+       LIMIT 1`,
+      [organizationId, familyId, identitySubject],
+    );
+    return Boolean(result.rows[0]);
   }
 
   private async getFamilyInTenant(
@@ -1095,6 +1426,50 @@ export class FamilyStore {
     const family = await this.getFamilyInTenant(client, organizationId, familyId);
     if (!family) throw new FamilyNotFoundError('Family not found');
     return family;
+  }
+
+  private async getRegistrationInTenant(
+    client: PoolClient,
+    organizationId: string,
+    registrationId: string,
+  ): Promise<CamperSessionRegistrationRecord> {
+    const result = await client.query<CamperSessionRegistrationRow>(
+      `SELECT
+         r.camper_id,
+         r.id AS registration_id,
+         s.id AS session_id,
+         s.code AS session_code,
+         s.name AS session_name,
+         p.name AS program_name,
+         s.starts_on::text,
+         s.ends_on::text,
+         r.status,
+         r.source,
+         r.registered_at AS updated_at
+       FROM registrations r
+       JOIN sessions s
+         ON s.organization_id = r.organization_id
+        AND s.id = r.session_id
+       JOIN programs p
+         ON p.organization_id = s.organization_id
+        AND p.id = s.program_id
+       WHERE r.organization_id = $1 AND r.id = $2`,
+      [organizationId, registrationId],
+    );
+    const row = result.rows[0];
+    if (!row) throw new FamilyNotFoundError('Registration not found');
+    return {
+      ends_on: row.ends_on,
+      program_name: row.program_name,
+      registered_at: timestamp(row.updated_at),
+      registration_id: row.registration_id,
+      session_code: row.session_code,
+      session_id: row.session_id,
+      session_name: row.session_name,
+      source: row.source,
+      starts_on: row.starts_on,
+      status: row.status,
+    };
   }
 
   private async ensureFamilyExists(

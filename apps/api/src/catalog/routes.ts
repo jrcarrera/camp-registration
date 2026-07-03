@@ -26,7 +26,7 @@ import {
   type SessionParams,
   type SessionUpdate,
 } from '@camp-registration/contracts';
-import type { FastifyInstance, FastifyReply } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import {
   CatalogAuthorizationError,
@@ -38,6 +38,18 @@ import {
   CatalogValidationError,
   type CatalogServiceApi,
 } from './service.js';
+
+type CatalogServiceSource =
+  | CatalogServiceApi
+  | ((request: FastifyRequest) => CatalogServiceApi | undefined)
+  | undefined;
+
+function resolveCatalogService(
+  source: CatalogServiceSource,
+  request: FastifyRequest,
+): CatalogServiceApi | undefined {
+  return typeof source === 'function' ? source(request) : source;
+}
 
 function sendProblem(reply: FastifyReply, error: unknown) {
   if (error instanceof CatalogValidationError) {
@@ -82,10 +94,7 @@ const errorResponses = {
   503: ProblemResponseSchema,
 };
 
-export function registerCatalogRoutes(
-  app: FastifyInstance,
-  service: CatalogServiceApi | undefined,
-): void {
+export function registerCatalogRoutes(app: FastifyInstance, service: CatalogServiceSource): void {
   app.get<{ Reply: CatalogContext | ProblemResponse }>(
     '/v1/catalog',
     {
@@ -95,15 +104,16 @@ export function registerCatalogRoutes(
         tags: ['catalog'],
       },
     },
-    async (_request, reply) => {
-      if (!service) {
+    async (request, reply) => {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
         return reply.code(503).send({
           code: 'catalog_unavailable',
           message: 'Catalog dependencies are not configured.',
         });
       }
       try {
-        return await service.getContext();
+        return await catalogService.getContext();
       } catch (error) {
         return sendProblem(reply, error);
       }
@@ -119,15 +129,16 @@ export function registerCatalogRoutes(
         tags: ['sessions'],
       },
     },
-    async (_request, reply) => {
-      if (!service) {
+    async (request, reply) => {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
         return reply.code(503).send({
           code: 'catalog_unavailable',
           message: 'Catalog dependencies are not configured.',
         });
       }
       try {
-        return { sessions: await service.listSessions() };
+        return { sessions: await catalogService.listSessions() };
       } catch (error) {
         return sendProblem(reply, error);
       }
@@ -145,14 +156,15 @@ export function registerCatalogRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
         return reply.code(503).send({
           code: 'catalog_unavailable',
           message: 'Catalog dependencies are not configured.',
         });
       }
       try {
-        const season = await service.createSeason(request.body, request.id);
+        const season = await catalogService.createSeason(request.body, request.id);
         return reply.code(201).send(season);
       } catch (error) {
         return sendProblem(reply, error);
@@ -171,14 +183,15 @@ export function registerCatalogRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
         return reply.code(503).send({
           code: 'catalog_unavailable',
           message: 'Catalog dependencies are not configured.',
         });
       }
       try {
-        const program = await service.createProgram(request.body, request.id);
+        const program = await catalogService.createProgram(request.body, request.id);
         return reply.code(201).send(program);
       } catch (error) {
         return sendProblem(reply, error);
@@ -202,14 +215,19 @@ export function registerCatalogRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
         return reply.code(503).send({
           code: 'catalog_unavailable',
           message: 'Catalog dependencies are not configured.',
         });
       }
       try {
-        return await service.updateProgram(request.params.programId, request.body, request.id);
+        return await catalogService.updateProgram(
+          request.params.programId,
+          request.body,
+          request.id,
+        );
       } catch (error) {
         return sendProblem(reply, error);
       }
@@ -227,14 +245,15 @@ export function registerCatalogRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
         return reply.code(503).send({
           code: 'catalog_unavailable',
           message: 'Catalog dependencies are not configured.',
         });
       }
       try {
-        const session = await service.createSession(request.body, request.id);
+        const session = await catalogService.createSession(request.body, request.id);
         return reply.code(201).send(session);
       } catch (error) {
         return sendProblem(reply, error);
@@ -253,14 +272,15 @@ export function registerCatalogRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
         return reply.code(503).send({
           code: 'catalog_unavailable',
           message: 'Catalog dependencies are not configured.',
         });
       }
       try {
-        return await service.getSession(request.params.sessionId);
+        return await catalogService.getSession(request.params.sessionId);
       } catch (error) {
         return sendProblem(reply, error);
       }
@@ -283,14 +303,19 @@ export function registerCatalogRoutes(
       },
     },
     async (request, reply) => {
-      if (!service) {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
         return reply.code(503).send({
           code: 'catalog_unavailable',
           message: 'Catalog dependencies are not configured.',
         });
       }
       try {
-        return await service.updateSession(request.params.sessionId, request.body, request.id);
+        return await catalogService.updateSession(
+          request.params.sessionId,
+          request.body,
+          request.id,
+        );
       } catch (error) {
         return sendProblem(reply, error);
       }

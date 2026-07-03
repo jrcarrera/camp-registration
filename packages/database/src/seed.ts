@@ -277,7 +277,14 @@ export async function seedFamilyFixture(
              can_register, can_make_payments, emergency_contact, authorized_pickup,
              receives_operational_communication
            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-           ON CONFLICT (id) DO NOTHING`,
+           ON CONFLICT (id) DO UPDATE
+           SET identity_subject = COALESCE(EXCLUDED.identity_subject, adults.identity_subject),
+               updated_at = CASE
+                 WHEN EXCLUDED.identity_subject IS NOT NULL
+                   AND adults.identity_subject IS DISTINCT FROM EXCLUDED.identity_subject
+                 THEN transaction_timestamp()
+                 ELSE adults.updated_at
+               END`,
           [
             adult.id,
             family.organization_id,

@@ -375,6 +375,146 @@ describe('family store', () => {
         },
       ),
     ).rejects.toBeInstanceOf(FamilyRegistrationDuplicateError);
+
+    const cancelled = await store.cancelRegistration(
+      { ...context, requestId: 'checkout-cancel-test' },
+      firstFamilyId,
+      firstRegistrationId,
+    );
+    const promoted = await store.promoteNextWaitlistRegistration(
+      { ...context, requestId: 'checkout-promote-test' },
+      sessionId,
+    );
+
+    expect(cancelled.registration).toMatchObject({
+      registration_id: firstRegistrationId,
+      status: 'CANCELLED',
+    });
+    expect(cancelled.family.campers[0]?.registrations).toEqual([]);
+    expect(promoted.registration).toMatchObject({
+      registration_id: secondRegistrationId,
+      status: 'CONFIRMED',
+    });
+  });
+
+  it('claims adult identity and lists only owned families for that identity', async () => {
+    const store = new FamilyStore(runtimeDatabase);
+    const familyId = 'b91b5297-0d8f-4990-bff5-63d80e2de08d';
+    const adultId = '238c7a2d-7d20-4669-b1ac-34f58513a3c3';
+    const context = {
+      actorId: 'parent-identity-subject',
+      organizationId,
+      requestId: 'adult-identity-claim-test',
+    };
+
+    await store.createFamily(context, {
+      family_name: 'Claimable Family',
+      id: familyId,
+    });
+    await store.createAdult(context, {
+      account_owner: true,
+      authorized_pickup: true,
+      birth_date: null,
+      can_make_payments: true,
+      can_manage_family: true,
+      can_register: true,
+      email: 'parent.claim@example.test',
+      email_normalized: 'parent.claim@example.test',
+      emergency_contact: true,
+      family_id: familyId,
+      first_name: 'Casey',
+      id: adultId,
+      identity_subject: null,
+      last_name: 'Claim',
+      phone: '555-0150',
+      receives_operational_communication: true,
+    });
+
+    const claimed = await store.claimAdultIdentity(
+      context,
+      familyId,
+      adultId,
+      'parent.claim@example.test',
+    );
+    const ownedFamilies = await store.listFamiliesForAdultIdentity(organizationId, context.actorId);
+
+    expect(claimed.adults[0]).toMatchObject({
+      id: adultId,
+      identity_subject: context.actorId,
+    });
+    expect(ownedFamilies).toEqual([
+      expect.objectContaining({
+        family_name: 'Claimable Family',
+        id: familyId,
+      }),
+    ]);
+    await expect(
+      store.adultIdentityCanRegisterFamily(organizationId, familyId, context.actorId),
+    ).resolves.toBe(true);
+    await expect(
+      store.adultIdentityCanRegisterFamily(organizationId, otherOrganizationId, context.actorId),
+    ).resolves.toBe(false);
+  });
+
+  it('rolls back a new camper when atomic parent checkout cannot register', async () => {
+    const store = new FamilyStore(runtimeDatabase);
+    const dates = checkoutFixtureDates();
+    const sessionId = 'f25dc597-4676-401b-84bc-8b1295f5de29';
+    const familyId = '8df9f102-53eb-418e-a8e2-ef084cf90289';
+    const camperId = 'e0c64d26-83a5-4315-8148-9ee321d3d122';
+    const context = {
+      actorId: 'parent-checkout-subject',
+      organizationId,
+      requestId: 'atomic-checkout-rollback-test',
+    };
+
+    const admin = new Pool({ connectionString: migrationUrl });
+    await admin.query(
+      `INSERT INTO sessions (
+         id, organization_id, season_id, program_id, code, name, starts_on, ends_on,
+         registration_opens_at, registration_closes_at, capacity, minimum_age,
+         maximum_age, age_as_of, currency, price_cents, deposit_cents,
+         waitlist_enabled, status
+       ) VALUES (
+         $1, $2, 'd5d8a8b7-c4ff-43be-a849-60cbd5914c85',
+         '6d75c29b-e424-4da6-8191-db70859382fd', 'HS-CHECKOUT-ROLLBACK',
+         'High School Atomic Checkout Rollback', $3, $4, $5, $6, 20, 14, 18,
+         'SESSION_START', 'USD', 52500, 10000, true, 'PUBLISHED'
+       )`,
+      [sessionId, organizationId, dates.startsOn, dates.endsOn, dates.opensAt, dates.closesAt],
+    );
+    await admin.end();
+
+    await store.createFamily(context, { family_name: 'Atomic Checkout Family', id: familyId });
+
+    await expect(
+      store.createParentCheckout(context, {
+        family_id: familyId,
+        new_camper: {
+          accessibility_needs: null,
+          adult_id: null,
+          birth_date: `${new Date(dates.startsOn).getUTCFullYear() - 9}-04-12`,
+          cabin_preference: null,
+          email: null,
+          email_normalized: null,
+          family_id: familyId,
+          first_name: 'Avery',
+          gender: 'Female',
+          id: camperId,
+          last_name: 'Rollback',
+          preferred_name: null,
+          school_grade: '4',
+        },
+        registration_id: 'b5cdfa77-1e8d-4817-825a-02191faec30f',
+        selected_camper_id: null,
+        session_id: sessionId,
+      }),
+    ).rejects.toBeInstanceOf(FamilyRegistrationEligibilityError);
+
+    await expect(store.getFamily(organizationId, familyId)).resolves.toMatchObject({
+      camper_count: 0,
+      campers: [],
+    });
   });
 
   it('applies grade eligibility from explicit program grade bounds', async () => {

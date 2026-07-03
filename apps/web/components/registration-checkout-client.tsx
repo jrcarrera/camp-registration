@@ -1,12 +1,11 @@
 'use client';
 
 import type {
-  Camper,
   CamperCreate,
   FamilyDetail,
-  FamilyRegistrationCreate,
   FamilyRegistrationResult,
   FamilySummary,
+  ParentCheckoutCreate,
   ProblemResponse,
   SessionDetail,
 } from '@camp-registration/contracts';
@@ -120,44 +119,27 @@ function resultMessage(result: FamilyRegistrationResult): string {
     : `${result.registration.session_name} waitlist spot added.`;
 }
 
-async function readFamily(familyId: string): Promise<FamilyDetail | ProblemResponse> {
-  const response = await fetch(`/api/v1/families/${familyId}`);
-  return (await response.json()) as FamilyDetail | ProblemResponse;
-}
-
-async function createCamper(
+async function readFamily(
   familyId: string,
-  payload: CamperCreate,
+  requestHeaders?: Record<string, string>,
 ): Promise<FamilyDetail | ProblemResponse> {
-  const response = await fetch(`/api/v1/families/${familyId}/campers`, {
-    body: JSON.stringify(payload),
-    headers: { 'content-type': 'application/json' },
-    method: 'POST',
+  const response = await fetch(`/api/v1/families/${familyId}`, {
+    ...(requestHeaders ? { headers: requestHeaders } : {}),
   });
   return (await response.json()) as FamilyDetail | ProblemResponse;
 }
 
-async function createRegistration(
+async function createCheckout(
   familyId: string,
-  payload: FamilyRegistrationCreate,
+  payload: ParentCheckoutCreate,
+  requestHeaders?: Record<string, string>,
 ): Promise<FamilyRegistrationResult | ProblemResponse> {
-  const response = await fetch(`/api/v1/families/${familyId}/registrations`, {
+  const response = await fetch(`/api/v1/families/${familyId}/checkout`, {
     body: JSON.stringify(payload),
-    headers: { 'content-type': 'application/json' },
+    headers: { ...(requestHeaders ?? {}), 'content-type': 'application/json' },
     method: 'POST',
   });
   return (await response.json()) as FamilyRegistrationResult | ProblemResponse;
-}
-
-function findCreatedCamper(family: FamilyDetail, payload: CamperCreate): Camper | undefined {
-  return [...family.campers]
-    .reverse()
-    .find(
-      (camper) =>
-        camper.first_name === payload.first_name &&
-        camper.last_name === payload.last_name &&
-        camper.birth_date === payload.birth_date,
-    );
 }
 
 function currentLocalDate(now: Date): string {
@@ -283,15 +265,36 @@ function camperFromForm(form: CamperForm): CandidateCamper | null {
   };
 }
 
-export function RegistrationCheckoutClient({
-  families,
-  seasonYearsById,
-  sessions,
-}: {
+function preferredCamperId(family: FamilyDetail, initialCamperId?: string): string {
+  if (initialCamperId && family.campers.some((camper) => camper.id === initialCamperId)) {
+    return initialCamperId;
+  }
+  return family.campers[0]?.id ?? '';
+}
+
+interface RegistrationCheckoutClientProps {
   families: FamilySummary[];
+  hideFamilySelector?: boolean;
+  initialCamperId?: string | undefined;
+  initialFamily?: FamilyDetail | null;
+  requestHeaders?: Record<string, string>;
+  returnHref?: string;
+  returnLabel?: string;
   seasonYearsById: Record<string, number>;
   sessions: SessionDetail[];
-}) {
+}
+
+export function RegistrationCheckoutClient({
+  families,
+  hideFamilySelector = false,
+  initialCamperId,
+  initialFamily = null,
+  requestHeaders,
+  returnHref = '/families',
+  returnLabel = 'Families',
+  seasonYearsById,
+  sessions,
+}: RegistrationCheckoutClientProps) {
   const [now, setNow] = useState(() => new Date());
   const candidateSessions = useMemo(
     () =>
@@ -301,10 +304,12 @@ export function RegistrationCheckoutClient({
       ),
     [now, sessions],
   );
-  const [familyId, setFamilyId] = useState(families[0]?.id ?? '');
-  const [family, setFamily] = useState<FamilyDetail | null>(null);
+  const [familyId, setFamilyId] = useState(initialFamily?.id ?? families[0]?.id ?? '');
+  const [family, setFamily] = useState<FamilyDetail | null>(initialFamily);
   const [camperMode, setCamperMode] = useState<'existing' | 'new'>('existing');
-  const [camperId, setCamperId] = useState('');
+  const [camperId, setCamperId] = useState(() =>
+    initialFamily ? preferredCamperId(initialFamily, initialCamperId) : (initialCamperId ?? ''),
+  );
   const [sessionId, setSessionId] = useState('');
   const [camperForm, setCamperForm] = useState<CamperForm>(cleanCamperForm);
   const [state, setState] = useState<CheckoutState>(cleanState);
@@ -327,22 +332,31 @@ export function RegistrationCheckoutClient({
   );
 
   useEffect(() => {
-    if (!familyId) return;
+    if (!familyId) {
+      setFamily(null);
+      setCamperId('');
+      return;
+    }
     let cancelled = false;
     setState(cleanState);
-    void readFamily(familyId).then((result) => {
+    if (initialFamily?.id === familyId) {
+      setFamily(initialFamily);
+      setCamperId(preferredCamperId(initialFamily, initialCamperId));
+      return;
+    }
+    void readFamily(familyId, requestHeaders).then((result) => {
       if (cancelled) return;
       if ('code' in result) {
         setState(problemMessage(result));
         return;
       }
       setFamily(result);
-      setCamperId(result.campers[0]?.id ?? '');
+      setCamperId(preferredCamperId(result, initialCamperId));
     });
     return () => {
       cancelled = true;
     };
-  }, [familyId]);
+  }, [familyId, initialCamperId, initialFamily, requestHeaders]);
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(new Date()), 60_000);
@@ -385,34 +399,16 @@ export function RegistrationCheckoutClient({
     }
     setState({ ...cleanState, saving: true });
 
-    let selectedCamperId = camperId;
-    if (camperMode === 'new') {
-      const payload = camperPayload(camperForm);
-      const created = await createCamper(family.id, payload);
-      if ('code' in created) {
-        setState(problemMessage(created));
-        return;
-      }
-      setFamily(created);
-      const createdCamper = findCreatedCamper(created, payload);
-      selectedCamperId = createdCamper?.id ?? '';
-      setCamperId(selectedCamperId);
-      if (!selectedCamperId) {
-        setState({
-          fieldErrors: {},
-          message: 'The camper was added, but registration could not continue.',
-          saving: false,
-          tone: 'error',
-        });
-        return;
-      }
-    }
-
-    const result = await createRegistration(family.id, {
-      camper_id: selectedCamperId,
-      session_id: sessionId,
-      source: 'PARENT',
-    });
+    const result = await createCheckout(
+      family.id,
+      {
+        ...(camperMode === 'new'
+          ? { new_camper: camperPayload(camperForm) }
+          : { existing_camper_id: camperId }),
+        session_id: sessionId,
+      },
+      requestHeaders,
+    );
     if ('code' in result) {
       setState(problemMessage(result));
       return;
@@ -427,22 +423,29 @@ export function RegistrationCheckoutClient({
     <form className="checkoutForm" onSubmit={submit}>
       <Message state={state} />
       <div className="fieldGrid">
-        <Field label="Family account">
-          <select
-            value={familyId}
-            onChange={(event) => {
-              setFamilyId(event.target.value);
-              setFamily(null);
-            }}
-            required
-          >
-            {families.map((familyOption) => (
-              <option key={familyOption.id} value={familyOption.id}>
-                {familyOption.family_name}
-              </option>
-            ))}
-          </select>
-        </Field>
+        {hideFamilySelector ? (
+          <div className="selectedFamilyContext" aria-label="Household">
+            <span>Household</span>
+            <strong>{family?.family_name ?? 'Loading family'}</strong>
+          </div>
+        ) : (
+          <Field label="Family account">
+            <select
+              value={familyId}
+              onChange={(event) => {
+                setFamilyId(event.target.value);
+                setFamily(null);
+              }}
+              required
+            >
+              {families.map((familyOption) => (
+                <option key={familyOption.id} value={familyOption.id}>
+                  {familyOption.family_name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
         <Field label="Session" error={state.fieldErrors.session_id}>
           <select
             value={sessionId}
@@ -565,8 +568,8 @@ export function RegistrationCheckoutClient({
       )}
 
       <div className="inlineActions">
-        <Link className="buttonSecondary" href="/families">
-          Families
+        <Link className="buttonSecondary" href={returnHref}>
+          {returnLabel}
         </Link>
         <button
           className="buttonPrimary"

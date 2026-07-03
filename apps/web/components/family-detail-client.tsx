@@ -17,7 +17,7 @@ import type {
   ProblemResponse,
   SessionSummary,
 } from '@camp-registration/contracts';
-import { AlertCircle, CheckCircle2, Plus, Save } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Plus, Save, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, type ReactNode, useEffect, useState } from 'react';
@@ -818,7 +818,7 @@ function CamperEditor({
         <span>{roleLabel(camper.adult_id ? 'Adult camper' : 'Camper', camper.birth_date)}</span>
       </div>
       <Message state={state} />
-      <CamperRegistrations camper={camper} />
+      <CamperRegistrations camper={camper} familyId={familyId} onSaved={onSaved} />
       <CamperFields form={form} state={state} set={set} />
       <div className="inlineActions">
         <button className="buttonSecondary" type="submit" disabled={state.saving}>
@@ -830,26 +830,60 @@ function CamperEditor({
   );
 }
 
-function CamperRegistrations({ camper }: { camper: Camper }) {
+function CamperRegistrations({
+  camper,
+  familyId,
+  onSaved,
+}: {
+  camper: Camper;
+  familyId: string;
+  onSaved: (family: FamilyDetail) => void;
+}) {
+  const [state, setState] = useState<SaveState>(cleanState);
   if (camper.registrations.length === 0) return null;
+
+  const cancel = async (registrationId: string) => {
+    setState({ ...cleanState, saving: true });
+    const result = await postRegistrationOperation(
+      `/api/v1/families/${familyId}/registrations/${registrationId}/cancel`,
+    );
+    if ('field_errors' in result || 'code' in result) {
+      setState(problemMessage(result));
+      return;
+    }
+    onSaved(result.family);
+    setState({ ...cleanState, message: 'Registration cancelled.' });
+  };
 
   return (
     <div className="registrationLinks" aria-label={`${camper.first_name} session registrations`}>
+      <Message state={state} />
       <span>Session registrations</span>
       <div>
         {camper.registrations.map((registration) => (
-          <Link
-            className={`registrationLink registrationLink${registration.status.toLowerCase()}`}
-            key={registration.registration_id}
-            href={`/sessions/${registration.session_id}`}
-          >
-            <strong>{registration.session_name}</strong>
-            <small>
-              {registration.status === 'CONFIRMED' ? 'Attending' : 'Waitlisted'} -{' '}
-              {registration.source === 'ADMIN' ? 'Admin' : 'Parent'} - {registration.session_code} -{' '}
-              {new Date(registration.registered_at).toLocaleDateString('en-US')}
-            </small>
-          </Link>
+          <div className="registrationLinkRow" key={registration.registration_id}>
+            <Link
+              className={`registrationLink registrationLink${registration.status.toLowerCase()}`}
+              href={`/sessions/${registration.session_id}`}
+            >
+              <strong>{registration.session_name}</strong>
+              <small>
+                {registration.status === 'CONFIRMED' ? 'Attending' : 'Waitlisted'} -{' '}
+                {registration.source === 'ADMIN' ? 'Admin' : 'Parent'} - {registration.session_code}{' '}
+                - {new Date(registration.registered_at).toLocaleDateString('en-US')}
+              </small>
+            </Link>
+            <button
+              className="iconButton dangerButton"
+              type="button"
+              disabled={state.saving}
+              onClick={() => void cancel(registration.registration_id)}
+              title="Cancel registration"
+              aria-label={`Cancel ${registration.session_name} registration`}
+            >
+              <XCircle size={17} aria-hidden="true" />
+            </button>
+          </div>
         ))}
       </div>
     </div>
@@ -1273,5 +1307,16 @@ async function writeRegistration(
     return (await response.json()) as FamilyRegistrationResult | ProblemResponse;
   } catch {
     return { code: 'request_failed', message: 'The camper could not be registered.' };
+  }
+}
+
+async function postRegistrationOperation(
+  path: string,
+): Promise<FamilyRegistrationResult | ProblemResponse> {
+  try {
+    const response = await fetch(path, { method: 'POST' });
+    return (await response.json()) as FamilyRegistrationResult | ProblemResponse;
+  } catch {
+    return { code: 'request_failed', message: 'The registration could not be updated.' };
   }
 }

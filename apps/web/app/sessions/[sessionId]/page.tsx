@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import type { RegisteredCamper } from '@camp-registration/contracts';
 
 import { SessionEditor } from '../../../components/session-editor';
+import { WaitlistPromoteButton } from '../../../components/waitlist-promote-button';
 import { ApiError, getCatalog, getSession } from '../../../lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -37,7 +38,11 @@ export default async function SessionEditorPage({
           </span>
         </header>
         <SessionEditor programs={catalog.programs} seasons={catalog.seasons} session={session} />
-        <RegisteredCampers campers={session.registered_campers} />
+        <RegisteredCampers
+          availableCount={session.available_count}
+          campers={session.registered_campers}
+          sessionId={session.id}
+        />
       </>
     );
   } catch (error) {
@@ -46,7 +51,15 @@ export default async function SessionEditorPage({
   }
 }
 
-function RegisteredCampers({ campers }: { campers: RegisteredCamper[] }) {
+function RegisteredCampers({
+  availableCount,
+  campers,
+  sessionId,
+}: {
+  availableCount: number;
+  campers: RegisteredCamper[];
+  sessionId: string;
+}) {
   const confirmedCount = campers.filter((camper) => camper.status === 'CONFIRMED').length;
   const waitlistedCount = campers.filter((camper) => camper.status === 'WAITLISTED').length;
 
@@ -59,6 +72,10 @@ function RegisteredCampers({ campers }: { campers: RegisteredCamper[] }) {
             {confirmedCount} attending, {waitlistedCount} waitlisted
           </p>
         </div>
+        <WaitlistPromoteButton
+          disabled={waitlistedCount === 0 || availableCount === 0}
+          sessionId={sessionId}
+        />
       </div>
       <div className="tableFrame">
         <table className="sessionsTable">

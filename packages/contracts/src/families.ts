@@ -232,6 +232,15 @@ export const CamperCreateSchema = Type.Object(
   { additionalProperties: false, $id: 'CamperCreate' },
 );
 
+export const ParentCheckoutCreateSchema = Type.Object(
+  {
+    existing_camper_id: Type.Optional(UuidSchema),
+    new_camper: Type.Optional(CamperCreateSchema),
+    session_id: UuidSchema,
+  },
+  { additionalProperties: false, $id: 'ParentCheckoutCreate' },
+);
+
 export const CamperUpdateSchema = Type.Composite(
   [
     CamperCreateSchema,
@@ -284,6 +293,11 @@ export const ContactParamsSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const FamilyRegistrationParamsSchema = Type.Object(
+  { familyId: UuidSchema, registrationId: UuidSchema },
+  { additionalProperties: false },
+);
+
 export type FamilySummary = Static<typeof FamilySummarySchema>;
 export type Adult = Static<typeof AdultSchema>;
 export type CamperSessionRegistration = Static<typeof CamperSessionRegistrationSchema>;
@@ -292,6 +306,7 @@ export type Contact = Static<typeof ContactSchema>;
 export type FamilyDetail = Static<typeof FamilyDetailSchema>;
 export type FamilyListResponse = Static<typeof FamilyListResponseSchema>;
 export type FamilyRegistrationCreate = Static<typeof FamilyRegistrationCreateSchema>;
+export type ParentCheckoutCreate = Static<typeof ParentCheckoutCreateSchema>;
 export type FamilyRegistrationResult = Static<typeof FamilyRegistrationResultSchema>;
 export type FamilyCreate = Static<typeof FamilyCreateSchema>;
 export type FamilyUpdate = Static<typeof FamilyUpdateSchema>;
@@ -305,3 +320,4 @@ export type FamilyParams = Static<typeof FamilyParamsSchema>;
 export type AdultParams = Static<typeof AdultParamsSchema>;
 export type CamperParams = Static<typeof CamperParamsSchema>;
 export type ContactParams = Static<typeof ContactParamsSchema>;
+export type FamilyRegistrationParams = Static<typeof FamilyRegistrationParamsSchema>;

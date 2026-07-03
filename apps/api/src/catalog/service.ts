@@ -22,7 +22,7 @@ import {
 } from '@camp-registration/database';
 import type { CatalogStore } from '@camp-registration/database';
 
-const readRoles = new Set(['camp_staff', 'camp_admin', 'organization_admin']);
+const readRoles = new Set(['parent_guardian', 'camp_staff', 'camp_admin', 'organization_admin']);
 const editRoles = new Set(['camp_admin', 'organization_admin']);
 
 export class CatalogAuthorizationError extends Error {}

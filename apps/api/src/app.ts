@@ -11,7 +11,11 @@ import {
   type UnavailableResponse,
 } from '@camp-registration/contracts';
 import { CatalogStore, FamilyStore, type DatabaseClient } from '@camp-registration/database';
-import Fastify, { type FastifyBaseLogger, type FastifyInstance } from 'fastify';
+import Fastify, {
+  type FastifyBaseLogger,
+  type FastifyInstance,
+  type FastifyRequest,
+} from 'fastify';
 
 import { registerCatalogRoutes } from './catalog/routes.js';
 import { CatalogService, type CatalogServiceApi } from './catalog/service.js';
@@ -25,6 +29,12 @@ export interface BuildAppOptions {
   identity?: RequestIdentity;
   logger?: boolean | FastifyBaseLogger;
   organizationId?: string;
+  requestContext?: (request: FastifyRequest) => RequestServiceContext | undefined;
+}
+
+export interface RequestServiceContext {
+  identity: RequestIdentity;
+  organizationId: string;
 }
 
 export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyInstance> {
@@ -47,25 +57,35 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     routePrefix: '/docs',
   });
 
+  const resolveRequestContext = (request: FastifyRequest): RequestServiceContext | undefined =>
+    options.requestContext?.(request) ??
+    (options.identity && options.organizationId
+      ? { identity: options.identity, organizationId: options.organizationId }
+      : undefined);
+
+  const catalogStore = options.database ? new CatalogStore(options.database) : undefined;
   const catalogService =
     options.catalogService ??
-    (options.database && options.identity && options.organizationId
-      ? new CatalogService(
-          new CatalogStore(options.database),
-          options.identity,
-          options.organizationId,
-        )
+    (catalogStore
+      ? (request: FastifyRequest) => {
+          const context = resolveRequestContext(request);
+          return context
+            ? new CatalogService(catalogStore, context.identity, context.organizationId)
+            : undefined;
+        }
       : undefined);
   registerCatalogRoutes(app, catalogService);
 
+  const familyStore = options.database ? new FamilyStore(options.database) : undefined;
   const familyService =
     options.familyService ??
-    (options.database && options.identity && options.organizationId
-      ? new FamilyService(
-          new FamilyStore(options.database),
-          options.identity,
-          options.organizationId,
-        )
+    (familyStore
+      ? (request: FastifyRequest) => {
+          const context = resolveRequestContext(request);
+          return context
+            ? new FamilyService(familyStore, context.identity, context.organizationId)
+            : undefined;
+        }
       : undefined);
   registerFamilyRoutes(app, familyService);
 

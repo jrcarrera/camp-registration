@@ -14,13 +14,18 @@ import type {
   FamilyRegistrationResult,
   FamilySummary,
   FamilyUpdate,
+  ParentCheckoutCreate,
 } from '@camp-registration/contracts';
 import type { RequestIdentity } from '@camp-registration/auth';
 import { FamilyConflictError } from '@camp-registration/database';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildApp } from '../src/app.js';
-import { FamilyService, type FamilyServiceApi } from '../src/families/service.js';
+import {
+  FamilyAuthorizationError,
+  FamilyService,
+  type FamilyServiceApi,
+} from '../src/families/service.js';
 
 const organizationId = 'a60b272f-b028-4f1a-b666-3ef3cffd9827';
 const familyId = '0f6dcf52-c873-44df-a597-9a0a51bf5067';
@@ -148,6 +153,10 @@ const registrationCreate: FamilyRegistrationCreate = {
   camper_id: camperId,
   session_id: '06c02070-2e63-4b7b-bd93-578e54fa1ea6',
   source: 'ADMIN',
+};
+const checkoutCreate: ParentCheckoutCreate = {
+  existing_camper_id: camperId,
+  session_id: registrationCreate.session_id,
 };
 const registrationResult: FamilyRegistrationResult = {
   family: {
@@ -332,6 +341,66 @@ describe('family routes', () => {
     );
   });
 
+  it('claims adult identity and runs parent checkout through the family API', async () => {
+    const service = fakeService();
+    const app = await buildApp({ familyService: service });
+    applications.push(app);
+
+    const claimResponse = await app.inject({
+      headers: { 'x-request-id': 'adult-claim-route-test' },
+      method: 'POST',
+      url: `/v1/families/${familyId}/adults/${adultId}/claim-identity`,
+    });
+    const checkoutResponse = await app.inject({
+      headers: { 'x-request-id': 'checkout-route-test' },
+      method: 'POST',
+      payload: checkoutCreate,
+      url: `/v1/families/${familyId}/checkout`,
+    });
+
+    expect(claimResponse.statusCode).toBe(200);
+    expect(checkoutResponse.statusCode).toBe(201);
+    expect(service.claimAdultIdentity).toHaveBeenCalledWith(
+      familyId,
+      adultId,
+      'adult-claim-route-test',
+    );
+    expect(service.createParentCheckout).toHaveBeenCalledWith(
+      familyId,
+      checkoutCreate,
+      'checkout-route-test',
+    );
+  });
+
+  it('cancels registrations and promotes waitlisted campers through the family API', async () => {
+    const service = fakeService();
+    const app = await buildApp({ familyService: service });
+    applications.push(app);
+
+    const cancelResponse = await app.inject({
+      headers: { 'x-request-id': 'registration-cancel-route-test' },
+      method: 'POST',
+      url: `/v1/families/${familyId}/registrations/${registrationResult.registration.registration_id}/cancel`,
+    });
+    const promoteResponse = await app.inject({
+      headers: { 'x-request-id': 'waitlist-promote-route-test' },
+      method: 'POST',
+      url: `/v1/sessions/${registrationCreate.session_id}/waitlist/promote`,
+    });
+
+    expect(cancelResponse.statusCode).toBe(200);
+    expect(promoteResponse.statusCode).toBe(200);
+    expect(service.cancelRegistration).toHaveBeenCalledWith(
+      familyId,
+      registrationResult.registration.registration_id,
+      'registration-cancel-route-test',
+    );
+    expect(service.promoteNextWaitlistRegistration).toHaveBeenCalledWith(
+      registrationCreate.session_id,
+      'waitlist-promote-route-test',
+    );
+  });
+
   it('returns a stable conflict response', async () => {
     const service = fakeService();
     service.updateFamily = vi.fn().mockRejectedValue(new FamilyConflictError('Stale version'));
@@ -389,6 +458,51 @@ describe('family service validation', () => {
     expect(store.createCamper).not.toHaveBeenCalled();
     expect(store.createContact).not.toHaveBeenCalled();
   });
+
+  it('filters parent family access through linked adult ownership', async () => {
+    const store = {
+      adultIdentityCanAccessFamily: vi.fn().mockResolvedValue(false),
+      listFamilies: vi.fn(),
+      listFamiliesForAdultIdentity: vi.fn().mockResolvedValue([summary]),
+    };
+    const service = new FamilyService(store as never, parentIdentity, organizationId);
+
+    await expect(service.listFamilies()).resolves.toEqual([summary]);
+    expect(store.listFamiliesForAdultIdentity).toHaveBeenCalledWith(
+      organizationId,
+      parentIdentity.subject,
+    );
+    expect(store.listFamilies).not.toHaveBeenCalled();
+    await expect(service.getFamily(familyId)).rejects.toBeInstanceOf(FamilyAuthorizationError);
+  });
+
+  it('requires linked adult registration permission for parent-source registrations', async () => {
+    const store = {
+      adultIdentityCanRegisterFamily: vi.fn().mockResolvedValue(false),
+      createRegistration: vi.fn(),
+    };
+    const service = new FamilyService(store as never, parentIdentity, organizationId);
+
+    await expect(
+      service.createRegistration(
+        familyId,
+        { ...registrationCreate, source: 'PARENT' },
+        'parent-registration-denied-test',
+      ),
+    ).rejects.toBeInstanceOf(FamilyAuthorizationError);
+    expect(store.createRegistration).not.toHaveBeenCalled();
+
+    store.adultIdentityCanRegisterFamily.mockResolvedValue(true);
+    store.createRegistration.mockResolvedValue(registrationResult);
+    await expect(
+      service.createRegistration(
+        familyId,
+        { ...registrationCreate, source: 'PARENT' },
+        'parent-registration-allowed-test',
+      ),
+    ).resolves.toEqual(registrationResult);
+    expect(store.createRegistration).toHaveBeenCalled();
+  });
 });
 
 const localIdentity: RequestIdentity = {
@@ -405,25 +519,52 @@ const localIdentity: RequestIdentity = {
   subject: 'local-admin',
 };
 
+const parentIdentity: RequestIdentity = {
+  email: 'parent@example.test',
+  emailVerified: true,
+  memberships: [
+    {
+      campIds: [],
+      organizationId,
+      roles: ['parent_guardian'],
+    },
+  ],
+  mfaVerified: false,
+  subject: 'parent-subject',
+};
+
 function fakeService(): FamilyServiceApi & {
+  cancelRegistration: ReturnType<typeof vi.fn<FamilyServiceApi['cancelRegistration']>>;
+  claimAdultIdentity: ReturnType<typeof vi.fn<FamilyServiceApi['claimAdultIdentity']>>;
   createAdult: ReturnType<typeof vi.fn<FamilyServiceApi['createAdult']>>;
   createCamper: ReturnType<typeof vi.fn<FamilyServiceApi['createCamper']>>;
   createContact: ReturnType<typeof vi.fn<FamilyServiceApi['createContact']>>;
   createFamily: ReturnType<typeof vi.fn<FamilyServiceApi['createFamily']>>;
+  createParentCheckout: ReturnType<typeof vi.fn<FamilyServiceApi['createParentCheckout']>>;
   createRegistration: ReturnType<typeof vi.fn<FamilyServiceApi['createRegistration']>>;
+  promoteNextWaitlistRegistration: ReturnType<
+    typeof vi.fn<FamilyServiceApi['promoteNextWaitlistRegistration']>
+  >;
   updateAdult: ReturnType<typeof vi.fn<FamilyServiceApi['updateAdult']>>;
   updateCamper: ReturnType<typeof vi.fn<FamilyServiceApi['updateCamper']>>;
   updateContact: ReturnType<typeof vi.fn<FamilyServiceApi['updateContact']>>;
   updateFamily: ReturnType<typeof vi.fn<FamilyServiceApi['updateFamily']>>;
 } {
   return {
+    cancelRegistration: vi.fn().mockResolvedValue({
+      ...registrationResult,
+      registration: { ...registrationResult.registration, status: 'CANCELLED' },
+    }),
+    claimAdultIdentity: vi.fn().mockResolvedValue(detail),
     createAdult: vi.fn().mockResolvedValue(detail),
     createCamper: vi.fn().mockResolvedValue(detail),
     createContact: vi.fn().mockResolvedValue(detail),
     createFamily: vi.fn().mockResolvedValue(detail),
+    createParentCheckout: vi.fn().mockResolvedValue(registrationResult),
     createRegistration: vi.fn().mockResolvedValue(registrationResult),
     getFamily: vi.fn().mockResolvedValue(detail),
     listFamilies: vi.fn().mockResolvedValue([summary]),
+    promoteNextWaitlistRegistration: vi.fn().mockResolvedValue(registrationResult),
     updateAdult: vi.fn().mockResolvedValue(detail),
     updateCamper: vi.fn().mockResolvedValue(detail),
     updateContact: vi.fn().mockResolvedValue(detail),

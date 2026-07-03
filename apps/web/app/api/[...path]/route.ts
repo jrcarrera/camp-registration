@@ -10,13 +10,25 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   target.search = request.nextUrl.search;
 
   const body = request.method === 'GET' || request.method === 'HEAD' ? null : await request.text();
+  const headers = new Headers({
+    accept: request.headers.get('accept') ?? 'application/json',
+    'content-type': request.headers.get('content-type') ?? 'application/json',
+    'x-request-id': request.headers.get('x-request-id') ?? crypto.randomUUID(),
+  });
+  for (const header of [
+    'x-local-actor-id',
+    'x-local-email',
+    'x-local-email-verified',
+    'x-local-mfa-verified',
+    'x-local-organization-id',
+    'x-local-roles',
+  ]) {
+    const value = request.headers.get(header);
+    if (value) headers.set(header, value);
+  }
   const response = await fetch(target, {
     ...(body === null ? {} : { body }),
-    headers: {
-      accept: request.headers.get('accept') ?? 'application/json',
-      'content-type': request.headers.get('content-type') ?? 'application/json',
-      'x-request-id': request.headers.get('x-request-id') ?? crypto.randomUUID(),
-    },
+    headers,
     method: request.method,
   });
 

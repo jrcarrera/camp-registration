@@ -24,6 +24,9 @@ Implemented in this slice:
 - PostgreSQL tables with `organization_id`, RLS, and runtime grants
 - Optimistic version checks for updates
 - Audit events for family-domain writes
+- Parent-owned family filtering and parent registration authorization through
+  linked adult `identity_subject`
+- Parent-style checkout, registration cancellation, and next waitlist promotion
 - Web UI for listing families, creating families, and editing nested records
 - Route and database tests for family behavior
 - OpenAPI and generated TypeScript API types
@@ -46,10 +49,11 @@ Implemented in this slice:
 
 ## Deferred
 
-- Parent self-service onboarding
-- Adult invite, claim, identity-link, and identity-unlink workflows
+- Parent self-service onboarding beyond local/domain claim support
+- Adult invite, identity-unlink, account recovery, and provider-backed
+  identity-management workflows
 - Family merge, split, transfer, archive, and restore workflows
 - Health forms, medications, allergies, and medical documents
-- Registration checkout, waitlist, and payment integration
-- Parent/guardian object-level authorization
+- Payments, capacity holds, sibling atomic checkout groups, and waitlist
+  offer/expiration workflows
 - Restricted pickup rules and custody-sensitive workflows
