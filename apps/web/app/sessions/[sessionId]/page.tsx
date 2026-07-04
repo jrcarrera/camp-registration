@@ -3,11 +3,26 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { RegisteredCamper } from '@camp-registration/contracts';
 
+import { RegistrationPaymentForm } from '../../../components/registration-payment-form';
 import { SessionEditor } from '../../../components/session-editor';
 import { WaitlistPromoteButton } from '../../../components/waitlist-promote-button';
 import { ApiError, getCatalog, getSession } from '../../../lib/api';
 
 export const dynamic = 'force-dynamic';
+
+function money(cents: number): string {
+  return new Intl.NumberFormat('en-US', { currency: 'USD', style: 'currency' }).format(cents / 100);
+}
+
+function paymentStatusLabel(status: RegisteredCamper['payment_status']): string {
+  const labels: Record<RegisteredCamper['payment_status'], string> = {
+    DEPOSIT_DUE: 'Deposit due',
+    NOT_DUE: 'Not due',
+    PAID: 'Paid',
+    PARTIAL: 'Partial',
+  };
+  return labels[status];
+}
 
 export default async function SessionEditorPage({
   params,
@@ -86,14 +101,16 @@ function RegisteredCampers({
               <th>Gender</th>
               <th>Grade</th>
               <th>Status</th>
+              <th>Balance</th>
               <th>Source</th>
               <th>Registered</th>
+              <th>Payment</th>
             </tr>
           </thead>
           <tbody>
             {campers.length === 0 ? (
               <tr>
-                <td className="emptyState" colSpan={7}>
+                <td className="emptyState" colSpan={9}>
                   <strong>No campers</strong>
                   <span>Confirmed and waitlisted campers will appear here.</span>
                 </td>
@@ -125,9 +142,16 @@ function RegisteredCampers({
                       {camper.status === 'CONFIRMED' ? 'Attending' : 'Waitlisted'}
                     </span>
                   </td>
+                  <td data-label="Balance">
+                    <strong>{money(camper.balance_due_cents)}</strong>
+                    <span>{paymentStatusLabel(camper.payment_status)}</span>
+                  </td>
                   <td data-label="Source">{camper.source === 'ADMIN' ? 'Admin' : 'Parent'}</td>
                   <td data-label="Registered">
                     {new Date(camper.registered_at).toLocaleDateString('en-US')}
+                  </td>
+                  <td data-label="Payment">
+                    <RegistrationPaymentForm camper={camper} />
                   </td>
                 </tr>
               ))

@@ -14,6 +14,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
+  CreditCard,
   HeartPulse,
   Plus,
   ShieldCheck,
@@ -88,6 +89,20 @@ function statusLabel(status: CamperSessionRegistration['status']): string {
   return status.charAt(0) + status.slice(1).toLowerCase();
 }
 
+function paymentStatusLabel(status: CamperSessionRegistration['payment_status']): string {
+  const labels: Record<CamperSessionRegistration['payment_status'], string> = {
+    DEPOSIT_DUE: 'Deposit due',
+    NOT_DUE: 'Not due',
+    PAID: 'Paid',
+    PARTIAL: 'Partial',
+  };
+  return labels[status];
+}
+
+function money(cents: number): string {
+  return new Intl.NumberFormat('en-US', { currency: 'USD', style: 'currency' }).format(cents / 100);
+}
+
 function registrationIcon(status: CamperSessionRegistration['status']): LucideIcon {
   return status === 'WAITLISTED' ? Clock3 : CheckCircle2;
 }
@@ -112,14 +127,8 @@ function countWaitlisted(items: RegistrationItem[]): number {
   return items.filter((item) => item.registration.status === 'WAITLISTED').length;
 }
 
-function countEmergencyPeople(families: FamilyDetail[]): number {
-  return families.reduce(
-    (total, family) =>
-      total +
-      family.adults.filter((adult) => adult.emergency_contact).length +
-      family.contacts.filter((contact) => contact.emergency_contact).length,
-    0,
-  );
+function totalBalanceDue(items: RegistrationItem[]): number {
+  return items.reduce((total, item) => total + item.registration.balance_due_cents, 0);
 }
 
 function findPrimaryAdult(family: FamilyDetail): Adult | null {
@@ -256,6 +265,11 @@ function RegistrationPlan({
                       {statusLabel(registration.status)}
                     </span>
                     <span>{family.family_name}</span>
+                    <span>
+                      {registration.balance_due_cents > 0
+                        ? `${money(registration.balance_due_cents)} due`
+                        : paymentStatusLabel(registration.payment_status)}
+                    </span>
                     <span>Added {formatTimestamp(registration.registered_at)}</span>
                   </div>
                 </div>
@@ -319,6 +333,11 @@ function CamperCard({ camper }: { camper: Camper }) {
                   <span>
                     {registration.program_name} - {formatDate(registration.starts_on)}-
                     {formatDate(registration.ends_on)}
+                  </span>
+                  <span>
+                    {registration.balance_due_cents > 0
+                      ? `${money(registration.balance_due_cents)} due`
+                      : paymentStatusLabel(registration.payment_status)}
                   </span>
                 </div>
                 <span className={`statusBadge status${registration.status.toLowerCase()}`}>
@@ -464,8 +483,8 @@ export function ParentPortalDashboard({
   const [state, setState] = useState<PortalState>(cleanState);
   const items = useMemo(() => registrationItems(families), [families]);
   const camperCount = families.reduce((total, family) => total + family.camper_count, 0);
-  const emergencyPeople = countEmergencyPeople(families);
   const waitlistedCount = countWaitlisted(items);
+  const balanceDue = totalBalanceDue(items);
 
   const handleCancel = async (item: RegistrationItem) => {
     const { camper, family, registration } = item;
@@ -513,7 +532,7 @@ export function ParentPortalDashboard({
           label="Current registrations"
           value={String(items.length)}
         />
-        <SummaryTile icon={HeartPulse} label="Emergency contacts" value={String(emergencyPeople)} />
+        <SummaryTile icon={CreditCard} label="Balance due" value={money(balanceDue)} />
       </div>
 
       <div className="portalActionBand">

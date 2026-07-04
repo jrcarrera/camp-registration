@@ -14,9 +14,30 @@ const RegistrationStatusSchema = Type.Union([
   Type.Literal('CANCELLED'),
 ]);
 const RegistrationSourceSchema = Type.Union([Type.Literal('ADMIN'), Type.Literal('PARENT')]);
+const PaymentStatusSchema = Type.Union([
+  Type.Literal('NOT_DUE'),
+  Type.Literal('DEPOSIT_DUE'),
+  Type.Literal('PARTIAL'),
+  Type.Literal('PAID'),
+]);
+const PaymentMethodSchema = Type.Union([
+  Type.Literal('OFFLINE_CASH'),
+  Type.Literal('OFFLINE_CHECK'),
+  Type.Literal('OFFLINE_CARD'),
+  Type.Literal('SCHOLARSHIP'),
+  Type.Literal('DISCOUNT'),
+  Type.Literal('OTHER'),
+]);
 
 export const CamperSessionRegistrationSchema = Type.Object(
   {
+    amount_paid_cents: Type.Integer({ minimum: 0 }),
+    balance_due_cents: Type.Integer({ minimum: 0 }),
+    currency: Type.Literal('USD'),
+    deposit_cents: Type.Integer({ minimum: 0 }),
+    deposit_due_cents: Type.Integer({ minimum: 0 }),
+    payment_status: PaymentStatusSchema,
+    price_cents: Type.Integer({ minimum: 0 }),
     registration_id: UuidSchema,
     session_id: UuidSchema,
     session_code: Type.String({ minLength: 1 }),
@@ -33,6 +54,13 @@ export const CamperSessionRegistrationSchema = Type.Object(
 
 const FamilyRegistrationResultRegistrationSchema = Type.Object(
   {
+    amount_paid_cents: Type.Integer({ minimum: 0 }),
+    balance_due_cents: Type.Integer({ minimum: 0 }),
+    currency: Type.Literal('USD'),
+    deposit_cents: Type.Integer({ minimum: 0 }),
+    deposit_due_cents: Type.Integer({ minimum: 0 }),
+    payment_status: PaymentStatusSchema,
+    price_cents: Type.Integer({ minimum: 0 }),
     registration_id: UuidSchema,
     session_id: UuidSchema,
     session_code: Type.String({ minLength: 1 }),
@@ -165,6 +193,15 @@ export const FamilyRegistrationResultSchema = Type.Object(
     registration: FamilyRegistrationResultRegistrationSchema,
   },
   { additionalProperties: false, $id: 'FamilyRegistrationResult' },
+);
+
+export const FamilyRegistrationPaymentCreateSchema = Type.Object(
+  {
+    amount_cents: Type.Integer({ minimum: 1 }),
+    method: PaymentMethodSchema,
+    note: Type.Optional(Type.Union([Type.String({ minLength: 1, maxLength: 500 }), Type.Null()])),
+  },
+  { additionalProperties: false, $id: 'FamilyRegistrationPaymentCreate' },
 );
 
 export const FamilyCreateSchema = Type.Object(
@@ -308,6 +345,7 @@ export type FamilyListResponse = Static<typeof FamilyListResponseSchema>;
 export type FamilyRegistrationCreate = Static<typeof FamilyRegistrationCreateSchema>;
 export type ParentCheckoutCreate = Static<typeof ParentCheckoutCreateSchema>;
 export type FamilyRegistrationResult = Static<typeof FamilyRegistrationResultSchema>;
+export type FamilyRegistrationPaymentCreate = Static<typeof FamilyRegistrationPaymentCreateSchema>;
 export type FamilyCreate = Static<typeof FamilyCreateSchema>;
 export type FamilyUpdate = Static<typeof FamilyUpdateSchema>;
 export type AdultCreate = Static<typeof AdultCreateSchema>;

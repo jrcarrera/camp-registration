@@ -95,6 +95,53 @@ test('lets parents add emergency and pickup contacts from readiness', async ({ p
   await expect(page.getByText(`${firstName} ${lastName}`)).toBeVisible();
 });
 
+test('lets staff record an offline payment for a parent registration', async ({
+  page,
+  request,
+}) => {
+  const suffix = Date.now().toString(36);
+  const firstName = 'Pay';
+  const lastName = `Balance${suffix}`;
+  const checkout = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
+    data: {
+      new_camper: {
+        birth_date: '2015-02-01',
+        first_name: firstName,
+        gender: 'Female',
+        last_name: lastName,
+        school_grade: '5',
+      },
+      session_id: elementarySessionId,
+    },
+    headers: parentHeaders,
+  });
+  expect(checkout.ok()).toBeTruthy();
+  const result = (await checkout.json()) as {
+    registration: { balance_due_cents: number; deposit_cents: number; registration_id: string };
+  };
+
+  await page.goto(`/sessions/${elementarySessionId}`);
+
+  const paymentForm = page.getByTestId(`payment-form-${result.registration.registration_id}`);
+  await expect(paymentForm).toBeVisible();
+  await expect(paymentForm.getByLabel('Payment amount')).toHaveValue(
+    (result.registration.deposit_cents / 100).toFixed(2),
+  );
+  await paymentForm.getByLabel('Payment method').selectOption('OFFLINE_CASH');
+  await paymentForm.getByLabel('Payment note').fill(`Cash ${suffix}`);
+  await paymentForm.getByRole('button', { name: 'Record payment' }).click();
+
+  await expect(paymentForm.getByRole('status')).toContainText('Payment recorded.');
+  const paymentRow = page.locator('tr').filter({ has: paymentForm });
+  await expect(
+    paymentRow.getByText(
+      new Intl.NumberFormat('en-US', { currency: 'USD', style: 'currency' }).format(
+        (result.registration.balance_due_cents - result.registration.deposit_cents) / 100,
+      ),
+    ),
+  ).toBeVisible();
+});
+
 test('redirects the legacy registration route into the parent portal', async ({ page }) => {
   await page.goto('/register');
 

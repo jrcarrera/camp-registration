@@ -69,9 +69,17 @@ export const RegistrationStatusSchema = Type.Union([
   Type.Literal('CANCELLED'),
 ]);
 export const RegistrationSourceSchema = Type.Union([Type.Literal('ADMIN'), Type.Literal('PARENT')]);
+export const PaymentStatusSchema = Type.Union([
+  Type.Literal('NOT_DUE'),
+  Type.Literal('DEPOSIT_DUE'),
+  Type.Literal('PARTIAL'),
+  Type.Literal('PAID'),
+]);
 
 export const RegisteredCamperSchema = Type.Object(
   {
+    amount_paid_cents: Type.Integer({ minimum: 0 }),
+    balance_due_cents: Type.Integer({ minimum: 0 }),
     registration_id: UuidSchema,
     camper_id: UuidSchema,
     family_id: UuidSchema,
@@ -84,6 +92,11 @@ export const RegisteredCamperSchema = Type.Object(
     birth_date: LocalDateSchema,
     status: RegistrationStatusSchema,
     source: RegistrationSourceSchema,
+    currency: Type.Literal('USD'),
+    deposit_cents: Type.Integer({ minimum: 0 }),
+    deposit_due_cents: Type.Integer({ minimum: 0 }),
+    payment_status: PaymentStatusSchema,
+    price_cents: Type.Integer({ minimum: 0 }),
     registered_at: UtcTimestampSchema,
   },
   { additionalProperties: false, $id: 'RegisteredCamper' },

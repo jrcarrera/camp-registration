@@ -14,6 +14,7 @@ import {
   FamilyParamsSchema,
   FamilyRegistrationParamsSchema,
   FamilyRegistrationCreateSchema,
+  FamilyRegistrationPaymentCreateSchema,
   FamilyRegistrationResultSchema,
   FamilyUpdateSchema,
   ParentCheckoutCreateSchema,
@@ -34,6 +35,7 @@ import {
   type FamilyParams,
   type FamilyRegistrationParams,
   type FamilyRegistrationCreate,
+  type FamilyRegistrationPaymentCreate,
   type FamilyRegistrationResult,
   type FamilyUpdate,
   type ParentCheckoutCreate,
@@ -420,6 +422,38 @@ export function registerFamilyRoutes(app: FastifyInstance, service: FamilyServic
           request.params.registrationId,
           request.id,
         );
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Body: FamilyRegistrationPaymentCreate;
+    Params: FamilyRegistrationParams;
+    Reply: FamilyRegistrationResult | ProblemResponse;
+  }>(
+    '/v1/families/:familyId/registrations/:registrationId/payments',
+    {
+      schema: {
+        body: FamilyRegistrationPaymentCreateSchema,
+        description: 'Record an offline payment or credit for a confirmed registration.',
+        params: FamilyRegistrationParamsSchema,
+        response: { 201: FamilyRegistrationResultSchema, ...errorResponses },
+        tags: ['families', 'payments', 'registrations'],
+      },
+    },
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
+      try {
+        const result = await familyService.recordRegistrationPayment(
+          request.params.familyId,
+          request.params.registrationId,
+          request.body,
+          request.id,
+        );
+        return reply.code(201).send(result);
       } catch (error) {
         return sendProblem(reply, error);
       }

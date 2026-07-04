@@ -11,6 +11,7 @@ import type {
   FamilyCreate,
   FamilyDetail,
   FamilyRegistrationCreate,
+  FamilyRegistrationPaymentCreate,
   FamilyRegistrationResult,
   FamilySummary,
   FamilyUpdate,
@@ -154,9 +155,23 @@ const registrationCreate: FamilyRegistrationCreate = {
   session_id: '06c02070-2e63-4b7b-bd93-578e54fa1ea6',
   source: 'ADMIN',
 };
+const paymentCreate: FamilyRegistrationPaymentCreate = {
+  amount_cents: 10000,
+  method: 'OFFLINE_CHECK',
+  note: 'Check 1001',
+};
 const checkoutCreate: ParentCheckoutCreate = {
   existing_camper_id: camperId,
   session_id: registrationCreate.session_id,
+};
+const registrationFinancials = {
+  amount_paid_cents: 0,
+  balance_due_cents: 52500,
+  currency: 'USD' as const,
+  deposit_cents: 10000,
+  deposit_due_cents: 10000,
+  payment_status: 'DEPOSIT_DUE' as const,
+  price_cents: 52500,
 };
 const registrationResult: FamilyRegistrationResult = {
   family: {
@@ -166,6 +181,7 @@ const registrationResult: FamilyRegistrationResult = {
         ...camper,
         registrations: [
           {
+            ...registrationFinancials,
             ends_on: '2027-07-10',
             program_name: 'High School Camp',
             registered_at: '2026-06-27T12:00:00Z',
@@ -182,6 +198,7 @@ const registrationResult: FamilyRegistrationResult = {
     ],
   },
   registration: {
+    ...registrationFinancials,
     ends_on: '2027-07-10',
     program_name: 'High School Camp',
     registered_at: '2026-06-27T12:00:00Z',
@@ -401,6 +418,28 @@ describe('family routes', () => {
     );
   });
 
+  it('records offline registration payments through the family API', async () => {
+    const service = fakeService();
+    const app = await buildApp({ familyService: service });
+    applications.push(app);
+
+    const response = await app.inject({
+      headers: { 'x-request-id': 'registration-payment-route-test' },
+      method: 'POST',
+      payload: paymentCreate,
+      url: `/v1/families/${familyId}/registrations/${registrationResult.registration.registration_id}/payments`,
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).toEqual(registrationResult);
+    expect(service.recordRegistrationPayment).toHaveBeenCalledWith(
+      familyId,
+      registrationResult.registration.registration_id,
+      paymentCreate,
+      'registration-payment-route-test',
+    );
+  });
+
   it('returns a stable conflict response', async () => {
     const service = fakeService();
     service.updateFamily = vi.fn().mockRejectedValue(new FamilyConflictError('Stale version'));
@@ -504,6 +543,21 @@ describe('family service validation', () => {
     expect(store.createRegistration).toHaveBeenCalled();
   });
 
+  it('keeps offline payment recording staff-only', async () => {
+    const store = { recordRegistrationPayment: vi.fn() };
+    const service = new FamilyService(store as never, parentIdentity, organizationId);
+
+    await expect(
+      service.recordRegistrationPayment(
+        familyId,
+        registrationResult.registration.registration_id,
+        paymentCreate,
+        'parent-payment-denied-test',
+      ),
+    ).rejects.toBeInstanceOf(FamilyAuthorizationError);
+    expect(store.recordRegistrationPayment).not.toHaveBeenCalled();
+  });
+
   it('requires linked adult management permission for parent profile and contact edits', async () => {
     const store = {
       adultIdentityCanManageFamily: vi.fn().mockResolvedValue(false),
@@ -586,6 +640,9 @@ function fakeService(): FamilyServiceApi & {
   promoteNextWaitlistRegistration: ReturnType<
     typeof vi.fn<FamilyServiceApi['promoteNextWaitlistRegistration']>
   >;
+  recordRegistrationPayment: ReturnType<
+    typeof vi.fn<FamilyServiceApi['recordRegistrationPayment']>
+  >;
   updateAdult: ReturnType<typeof vi.fn<FamilyServiceApi['updateAdult']>>;
   updateCamper: ReturnType<typeof vi.fn<FamilyServiceApi['updateCamper']>>;
   updateContact: ReturnType<typeof vi.fn<FamilyServiceApi['updateContact']>>;
@@ -606,6 +663,7 @@ function fakeService(): FamilyServiceApi & {
     getFamily: vi.fn().mockResolvedValue(detail),
     listFamilies: vi.fn().mockResolvedValue([summary]),
     promoteNextWaitlistRegistration: vi.fn().mockResolvedValue(registrationResult),
+    recordRegistrationPayment: vi.fn().mockResolvedValue(registrationResult),
     updateAdult: vi.fn().mockResolvedValue(detail),
     updateCamper: vi.fn().mockResolvedValue(detail),
     updateContact: vi.fn().mockResolvedValue(detail),

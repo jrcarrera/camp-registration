@@ -11,6 +11,7 @@ import type {
   FamilyCreate,
   FamilyDetail,
   FamilyRegistrationCreate,
+  FamilyRegistrationPaymentCreate,
   FamilyRegistrationResult,
   FamilySummary,
   FamilyUpdate,
@@ -23,6 +24,7 @@ import {
   FamilyRegistrationCapacityError,
   FamilyRegistrationDuplicateError,
   FamilyRegistrationEligibilityError,
+  type FamilyRegistrationPaymentMethod,
   type CamperGender,
   type FamilyStore,
 } from '@camp-registration/database';
@@ -81,6 +83,12 @@ export interface FamilyServiceApi {
   cancelRegistration(
     familyId: string,
     registrationId: string,
+    requestId: string,
+  ): Promise<FamilyRegistrationResult>;
+  recordRegistrationPayment(
+    familyId: string,
+    registrationId: string,
+    payment: FamilyRegistrationPaymentCreate,
     requestId: string,
   ): Promise<FamilyRegistrationResult>;
   promoteNextWaitlistRegistration(
@@ -211,6 +219,23 @@ function validateContact(contact: ContactCreate | ContactUpdate): void {
   }
   if (Object.keys(errors).length > 0) {
     throw new FamilyValidationError(errors, 'Contact details are invalid');
+  }
+}
+
+function validateRegistrationPayment(payment: FamilyRegistrationPaymentCreate): void {
+  const errors: Record<string, string> = {};
+  if (!Number.isInteger(payment.amount_cents) || payment.amount_cents <= 0) {
+    errors.amount_cents = 'Enter a payment amount greater than zero.';
+  }
+  if (
+    !['OFFLINE_CASH', 'OFFLINE_CHECK', 'OFFLINE_CARD', 'SCHOLARSHIP', 'DISCOUNT', 'OTHER'].includes(
+      payment.method,
+    )
+  ) {
+    errors.method = 'Select a valid payment method.';
+  }
+  if (Object.keys(errors).length > 0) {
+    throw new FamilyValidationError(errors, 'Payment details are invalid');
   }
 }
 
@@ -552,6 +577,22 @@ export class FamilyService implements FamilyServiceApi {
   ): Promise<FamilyRegistrationResult> {
     await this.authorizeParentRegistration(familyId);
     return this.store.cancelRegistration(this.context(requestId), familyId, registrationId);
+  }
+
+  async recordRegistrationPayment(
+    familyId: string,
+    registrationId: string,
+    payment: FamilyRegistrationPaymentCreate,
+    requestId: string,
+  ): Promise<FamilyRegistrationResult> {
+    this.authorize(editRoles);
+    validateRegistrationPayment(payment);
+    return this.store.recordRegistrationPayment(this.context(requestId), familyId, registrationId, {
+      amount_cents: payment.amount_cents,
+      id: randomUUID(),
+      method: payment.method as FamilyRegistrationPaymentMethod,
+      note: nullable(payment.note),
+    });
   }
 
   async promoteNextWaitlistRegistration(

@@ -5,6 +5,14 @@ import type { DatabaseClient } from './client.js';
 export type CamperGender = 'Female' | 'Male';
 export type FamilyRegistrationStatus = 'CONFIRMED' | 'WAITLISTED' | 'CANCELLED';
 export type FamilyRegistrationSource = 'ADMIN' | 'PARENT';
+export type FamilyPaymentStatus = 'NOT_DUE' | 'DEPOSIT_DUE' | 'PARTIAL' | 'PAID';
+export type FamilyRegistrationPaymentMethod =
+  | 'OFFLINE_CASH'
+  | 'OFFLINE_CHECK'
+  | 'OFFLINE_CARD'
+  | 'SCHOLARSHIP'
+  | 'DISCOUNT'
+  | 'OTHER';
 
 export interface FamilySummaryRecord {
   id: string;
@@ -58,6 +66,13 @@ export interface CamperRecord {
 }
 
 export interface CamperSessionRegistrationRecord {
+  amount_paid_cents: number;
+  balance_due_cents: number;
+  currency: 'USD';
+  deposit_cents: number;
+  deposit_due_cents: number;
+  payment_status: FamilyPaymentStatus;
+  price_cents: number;
   registration_id: string;
   session_id: string;
   session_code: string;
@@ -184,6 +199,13 @@ export interface CreateRegistrationRecord {
   source: FamilyRegistrationSource;
 }
 
+export interface CreateRegistrationPaymentRecord {
+  amount_cents: number;
+  id: string;
+  method: FamilyRegistrationPaymentMethod;
+  note: string | null;
+}
+
 export interface CreateParentCheckoutRecord {
   family_id: string;
   new_camper: CreateCamperRecord | null;
@@ -231,6 +253,12 @@ interface RegistrationRow {
   source: FamilyRegistrationSource;
 }
 
+interface PaymentRegistrationRow extends RegistrationRow {
+  amount_paid_cents: number;
+  balance_due_cents: number;
+  price_cents: number;
+}
+
 interface RegistrationSessionRow {
   id: string;
   code: string;
@@ -240,6 +268,9 @@ interface RegistrationSessionRow {
   maximum_grade: number;
   season_year: number;
   starts_on: string;
+  currency: 'USD';
+  price_cents: number;
+  deposit_cents: number;
   status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'ARCHIVED';
   registration_opens_at: Date | string;
   registration_closes_at: Date | string;
@@ -290,6 +321,15 @@ const familySummarySelect = `
       AND c.family_id = f.id
       AND c.archived_at IS NULL
   ) contacts ON true
+`;
+
+const paymentStatusSql = `
+  CASE
+    WHEN r.status <> 'CONFIRMED' THEN 'NOT_DUE'
+    WHEN COALESCE(payments.amount_paid_cents, 0) >= r.price_cents THEN 'PAID'
+    WHEN COALESCE(payments.amount_paid_cents, 0) >= r.deposit_cents THEN 'PARTIAL'
+    ELSE 'DEPOSIT_DUE'
+  END
 `;
 
 function timestamp(value: Date | string): string {
@@ -1029,6 +1069,98 @@ export class FamilyStore {
     });
   }
 
+  async recordRegistrationPayment(
+    context: FamilyWriteContext,
+    familyId: string,
+    registrationId: string,
+    payment: CreateRegistrationPaymentRecord,
+  ): Promise<FamilyRegistrationResultRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      await this.ensureFamilyExists(client, context.organizationId, familyId);
+      const current = await client.query<PaymentRegistrationRow>(
+        `SELECT
+           r.id,
+           r.family_id,
+           r.camper_id,
+           r.session_id,
+           r.status,
+           r.source,
+           r.price_cents,
+           COALESCE(payments.amount_paid_cents, 0)::integer AS amount_paid_cents,
+           CASE WHEN r.status = 'CONFIRMED'
+             THEN GREATEST(r.price_cents - COALESCE(payments.amount_paid_cents, 0), 0)::integer
+             ELSE 0
+           END AS balance_due_cents
+         FROM registrations r
+         LEFT JOIN LATERAL (
+           SELECT COALESCE(sum(rp.amount_cents), 0)::integer AS amount_paid_cents
+           FROM registration_payments rp
+           WHERE rp.organization_id = r.organization_id
+             AND rp.registration_id = r.id
+         ) payments ON true
+         WHERE r.organization_id = $1 AND r.family_id = $2 AND r.id = $3
+         FOR UPDATE OF r`,
+        [context.organizationId, familyId, registrationId],
+      );
+      const registration = current.rows[0];
+      if (!registration) throw new FamilyNotFoundError('Registration not found');
+      if (registration.status !== 'CONFIRMED') {
+        throw new FamilyRegistrationEligibilityError(
+          'Only confirmed registrations can accept payments',
+          { registration_id: 'Record payments after a registration is confirmed.' },
+        );
+      }
+      if (payment.amount_cents > registration.balance_due_cents) {
+        throw new FamilyRegistrationEligibilityError('Payment exceeds the balance due', {
+          amount_cents: 'Payment cannot exceed the current balance due.',
+        });
+      }
+
+      await client.query(
+        `INSERT INTO registration_payments (
+           id,
+           organization_id,
+           family_id,
+           registration_id,
+           amount_cents,
+           method,
+           note,
+           recorded_by
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          payment.id,
+          context.organizationId,
+          familyId,
+          registrationId,
+          payment.amount_cents,
+          payment.method,
+          payment.note,
+          context.actorId,
+        ],
+      );
+      await this.insertAudit(
+        client,
+        context,
+        'registration.payment_recorded',
+        'registration',
+        registrationId,
+        {
+          amount_cents: payment.amount_cents,
+          method: payment.method,
+        },
+      );
+
+      return {
+        family: await this.requireFamilyInTenant(client, context.organizationId, familyId),
+        registration: await this.getRegistrationInTenant(
+          client,
+          context.organizationId,
+          registrationId,
+        ),
+      };
+    });
+  }
+
   async promoteNextWaitlistRegistration(
     context: FamilyWriteContext,
     sessionId: string,
@@ -1116,6 +1248,9 @@ export class FamilyStore {
          p.default_maximum_grade AS maximum_grade,
          se.year AS season_year,
          s.starts_on::text,
+         s.currency,
+         s.price_cents,
+         s.deposit_cents,
          s.status,
          s.registration_opens_at,
          s.registration_closes_at,
@@ -1257,8 +1392,9 @@ export class FamilyStore {
     try {
       await client.query(
         `INSERT INTO registrations (
-           id, organization_id, session_id, family_id, camper_id, status, source
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+           id, organization_id, session_id, family_id, camper_id, status, source,
+           currency, price_cents, deposit_cents
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
         [
           registration.id,
           context.organizationId,
@@ -1267,6 +1403,9 @@ export class FamilyStore {
           registration.camper_id,
           status,
           registration.source,
+          sessionRow.currency,
+          sessionRow.price_cents,
+          sessionRow.deposit_cents,
         ],
       );
     } catch (error) {
@@ -1435,7 +1574,20 @@ export class FamilyStore {
   ): Promise<CamperSessionRegistrationRecord> {
     const result = await client.query<CamperSessionRegistrationRow>(
       `SELECT
+         COALESCE(payments.amount_paid_cents, 0)::integer AS amount_paid_cents,
+         CASE WHEN r.status = 'CONFIRMED'
+           THEN GREATEST(r.price_cents - COALESCE(payments.amount_paid_cents, 0), 0)::integer
+           ELSE 0
+         END AS balance_due_cents,
          r.camper_id,
+         r.currency,
+         r.deposit_cents,
+         CASE WHEN r.status = 'CONFIRMED'
+           THEN GREATEST(r.deposit_cents - COALESCE(payments.amount_paid_cents, 0), 0)::integer
+           ELSE 0
+         END AS deposit_due_cents,
+         ${paymentStatusSql} AS payment_status,
+         r.price_cents,
          r.id AS registration_id,
          s.id AS session_id,
          s.code AS session_code,
@@ -1453,13 +1605,26 @@ export class FamilyStore {
        JOIN programs p
          ON p.organization_id = s.organization_id
         AND p.id = s.program_id
+       LEFT JOIN LATERAL (
+         SELECT COALESCE(sum(rp.amount_cents), 0)::integer AS amount_paid_cents
+         FROM registration_payments rp
+         WHERE rp.organization_id = r.organization_id
+           AND rp.registration_id = r.id
+       ) payments ON true
        WHERE r.organization_id = $1 AND r.id = $2`,
       [organizationId, registrationId],
     );
     const row = result.rows[0];
     if (!row) throw new FamilyNotFoundError('Registration not found');
     return {
+      amount_paid_cents: row.amount_paid_cents,
+      balance_due_cents: row.balance_due_cents,
+      currency: row.currency,
+      deposit_cents: row.deposit_cents,
+      deposit_due_cents: row.deposit_due_cents,
       ends_on: row.ends_on,
+      payment_status: row.payment_status,
+      price_cents: row.price_cents,
       program_name: row.program_name,
       registered_at: timestamp(row.updated_at),
       registration_id: row.registration_id,
@@ -1513,7 +1678,20 @@ export class FamilyStore {
   ): Promise<Map<string, CamperSessionRegistrationRecord[]>> {
     const result = await client.query<CamperSessionRegistrationRow>(
       `SELECT
+         COALESCE(payments.amount_paid_cents, 0)::integer AS amount_paid_cents,
+         CASE WHEN r.status = 'CONFIRMED'
+           THEN GREATEST(r.price_cents - COALESCE(payments.amount_paid_cents, 0), 0)::integer
+           ELSE 0
+         END AS balance_due_cents,
          r.camper_id,
+         r.currency,
+         r.deposit_cents,
+         CASE WHEN r.status = 'CONFIRMED'
+           THEN GREATEST(r.deposit_cents - COALESCE(payments.amount_paid_cents, 0), 0)::integer
+           ELSE 0
+         END AS deposit_due_cents,
+         ${paymentStatusSql} AS payment_status,
+         r.price_cents,
          r.id AS registration_id,
          s.id AS session_id,
          s.code AS session_code,
@@ -1531,6 +1709,12 @@ export class FamilyStore {
        JOIN programs p
          ON p.organization_id = s.organization_id
         AND p.id = s.program_id
+       LEFT JOIN LATERAL (
+         SELECT COALESCE(sum(rp.amount_cents), 0)::integer AS amount_paid_cents
+         FROM registration_payments rp
+         WHERE rp.organization_id = r.organization_id
+           AND rp.registration_id = r.id
+       ) payments ON true
        WHERE r.organization_id = $1
          AND r.family_id = $2
          AND r.status IN ('CONFIRMED', 'WAITLISTED')
@@ -1546,7 +1730,14 @@ export class FamilyStore {
     for (const row of result.rows) {
       const camperRegistrations = registrations.get(row.camper_id) ?? [];
       camperRegistrations.push({
+        amount_paid_cents: row.amount_paid_cents,
+        balance_due_cents: row.balance_due_cents,
+        currency: row.currency,
+        deposit_cents: row.deposit_cents,
+        deposit_due_cents: row.deposit_due_cents,
         ends_on: row.ends_on,
+        payment_status: row.payment_status,
+        price_cents: row.price_cents,
         program_name: row.program_name,
         registered_at: timestamp(row.updated_at),
         registration_id: row.registration_id,

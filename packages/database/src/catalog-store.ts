@@ -6,6 +6,7 @@ export type SessionStatus = 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'ARCHIVED';
 export type AgeAsOf = 'SESSION_START' | 'SEASON_START';
 export type CatalogRegistrationStatus = 'CONFIRMED' | 'WAITLISTED' | 'CANCELLED';
 export type CatalogRegistrationSource = 'ADMIN' | 'PARENT';
+export type CatalogPaymentStatus = 'NOT_DUE' | 'DEPOSIT_DUE' | 'PARTIAL' | 'PAID';
 
 export interface CatalogContextRecord {
   organization: { id: string; slug: string; name: string; timezone: string };
@@ -70,6 +71,8 @@ export interface SessionDetailRecord extends SessionSummaryRecord {
 }
 
 export interface RegisteredCamperRecord {
+  amount_paid_cents: number;
+  balance_due_cents: number;
   registration_id: string;
   camper_id: string;
   family_id: string;
@@ -82,6 +85,11 @@ export interface RegisteredCamperRecord {
   school_grade: string | null;
   status: CatalogRegistrationStatus;
   source: CatalogRegistrationSource;
+  currency: 'USD';
+  deposit_cents: number;
+  deposit_due_cents: number;
+  payment_status: CatalogPaymentStatus;
+  price_cents: number;
   registered_at: string;
 }
 
@@ -906,6 +914,11 @@ export class CatalogStore {
   ): Promise<RegisteredCamperRecord[]> {
     const result = await client.query<RegisteredCamperRow>(
       `SELECT
+         COALESCE(payments.amount_paid_cents, 0)::integer AS amount_paid_cents,
+         CASE WHEN r.status = 'CONFIRMED'
+           THEN GREATEST(r.price_cents - COALESCE(payments.amount_paid_cents, 0), 0)::integer
+           ELSE 0
+         END AS balance_due_cents,
          r.id AS registration_id,
          c.id AS camper_id,
          c.family_id,
@@ -918,6 +931,19 @@ export class CatalogStore {
          c.school_grade,
          r.status,
          r.source,
+         r.currency,
+         r.deposit_cents,
+         CASE WHEN r.status = 'CONFIRMED'
+           THEN GREATEST(r.deposit_cents - COALESCE(payments.amount_paid_cents, 0), 0)::integer
+           ELSE 0
+         END AS deposit_due_cents,
+         CASE
+           WHEN r.status <> 'CONFIRMED' THEN 'NOT_DUE'
+           WHEN COALESCE(payments.amount_paid_cents, 0) >= r.price_cents THEN 'PAID'
+           WHEN COALESCE(payments.amount_paid_cents, 0) >= r.deposit_cents THEN 'PARTIAL'
+           ELSE 'DEPOSIT_DUE'
+         END AS payment_status,
+         r.price_cents,
          r.registered_at
        FROM registrations r
        JOIN campers c
@@ -929,6 +955,12 @@ export class CatalogStore {
          ON f.organization_id = c.organization_id
         AND f.id = c.family_id
         AND f.archived_at IS NULL
+       LEFT JOIN LATERAL (
+         SELECT COALESCE(sum(rp.amount_cents), 0)::integer AS amount_paid_cents
+         FROM registration_payments rp
+         WHERE rp.organization_id = r.organization_id
+           AND rp.registration_id = r.id
+       ) payments ON true
        WHERE r.organization_id = $1
          AND r.session_id = $2
          AND r.status IN ('CONFIRMED', 'WAITLISTED')

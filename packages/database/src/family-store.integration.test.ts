@@ -348,6 +348,12 @@ describe('family store', () => {
     );
 
     expect(confirmed.registration).toMatchObject({
+      amount_paid_cents: 0,
+      balance_due_cents: 52500,
+      deposit_cents: 10000,
+      deposit_due_cents: 10000,
+      payment_status: 'DEPOSIT_DUE',
+      price_cents: 52500,
       registration_id: firstRegistrationId,
       session_id: sessionId,
       source: 'PARENT',
@@ -362,6 +368,38 @@ describe('family store', () => {
     expect(confirmed.family.campers[0]?.registrations).toEqual([
       expect.objectContaining({ registration_id: firstRegistrationId, status: 'CONFIRMED' }),
     ]);
+
+    const paid = await store.recordRegistrationPayment(
+      { ...context, requestId: 'checkout-payment-test' },
+      firstFamilyId,
+      firstRegistrationId,
+      {
+        amount_cents: 10000,
+        id: 'd2db68c2-bf02-4dc7-ae4e-ce4a8e7cd536',
+        method: 'OFFLINE_CHECK',
+        note: 'Check 1001',
+      },
+    );
+    expect(paid.registration).toMatchObject({
+      amount_paid_cents: 10000,
+      balance_due_cents: 42500,
+      deposit_due_cents: 0,
+      payment_status: 'PARTIAL',
+      registration_id: firstRegistrationId,
+    });
+    await expect(
+      store.recordRegistrationPayment(
+        { ...context, requestId: 'checkout-overpayment-test' },
+        firstFamilyId,
+        firstRegistrationId,
+        {
+          amount_cents: 999999,
+          id: '54d4bc07-df98-4328-a7be-bd1bd6fe9533',
+          method: 'OFFLINE_CASH',
+          note: null,
+        },
+      ),
+    ).rejects.toBeInstanceOf(FamilyRegistrationEligibilityError);
 
     await expect(
       store.createRegistration(
