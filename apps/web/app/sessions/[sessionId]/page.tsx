@@ -1,9 +1,10 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { RegisteredCamper } from '@camp-registration/contracts';
 
 import { RegistrationPaymentForm } from '../../../components/registration-payment-form';
+import { SessionAttendanceControls } from '../../../components/session-attendance-controls';
 import { SessionEditor } from '../../../components/session-editor';
 import { WaitlistPromoteButton } from '../../../components/waitlist-promote-button';
 import { ApiError, getCatalog, getSession } from '../../../lib/api';
@@ -87,10 +88,16 @@ function RegisteredCampers({
             {confirmedCount} attending, {waitlistedCount} waitlisted
           </p>
         </div>
-        <WaitlistPromoteButton
-          disabled={waitlistedCount === 0 || availableCount === 0}
-          sessionId={sessionId}
-        />
+        <div className="sectionActions">
+          <Link className="buttonPrimary" href={`/sessions/${sessionId}/check-in`}>
+            <ClipboardCheck size={17} aria-hidden="true" />
+            Check-in desk
+          </Link>
+          <WaitlistPromoteButton
+            disabled={waitlistedCount === 0 || availableCount === 0}
+            sessionId={sessionId}
+          />
+        </div>
       </div>
       <div className="tableFrame">
         <table className="sessionsTable">
@@ -101,6 +108,8 @@ function RegisteredCampers({
               <th>Gender</th>
               <th>Grade</th>
               <th>Status</th>
+              <th>Attendance</th>
+              <th>Pickup</th>
               <th>Balance</th>
               <th>Source</th>
               <th>Registered</th>
@@ -110,7 +119,7 @@ function RegisteredCampers({
           <tbody>
             {campers.length === 0 ? (
               <tr>
-                <td className="emptyState" colSpan={9}>
+                <td className="emptyState" colSpan={11}>
                   <strong>No campers</strong>
                   <span>Confirmed and waitlisted campers will appear here.</span>
                 </td>
@@ -141,6 +150,20 @@ function RegisteredCampers({
                     >
                       {camper.status === 'CONFIRMED' ? 'Attending' : 'Waitlisted'}
                     </span>
+                  </td>
+                  <td data-label="Attendance">
+                    <SessionAttendanceControls camper={camper} sessionId={sessionId} />
+                  </td>
+                  <td data-label="Pickup">
+                    {camper.authorized_pickup_names.length > 0 ? (
+                      <ul className="pickupNameList">
+                        {camper.authorized_pickup_names.map((name) => (
+                          <li key={name}>{name}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span>No authorized pickup</span>
+                    )}
                   </td>
                   <td data-label="Balance">
                     <strong>{money(camper.balance_due_cents)}</strong>

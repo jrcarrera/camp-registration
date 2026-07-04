@@ -343,6 +343,10 @@ export interface paths {
                             organization_timezone: string;
                             registered_campers: {
                                 amount_paid_cents: number;
+                                attendance_date: string | null;
+                                attendance_note: string | null;
+                                attendance_status: "NOT_MARKED" | "CHECKED_IN" | "CHECKED_OUT" | "ABSENT";
+                                authorized_pickup_names: string[];
                                 balance_due_cents: number;
                                 registration_id: string;
                                 camper_id: string;
@@ -360,7 +364,10 @@ export interface paths {
                                 currency: "USD";
                                 deposit_cents: number;
                                 deposit_due_cents: number;
+                                checked_in_at: string | null;
+                                checked_out_at: string | null;
                                 payment_status: "NOT_DUE" | "DEPOSIT_DUE" | "PARTIAL" | "PAID";
+                                pickup_name: string | null;
                                 price_cents: number;
                                 registered_at: string;
                             }[];
@@ -926,6 +933,10 @@ export interface paths {
                             organization_timezone: string;
                             registered_campers: {
                                 amount_paid_cents: number;
+                                attendance_date: string | null;
+                                attendance_note: string | null;
+                                attendance_status: "NOT_MARKED" | "CHECKED_IN" | "CHECKED_OUT" | "ABSENT";
+                                authorized_pickup_names: string[];
                                 balance_due_cents: number;
                                 registration_id: string;
                                 camper_id: string;
@@ -943,7 +954,10 @@ export interface paths {
                                 currency: "USD";
                                 deposit_cents: number;
                                 deposit_due_cents: number;
+                                checked_in_at: string | null;
+                                checked_out_at: string | null;
                                 payment_status: "NOT_DUE" | "DEPOSIT_DUE" | "PARTIAL" | "PAID";
+                                pickup_name: string | null;
                                 price_cents: number;
                                 registered_at: string;
                             }[];
@@ -1108,6 +1122,10 @@ export interface paths {
                             organization_timezone: string;
                             registered_campers: {
                                 amount_paid_cents: number;
+                                attendance_date: string | null;
+                                attendance_note: string | null;
+                                attendance_status: "NOT_MARKED" | "CHECKED_IN" | "CHECKED_OUT" | "ABSENT";
+                                authorized_pickup_names: string[];
                                 balance_due_cents: number;
                                 registration_id: string;
                                 camper_id: string;
@@ -1125,7 +1143,10 @@ export interface paths {
                                 currency: "USD";
                                 deposit_cents: number;
                                 deposit_due_cents: number;
+                                checked_in_at: string | null;
+                                checked_out_at: string | null;
                                 payment_status: "NOT_DUE" | "DEPOSIT_DUE" | "PARTIAL" | "PAID";
+                                pickup_name: string | null;
                                 price_cents: number;
                                 registered_at: string;
                             }[];
@@ -1209,6 +1230,194 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/v1/sessions/{sessionId}/registrations/{registrationId}/attendance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Record daily attendance, check-in, check-out, or absence for a camper. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    registrationId: string;
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        action: "CHECK_IN" | "CHECK_OUT" | "MARK_ABSENT";
+                        attendance_date?: string;
+                        note?: string | null;
+                        pickup_name?: string | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            organization_id: string;
+                            season_id: string;
+                            program_id: string;
+                            code: string;
+                            name: string;
+                            program_name: string;
+                            starts_on: string;
+                            ends_on: string;
+                            capacity: number;
+                            registered_count: number;
+                            registered_female_count: number;
+                            registered_male_count: number;
+                            waitlisted_count: number;
+                            waitlisted_female_count: number;
+                            waitlisted_male_count: number;
+                            active_hold_count: number;
+                            available_count: number;
+                            /** @enum {string} */
+                            currency: "USD";
+                            price_cents: number;
+                            status: "DRAFT" | "PUBLISHED" | "CANCELLED" | "ARCHIVED";
+                            version: number;
+                            updated_at: string;
+                            registration_opens_at: string;
+                            registration_closes_at: string;
+                            minimum_age: number;
+                            maximum_age: number;
+                            minimum_grade: number;
+                            maximum_grade: number;
+                            age_as_of: "SESSION_START" | "SEASON_START";
+                            deposit_cents: number;
+                            waitlist_enabled: boolean;
+                            organization_timezone: string;
+                            registered_campers: {
+                                amount_paid_cents: number;
+                                attendance_date: string | null;
+                                attendance_note: string | null;
+                                attendance_status: "NOT_MARKED" | "CHECKED_IN" | "CHECKED_OUT" | "ABSENT";
+                                authorized_pickup_names: string[];
+                                balance_due_cents: number;
+                                registration_id: string;
+                                camper_id: string;
+                                family_id: string;
+                                family_name: string;
+                                first_name: string;
+                                last_name: string;
+                                preferred_name: string | null;
+                                gender: "Female" | "Male" | null;
+                                school_grade: string | null;
+                                birth_date: string;
+                                status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                source: "ADMIN" | "PARENT";
+                                /** @enum {string} */
+                                currency: "USD";
+                                deposit_cents: number;
+                                deposit_due_cents: number;
+                                checked_in_at: string | null;
+                                checked_out_at: string | null;
+                                payment_status: "NOT_DUE" | "DEPOSIT_DUE" | "PARTIAL" | "PAID";
+                                pickup_name: string | null;
+                                price_cents: number;
+                                registered_at: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/families": {

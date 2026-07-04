@@ -40,6 +40,9 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     revalidatePath('/');
     revalidatePath('/families');
     revalidatePath('/sessions');
+    if (path[0] === 'v1' && path[1] === 'sessions' && path[2]) {
+      revalidatePath(`/sessions/${path[2]}`);
+    }
     revalidatePath('/seasons');
     revalidatePath('/programs');
   }

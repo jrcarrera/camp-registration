@@ -1,15 +1,45 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type APIRequestContext } from '@playwright/test';
 
 import { waitForApiReady } from './support';
 
 const adamsFamilyId = 'dfd272a5-42df-5813-a7db-664d7a82f664';
-const elementarySessionId = '8945ea22-2659-4a13-9e70-ec4f2cbcbf9d';
+const elementaryProgramId = '1c9d3031-9923-43ba-909f-1887f99460bb';
+const portalTestSeasonId = 'fc94ef27-1fa6-466b-b877-312c27d00a7c';
 const parentHeaders = {
   'x-local-actor-id': 'local-parent-avery',
   'x-local-email': 'winter.family001.adult1@example.test',
   'x-local-email-verified': 'true',
   'x-local-roles': 'parent_guardian',
 };
+
+function uniqueSuffix(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+async function createPortalTestSession(
+  request: APIRequestContext,
+  suffix: string,
+  label: string,
+): Promise<{ id: string; name: string }> {
+  const code = `E2E-${label}-${suffix}`.toUpperCase();
+  const name = `E2E ${label} ${suffix}`;
+  const response = await request.post('/api/v1/sessions', {
+    data: {
+      code,
+      ends_on: '2027-06-26',
+      name,
+      program_id: elementaryProgramId,
+      registration_closes_at: '2027-06-17T05:00:00Z',
+      registration_opens_at: '2026-01-15T15:00:00Z',
+      season_id: portalTestSeasonId,
+      starts_on: '2027-06-20',
+      status: 'PUBLISHED',
+    },
+  });
+  expect(response.ok(), await response.text()).toBeTruthy();
+  const session = (await response.json()) as { id: string; name: string };
+  return { id: session.id, name: session.name };
+}
 
 test.describe.configure({ mode: 'serial' });
 
@@ -41,16 +71,41 @@ test('renders parent checkout without a family selector', async ({ page }) => {
 });
 
 test('lets parents complete camp readiness details', async ({ page, request }) => {
-  const familyResponse = await request.get(`/api/v1/families/${adamsFamilyId}`, {
+  const suffix = uniqueSuffix();
+  const session = await createPortalTestSession(request, suffix, 'READY');
+  const firstName = 'Ready';
+  const lastName = `Camper${suffix}`;
+  const checkout = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
+    data: {
+      new_camper: {
+        birth_date: '2018-02-01',
+        first_name: firstName,
+        gender: 'Female',
+        last_name: lastName,
+        school_grade: '3',
+      },
+      session_id: session.id,
+    },
     headers: parentHeaders,
   });
-  expect(familyResponse.ok()).toBeTruthy();
-  const family = (await familyResponse.json()) as {
-    campers: Array<{ first_name: string; id: string; last_name: string }>;
+  expect(checkout.ok()).toBeTruthy();
+  const result = (await checkout.json()) as {
+    family: {
+      campers: Array<{ first_name: string; id: string; last_name: string }>;
+    };
+    registration: { status: string };
   };
-  expect(family.campers.length).toBeGreaterThan(0);
-  const camper = family.campers[0]!;
-  const note = `No health concerns for readiness ${Date.now().toString(36)}`;
+  expect(result.registration.status).toBe('CONFIRMED');
+  const camper = result.family.campers.find(
+    (candidate) => candidate.first_name === firstName && candidate.last_name === lastName,
+  );
+  expect(camper).toBeDefined();
+  const createdCamper = camper as {
+    first_name: string;
+    id: string;
+    last_name: string;
+  };
+  const note = `No health concerns for readiness ${uniqueSuffix()}`;
 
   await page.goto('/portal/readiness');
 
@@ -60,7 +115,7 @@ test('lets parents complete camp readiness details', async ({ page, request }) =
     'page',
   );
 
-  const camperCard = page.getByTestId(`camper-readiness-${camper.id}`);
+  const camperCard = page.getByTestId(`camper-readiness-${createdCamper.id}`);
   await expect(camperCard).toBeVisible();
   await camperCard.getByLabel('School grade').fill('5');
   await camperCard.getByLabel('Gender').selectOption('Female');
@@ -68,7 +123,7 @@ test('lets parents complete camp readiness details', async ({ page, request }) =
   await camperCard.getByRole('button', { name: 'Save readiness' }).click();
 
   await expect(page.getByRole('status')).toContainText(
-    `${camper.first_name} ${camper.last_name} readiness details saved.`,
+    `${createdCamper.first_name} ${createdCamper.last_name} readiness details saved.`,
   );
   await expect(
     camperCard.getByText('Health, allergy, medication, or accessibility notes reviewed'),
@@ -76,7 +131,7 @@ test('lets parents complete camp readiness details', async ({ page, request }) =
 });
 
 test('lets parents add emergency and pickup contacts from readiness', async ({ page }) => {
-  const suffix = Date.now().toString(36);
+  const suffix = uniqueSuffix();
   const firstName = 'Pickup';
   const lastName = `Ready${suffix}`;
 
@@ -99,19 +154,20 @@ test('lets staff record an offline payment for a parent registration', async ({
   page,
   request,
 }) => {
-  const suffix = Date.now().toString(36);
+  const suffix = uniqueSuffix();
+  const session = await createPortalTestSession(request, suffix, 'PAY');
   const firstName = 'Pay';
   const lastName = `Balance${suffix}`;
   const checkout = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
     data: {
       new_camper: {
-        birth_date: '2015-02-01',
+        birth_date: '2018-02-01',
         first_name: firstName,
         gender: 'Female',
         last_name: lastName,
-        school_grade: '5',
+        school_grade: '3',
       },
-      session_id: elementarySessionId,
+      session_id: session.id,
     },
     headers: parentHeaders,
   });
@@ -120,7 +176,7 @@ test('lets staff record an offline payment for a parent registration', async ({
     registration: { balance_due_cents: number; deposit_cents: number; registration_id: string };
   };
 
-  await page.goto(`/sessions/${elementarySessionId}`);
+  await page.goto(`/sessions/${session.id}`);
 
   const paymentForm = page.getByTestId(`payment-form-${result.registration.registration_id}`);
   await expect(paymentForm).toBeVisible();
@@ -142,6 +198,123 @@ test('lets staff record an offline payment for a parent registration', async ({
   ).toBeVisible();
 });
 
+test('lets staff check in and check out a camper with authorized pickup', async ({
+  page,
+  request,
+}) => {
+  const suffix = uniqueSuffix();
+  const session = await createPortalTestSession(request, suffix, 'ATTEND');
+  const firstName = 'Attend';
+  const lastName = `Pickup${suffix}`;
+  const checkout = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
+    data: {
+      new_camper: {
+        birth_date: '2018-02-01',
+        first_name: firstName,
+        gender: 'Female',
+        last_name: lastName,
+        school_grade: '3',
+      },
+      session_id: session.id,
+    },
+    headers: parentHeaders,
+  });
+  expect(checkout.ok()).toBeTruthy();
+  const result = (await checkout.json()) as {
+    registration: { registration_id: string; status: string };
+  };
+  expect(result.registration.status).toBe('CONFIRMED');
+
+  await page.goto(`/sessions/${session.id}`);
+
+  const attendance = page.getByTestId(`attendance-controls-${result.registration.registration_id}`);
+  await expect(attendance).toBeVisible();
+  await expect(attendance).toContainText('Not marked');
+  await attendance.getByLabel('Attendance note').fill(`Arrived ${suffix}`);
+  const checkInResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes(`/registrations/${result.registration.registration_id}/attendance`) &&
+      response.request().method() === 'POST',
+  );
+  await attendance.getByRole('button', { name: 'Check in' }).click();
+  expect((await checkInResponse).ok()).toBeTruthy();
+
+  await expect(attendance).toContainText('Checked in');
+  await attendance.getByLabel('Pickup person').selectOption('Aisha Adams');
+  await attendance.getByLabel('Attendance note').fill(`Dismissed ${suffix}`);
+  const checkOutResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes(`/registrations/${result.registration.registration_id}/attendance`) &&
+      response.request().method() === 'POST',
+  );
+  await attendance.getByRole('button', { name: 'Check out' }).click();
+  expect((await checkOutResponse).ok()).toBeTruthy();
+
+  await expect(attendance).toContainText('Checked out');
+  const rosterRow = page.locator('tr').filter({ has: attendance });
+  await expect(rosterRow).toContainText('Aisha Adams');
+});
+
+test('lets staff run check-in desk actions from a focused queue', async ({ page, request }) => {
+  const suffix = uniqueSuffix();
+  const session = await createPortalTestSession(request, suffix, 'DESK');
+  const firstName = 'Desk';
+  const lastName = `Pickup${suffix}`;
+  const checkout = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
+    data: {
+      new_camper: {
+        birth_date: '2018-02-01',
+        first_name: firstName,
+        gender: 'Female',
+        last_name: lastName,
+        school_grade: '3',
+      },
+      session_id: session.id,
+    },
+    headers: parentHeaders,
+  });
+  expect(checkout.ok()).toBeTruthy();
+  const result = (await checkout.json()) as {
+    registration: { registration_id: string; status: string };
+  };
+  expect(result.registration.status).toBe('CONFIRMED');
+
+  await page.goto(`/sessions/${session.id}`);
+  await page.getByRole('link', { name: 'Check-in desk' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/sessions/${session.id}/check-in$`));
+  await expect(page.getByRole('heading', { level: 1, name: 'Check-in desk' })).toBeVisible();
+
+  const deskRow = page.getByTestId(`check-in-row-${result.registration.registration_id}`);
+  await expect(deskRow).toBeVisible();
+  await expect(deskRow).toContainText('Not marked');
+  await page.getByPlaceholder('Search camper, family, grade, or pickup').fill(lastName);
+  await expect(deskRow).toBeVisible();
+
+  await deskRow.getByLabel('Attendance note').fill(`Arrived ${suffix}`);
+  const checkInResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes(`/registrations/${result.registration.registration_id}/attendance`) &&
+      response.request().method() === 'POST',
+  );
+  await deskRow.getByRole('button', { name: 'Check in' }).click();
+  expect((await checkInResponse).ok()).toBeTruthy();
+
+  await expect(deskRow).toContainText('Checked in');
+  await deskRow.getByLabel('Pickup person').selectOption('Aisha Adams');
+  await deskRow.getByLabel('Attendance note').fill(`Dismissed ${suffix}`);
+  const checkOutResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes(`/registrations/${result.registration.registration_id}/attendance`) &&
+      response.request().method() === 'POST',
+  );
+  await deskRow.getByRole('button', { name: 'Check out' }).click();
+  expect((await checkOutResponse).ok()).toBeTruthy();
+
+  await expect(deskRow).toContainText('Checked out');
+  await expect(deskRow).toContainText(`Dismissed ${suffix}`);
+});
+
 test('redirects the legacy registration route into the parent portal', async ({ page }) => {
   await page.goto('/register');
 
@@ -149,34 +322,35 @@ test('redirects the legacy registration route into the parent portal', async ({ 
 });
 
 test('lets parents cancel a registration from the camp plan', async ({ page, request }) => {
-  const suffix = Date.now().toString(36);
+  const suffix = uniqueSuffix();
+  const session = await createPortalTestSession(request, suffix, 'CANCEL');
   const firstName = `Portal`;
   const lastName = `Cancel${suffix}`;
   const camperName = `${firstName} ${lastName}`;
   const checkout = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
     data: {
       new_camper: {
-        birth_date: '2015-02-01',
+        birth_date: '2018-02-01',
         first_name: firstName,
         gender: 'Female',
         last_name: lastName,
-        school_grade: '5',
+        school_grade: '3',
       },
-      session_id: elementarySessionId,
+      session_id: session.id,
     },
     headers: parentHeaders,
   });
   expect(checkout.ok()).toBeTruthy();
 
   await page.goto('/portal');
-  const planItem = page.getByLabel(`Elementary Boys & Girls for ${camperName}`);
+  const planItem = page.getByLabel(`${session.name} for ${camperName}`);
   await expect(planItem).toBeVisible();
 
   page.once('dialog', (dialog) => dialog.accept());
   await planItem.getByRole('button', { name: 'Cancel' }).click();
 
   await expect(page.getByRole('status')).toContainText(
-    `Elementary Boys & Girls registration cancelled for ${camperName}.`,
+    `${session.name} registration cancelled for ${camperName}.`,
   );
   await expect(planItem).toBeHidden();
 });

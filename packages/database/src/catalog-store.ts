@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import type { PoolClient } from 'pg';
 
 import type { DatabaseClient } from './client.js';
@@ -7,6 +9,8 @@ export type AgeAsOf = 'SESSION_START' | 'SEASON_START';
 export type CatalogRegistrationStatus = 'CONFIRMED' | 'WAITLISTED' | 'CANCELLED';
 export type CatalogRegistrationSource = 'ADMIN' | 'PARENT';
 export type CatalogPaymentStatus = 'NOT_DUE' | 'DEPOSIT_DUE' | 'PARTIAL' | 'PAID';
+export type CatalogAttendanceStatus = 'NOT_MARKED' | 'CHECKED_IN' | 'CHECKED_OUT' | 'ABSENT';
+export type CatalogAttendanceAction = 'CHECK_IN' | 'CHECK_OUT' | 'MARK_ABSENT';
 
 export interface CatalogContextRecord {
   organization: { id: string; slug: string; name: string; timezone: string };
@@ -72,6 +76,10 @@ export interface SessionDetailRecord extends SessionSummaryRecord {
 
 export interface RegisteredCamperRecord {
   amount_paid_cents: number;
+  attendance_date: string | null;
+  attendance_note: string | null;
+  attendance_status: CatalogAttendanceStatus;
+  authorized_pickup_names: string[];
   balance_due_cents: number;
   registration_id: string;
   camper_id: string;
@@ -88,7 +96,10 @@ export interface RegisteredCamperRecord {
   currency: 'USD';
   deposit_cents: number;
   deposit_due_cents: number;
+  checked_in_at: string | null;
+  checked_out_at: string | null;
   payment_status: CatalogPaymentStatus;
+  pickup_name: string | null;
   price_cents: number;
   registered_at: string;
 }
@@ -177,6 +188,22 @@ export interface UpdateSessionContext {
   update: UpdateSessionRecord;
 }
 
+export interface SessionAttendanceUpdateRecord {
+  action: CatalogAttendanceAction;
+  attendance_date: string;
+  note: string | null;
+  pickup_name: string | null;
+}
+
+export interface UpdateSessionAttendanceContext {
+  actorId: string;
+  organizationId: string;
+  registrationId: string;
+  requestId: string;
+  sessionId: string;
+  update: SessionAttendanceUpdateRecord;
+}
+
 export interface UpdateProgramContext {
   actorId: string;
   organizationId: string;
@@ -227,7 +254,13 @@ interface SessionRow {
   organization_timezone: string;
 }
 
-type RegisteredCamperRow = Omit<RegisteredCamperRecord, 'registered_at'> & {
+type RegisteredCamperRow = Omit<
+  RegisteredCamperRecord,
+  'attendance_date' | 'checked_in_at' | 'checked_out_at' | 'registered_at'
+> & {
+  attendance_date: string | null;
+  checked_in_at: Date | string | null;
+  checked_out_at: Date | string | null;
   registered_at: Date | string;
 };
 
@@ -339,6 +372,17 @@ function toSummary(session: SessionDetailRecord): SessionSummaryRecord {
   };
 }
 
+function mapRegisteredCamper(row: RegisteredCamperRow): RegisteredCamperRecord {
+  return {
+    ...row,
+    attendance_date: row.attendance_date,
+    authorized_pickup_names: row.authorized_pickup_names ?? [],
+    checked_in_at: row.checked_in_at ? timestamp(row.checked_in_at) : null,
+    checked_out_at: row.checked_out_at ? timestamp(row.checked_out_at) : null,
+    registered_at: timestamp(row.registered_at),
+  };
+}
+
 export class CatalogStore {
   constructor(private readonly database: DatabaseClient) {}
 
@@ -421,17 +465,31 @@ export class CatalogStore {
     });
   }
 
+  private async getSessionForClient(
+    client: PoolClient,
+    organizationId: string,
+    sessionId: string,
+    attendanceDate?: string,
+  ): Promise<SessionDetailRecord | null> {
+    const result = await client.query<SessionRow>(
+      `${sessionSelect}
+       WHERE s.organization_id = $1 AND s.id = $2`,
+      [organizationId, sessionId],
+    );
+    const session = result.rows[0];
+    if (!session) return null;
+    const registeredCampers = await this.listRegisteredCampers(
+      client,
+      organizationId,
+      sessionId,
+      attendanceDate,
+    );
+    return mapSession(session, registeredCampers);
+  }
+
   async getSession(organizationId: string, sessionId: string): Promise<SessionDetailRecord | null> {
     return this.withTenant(organizationId, async (client) => {
-      const result = await client.query<SessionRow>(
-        `${sessionSelect}
-         WHERE s.organization_id = $1 AND s.id = $2`,
-        [organizationId, sessionId],
-      );
-      const session = result.rows[0];
-      if (!session) return null;
-      const registeredCampers = await this.listRegisteredCampers(client, organizationId, sessionId);
-      return mapSession(session, registeredCampers);
+      return this.getSessionForClient(client, organizationId, sessionId);
     });
   }
 
@@ -779,6 +837,198 @@ export class CatalogStore {
     });
   }
 
+  async updateSessionAttendance(
+    context: UpdateSessionAttendanceContext,
+  ): Promise<SessionDetailRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const registrationResult = await client.query<{
+        family_id: string;
+        id: string;
+        status: CatalogRegistrationStatus;
+      }>(
+        `SELECT id, family_id, status
+         FROM registrations
+         WHERE organization_id = $1 AND session_id = $2 AND id = $3
+         FOR UPDATE`,
+        [context.organizationId, context.sessionId, context.registrationId],
+      );
+      const registration = registrationResult.rows[0];
+      if (!registration) {
+        throw new CatalogNotFoundError('Registration not found');
+      }
+      if (registration.status !== 'CONFIRMED') {
+        throw new CatalogReferenceError('Only confirmed registrations can be checked in or out');
+      }
+
+      const {
+        action,
+        attendance_date: attendanceDate,
+        note,
+        pickup_name: pickupName,
+      } = context.update;
+      let status: Exclude<CatalogAttendanceStatus, 'NOT_MARKED'>;
+
+      if (action === 'CHECK_IN') {
+        status = 'CHECKED_IN';
+        await client.query(
+          `INSERT INTO registration_attendance (
+             id,
+             organization_id,
+             session_id,
+             family_id,
+             registration_id,
+             attendance_date,
+             status,
+             checked_in_at,
+             note,
+             recorded_by
+           ) VALUES (
+             $1, $2, $3, $4, $5, $6::date, 'CHECKED_IN',
+             transaction_timestamp(), $7, $8
+           )
+           ON CONFLICT (organization_id, registration_id, attendance_date)
+           DO UPDATE SET
+             status = 'CHECKED_IN',
+             checked_in_at = COALESCE(registration_attendance.checked_in_at, transaction_timestamp()),
+             checked_out_at = NULL,
+             pickup_name = NULL,
+             note = EXCLUDED.note,
+             recorded_by = EXCLUDED.recorded_by,
+             updated_at = transaction_timestamp()`,
+          [
+            randomUUID(),
+            context.organizationId,
+            context.sessionId,
+            registration.family_id,
+            context.registrationId,
+            attendanceDate,
+            note,
+            context.actorId,
+          ],
+        );
+      } else if (action === 'CHECK_OUT') {
+        status = 'CHECKED_OUT';
+        if (!pickupName) {
+          throw new CatalogReferenceError('Pickup name is required for checkout');
+        }
+        const authorizedPickup = await client.query<{ authorized: boolean }>(
+          `SELECT EXISTS (
+             SELECT 1
+             FROM adults a
+             WHERE a.organization_id = $1
+               AND a.family_id = $2
+               AND a.authorized_pickup
+               AND a.archived_at IS NULL
+               AND a.first_name || ' ' || a.last_name = $3
+             UNION ALL
+             SELECT 1
+             FROM contacts c
+             WHERE c.organization_id = $1
+               AND c.family_id = $2
+               AND c.authorized_pickup
+               AND c.archived_at IS NULL
+               AND c.first_name || ' ' || c.last_name = $3
+           ) AS authorized`,
+          [context.organizationId, registration.family_id, pickupName],
+        );
+        if (!authorizedPickup.rows[0]?.authorized) {
+          throw new CatalogReferenceError('Pickup person is not authorized for this family');
+        }
+        const checkout = await client.query<{ id: string }>(
+          `UPDATE registration_attendance
+           SET status = 'CHECKED_OUT',
+               checked_out_at = transaction_timestamp(),
+               pickup_name = $5,
+               note = $6,
+               recorded_by = $7,
+               updated_at = transaction_timestamp()
+           WHERE organization_id = $1
+             AND session_id = $2
+             AND registration_id = $3
+             AND attendance_date = $4::date
+             AND status = 'CHECKED_IN'
+           RETURNING id`,
+          [
+            context.organizationId,
+            context.sessionId,
+            context.registrationId,
+            attendanceDate,
+            pickupName,
+            note,
+            context.actorId,
+          ],
+        );
+        if (!checkout.rows[0]) {
+          throw new CatalogReferenceError('Camper must be checked in before checkout');
+        }
+      } else {
+        status = 'ABSENT';
+        await client.query(
+          `INSERT INTO registration_attendance (
+             id,
+             organization_id,
+             session_id,
+             family_id,
+             registration_id,
+             attendance_date,
+             status,
+             note,
+             recorded_by
+           ) VALUES ($1, $2, $3, $4, $5, $6::date, 'ABSENT', $7, $8)
+           ON CONFLICT (organization_id, registration_id, attendance_date)
+           DO UPDATE SET
+             status = 'ABSENT',
+             checked_in_at = NULL,
+             checked_out_at = NULL,
+             pickup_name = NULL,
+             note = EXCLUDED.note,
+             recorded_by = EXCLUDED.recorded_by,
+             updated_at = transaction_timestamp()`,
+          [
+            randomUUID(),
+            context.organizationId,
+            context.sessionId,
+            registration.family_id,
+            context.registrationId,
+            attendanceDate,
+            note,
+            context.actorId,
+          ],
+        );
+      }
+
+      await client.query(
+        `INSERT INTO audit_events (
+           organization_id, actor_id, action, target_type, target_id, outcome,
+           request_id, details
+         ) VALUES ($1, $2, 'attendance.updated', 'registration', $3, 'success', $4, $5::jsonb)`,
+        [
+          context.organizationId,
+          context.actorId,
+          context.registrationId,
+          context.requestId,
+          JSON.stringify({
+            action,
+            attendance_date: attendanceDate,
+            session_id: context.sessionId,
+            status,
+          }),
+        ],
+      );
+
+      const updated = await this.getSessionForClient(
+        client,
+        context.organizationId,
+        context.sessionId,
+        attendanceDate,
+      );
+      if (!updated) {
+        throw new CatalogNotFoundError('Updated session not found');
+      }
+      return updated;
+    });
+  }
+
   async updateSession(context: UpdateSessionContext): Promise<SessionDetailRecord> {
     return this.withTenant(context.organizationId, async (client) => {
       const currentResult = await client.query<SessionRow>(
@@ -911,10 +1161,15 @@ export class CatalogStore {
     client: PoolClient,
     organizationId: string,
     sessionId: string,
+    attendanceDate?: string,
   ): Promise<RegisteredCamperRecord[]> {
     const result = await client.query<RegisteredCamperRow>(
       `SELECT
          COALESCE(payments.amount_paid_cents, 0)::integer AS amount_paid_cents,
+         attendance.attendance_date::text AS attendance_date,
+         attendance.note AS attendance_note,
+         COALESCE(attendance.status, 'NOT_MARKED') AS attendance_status,
+         COALESCE(pickup_people.authorized_pickup_names, ARRAY[]::text[]) AS authorized_pickup_names,
          CASE WHEN r.status = 'CONFIRMED'
            THEN GREATEST(r.price_cents - COALESCE(payments.amount_paid_cents, 0), 0)::integer
            ELSE 0
@@ -937,12 +1192,15 @@ export class CatalogStore {
            THEN GREATEST(r.deposit_cents - COALESCE(payments.amount_paid_cents, 0), 0)::integer
            ELSE 0
          END AS deposit_due_cents,
+         attendance.checked_in_at,
+         attendance.checked_out_at,
          CASE
            WHEN r.status <> 'CONFIRMED' THEN 'NOT_DUE'
            WHEN COALESCE(payments.amount_paid_cents, 0) >= r.price_cents THEN 'PAID'
            WHEN COALESCE(payments.amount_paid_cents, 0) >= r.deposit_cents THEN 'PARTIAL'
            ELSE 'DEPOSIT_DUE'
          END AS payment_status,
+         attendance.pickup_name,
          r.price_cents,
          r.registered_at
        FROM registrations r
@@ -961,6 +1219,41 @@ export class CatalogStore {
          WHERE rp.organization_id = r.organization_id
            AND rp.registration_id = r.id
        ) payments ON true
+       LEFT JOIN LATERAL (
+         SELECT
+           ra.attendance_date,
+           ra.status,
+           ra.checked_in_at,
+           ra.checked_out_at,
+           ra.pickup_name,
+           ra.note
+         FROM registration_attendance ra
+         WHERE ra.organization_id = r.organization_id
+           AND ra.registration_id = r.id
+           AND ra.attendance_date = COALESCE($3::date, CURRENT_DATE)
+         LIMIT 1
+       ) attendance ON true
+       LEFT JOIN LATERAL (
+         SELECT COALESCE(array_agg(name ORDER BY sort_name, name), ARRAY[]::text[])
+           AS authorized_pickup_names
+         FROM (
+           SELECT a.first_name || ' ' || a.last_name AS name,
+                  lower(a.last_name || ' ' || a.first_name) AS sort_name
+           FROM adults a
+           WHERE a.organization_id = c.organization_id
+             AND a.family_id = c.family_id
+             AND a.authorized_pickup
+             AND a.archived_at IS NULL
+           UNION
+           SELECT contacts.first_name || ' ' || contacts.last_name AS name,
+                  lower(contacts.last_name || ' ' || contacts.first_name) AS sort_name
+           FROM contacts
+           WHERE contacts.organization_id = c.organization_id
+             AND contacts.family_id = c.family_id
+             AND contacts.authorized_pickup
+             AND contacts.archived_at IS NULL
+         ) names
+       ) pickup_people ON true
        WHERE r.organization_id = $1
          AND r.session_id = $2
          AND r.status IN ('CONFIRMED', 'WAITLISTED')
@@ -970,9 +1263,9 @@ export class CatalogStore {
          lower(c.last_name),
          lower(c.first_name),
          c.id`,
-      [organizationId, sessionId],
+      [organizationId, sessionId, attendanceDate ?? null],
     );
 
-    return result.rows.map((row) => ({ ...row, registered_at: timestamp(row.registered_at) }));
+    return result.rows.map(mapRegisteredCamper);
   }
 }

@@ -1016,6 +1016,10 @@
                         "type": "object",
                         "required": [
                           "amount_paid_cents",
+                          "attendance_date",
+                          "attendance_note",
+                          "attendance_status",
+                          "authorized_pickup_names",
                           "balance_due_cents",
                           "registration_id",
                           "camper_id",
@@ -1032,7 +1036,10 @@
                           "currency",
                           "deposit_cents",
                           "deposit_due_cents",
+                          "checked_in_at",
+                          "checked_out_at",
                           "payment_status",
+                          "pickup_name",
                           "price_cents",
                           "registered_at"
                         ],
@@ -1040,6 +1047,63 @@
                           "amount_paid_cents": {
                             "minimum": 0,
                             "type": "integer"
+                          },
+                          "attendance_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "attendance_note": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "attendance_status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NOT_MARKED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CHECKED_IN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CHECKED_OUT"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ABSENT"
+                                ]
+                              }
+                            ]
+                          },
+                          "authorized_pickup_names": {
+                            "type": "array",
+                            "items": {
+                              "minLength": 1,
+                              "type": "string"
+                            }
                           },
                           "balance_due_cents": {
                             "minimum": 0,
@@ -1166,6 +1230,28 @@
                             "minimum": 0,
                             "type": "integer"
                           },
+                          "checked_in_at": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "checked_out_at": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "payment_status": {
                             "anyOf": [
                               {
@@ -1191,6 +1277,17 @@
                                 "enum": [
                                   "PAID"
                                 ]
+                              }
+                            ]
+                          },
+                          "pickup_name": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
                               }
                             ]
                           },
@@ -2630,6 +2727,10 @@
                         "type": "object",
                         "required": [
                           "amount_paid_cents",
+                          "attendance_date",
+                          "attendance_note",
+                          "attendance_status",
+                          "authorized_pickup_names",
                           "balance_due_cents",
                           "registration_id",
                           "camper_id",
@@ -2646,7 +2747,10 @@
                           "currency",
                           "deposit_cents",
                           "deposit_due_cents",
+                          "checked_in_at",
+                          "checked_out_at",
                           "payment_status",
+                          "pickup_name",
                           "price_cents",
                           "registered_at"
                         ],
@@ -2654,6 +2758,63 @@
                           "amount_paid_cents": {
                             "minimum": 0,
                             "type": "integer"
+                          },
+                          "attendance_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "attendance_note": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "attendance_status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NOT_MARKED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CHECKED_IN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CHECKED_OUT"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ABSENT"
+                                ]
+                              }
+                            ]
+                          },
+                          "authorized_pickup_names": {
+                            "type": "array",
+                            "items": {
+                              "minLength": 1,
+                              "type": "string"
+                            }
                           },
                           "balance_due_cents": {
                             "minimum": 0,
@@ -2780,6 +2941,28 @@
                             "minimum": 0,
                             "type": "integer"
                           },
+                          "checked_in_at": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "checked_out_at": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "payment_status": {
                             "anyOf": [
                               {
@@ -2805,6 +2988,17 @@
                                 "enum": [
                                   "PAID"
                                 ]
+                              }
+                            ]
+                          },
+                          "pickup_name": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
                               }
                             ]
                           },
@@ -3354,6 +3548,10 @@
                         "type": "object",
                         "required": [
                           "amount_paid_cents",
+                          "attendance_date",
+                          "attendance_note",
+                          "attendance_status",
+                          "authorized_pickup_names",
                           "balance_due_cents",
                           "registration_id",
                           "camper_id",
@@ -3370,7 +3568,10 @@
                           "currency",
                           "deposit_cents",
                           "deposit_due_cents",
+                          "checked_in_at",
+                          "checked_out_at",
                           "payment_status",
+                          "pickup_name",
                           "price_cents",
                           "registered_at"
                         ],
@@ -3378,6 +3579,63 @@
                           "amount_paid_cents": {
                             "minimum": 0,
                             "type": "integer"
+                          },
+                          "attendance_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "attendance_note": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "attendance_status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NOT_MARKED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CHECKED_IN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CHECKED_OUT"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ABSENT"
+                                ]
+                              }
+                            ]
+                          },
+                          "authorized_pickup_names": {
+                            "type": "array",
+                            "items": {
+                              "minLength": 1,
+                              "type": "string"
+                            }
                           },
                           "balance_due_cents": {
                             "minimum": 0,
@@ -3504,6 +3762,28 @@
                             "minimum": 0,
                             "type": "integer"
                           },
+                          "checked_in_at": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "checked_out_at": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "payment_status": {
                             "anyOf": [
                               {
@@ -3529,6 +3809,783 @@
                                 "enum": [
                                   "PAID"
                                 ]
+                              }
+                            ]
+                          },
+                          "pickup_name": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "price_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "registered_at": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sessions/{sessionId}/registrations/{registrationId}/attendance": {
+      "post": {
+        "tags": [
+          "attendance",
+          "sessions"
+        ],
+        "description": "Record daily attendance, check-in, check-out, or absence for a camper.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CHECK_IN"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CHECK_OUT"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "MARK_ABSENT"
+                        ]
+                      }
+                    ]
+                  },
+                  "attendance_date": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "note": {
+                    "anyOf": [
+                      {
+                        "minLength": 1,
+                        "maxLength": 500,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "pickup_name": {
+                    "anyOf": [
+                      {
+                        "minLength": 1,
+                        "maxLength": 160,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "registrationId",
+            "required": true
+          },
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "sessionId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "organization_id",
+                    "season_id",
+                    "program_id",
+                    "code",
+                    "name",
+                    "program_name",
+                    "starts_on",
+                    "ends_on",
+                    "capacity",
+                    "registered_count",
+                    "registered_female_count",
+                    "registered_male_count",
+                    "waitlisted_count",
+                    "waitlisted_female_count",
+                    "waitlisted_male_count",
+                    "active_hold_count",
+                    "available_count",
+                    "currency",
+                    "price_cents",
+                    "status",
+                    "version",
+                    "updated_at",
+                    "registration_opens_at",
+                    "registration_closes_at",
+                    "minimum_age",
+                    "maximum_age",
+                    "minimum_grade",
+                    "maximum_grade",
+                    "age_as_of",
+                    "deposit_cents",
+                    "waitlist_enabled",
+                    "organization_timezone",
+                    "registered_campers"
+                  ],
+                  "properties": {
+                    "id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "organization_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "season_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "program_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "name": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "program_name": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "starts_on": {
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "type": "string"
+                    },
+                    "ends_on": {
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "type": "string"
+                    },
+                    "capacity": {
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "registered_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "registered_female_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "registered_male_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlisted_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlisted_female_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlisted_male_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "active_hold_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "available_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "enum": [
+                        "USD"
+                      ]
+                    },
+                    "price_cents": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "DRAFT"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PUBLISHED"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CANCELLED"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ARCHIVED"
+                          ]
+                        }
+                      ]
+                    },
+                    "version": {
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "updated_at": {
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                      "type": "string"
+                    },
+                    "registration_opens_at": {
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                      "type": "string"
+                    },
+                    "registration_closes_at": {
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                      "type": "string"
+                    },
+                    "minimum_age": {
+                      "minimum": 0,
+                      "maximum": 120,
+                      "type": "integer"
+                    },
+                    "maximum_age": {
+                      "minimum": 0,
+                      "maximum": 120,
+                      "type": "integer"
+                    },
+                    "minimum_grade": {
+                      "minimum": 0,
+                      "maximum": 12,
+                      "type": "integer"
+                    },
+                    "maximum_grade": {
+                      "minimum": 0,
+                      "maximum": 12,
+                      "type": "integer"
+                    },
+                    "age_as_of": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SESSION_START"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SEASON_START"
+                          ]
+                        }
+                      ]
+                    },
+                    "deposit_cents": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "waitlist_enabled": {
+                      "type": "boolean"
+                    },
+                    "organization_timezone": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "registered_campers": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "amount_paid_cents",
+                          "attendance_date",
+                          "attendance_note",
+                          "attendance_status",
+                          "authorized_pickup_names",
+                          "balance_due_cents",
+                          "registration_id",
+                          "camper_id",
+                          "family_id",
+                          "family_name",
+                          "first_name",
+                          "last_name",
+                          "preferred_name",
+                          "gender",
+                          "school_grade",
+                          "birth_date",
+                          "status",
+                          "source",
+                          "currency",
+                          "deposit_cents",
+                          "deposit_due_cents",
+                          "checked_in_at",
+                          "checked_out_at",
+                          "payment_status",
+                          "pickup_name",
+                          "price_cents",
+                          "registered_at"
+                        ],
+                        "properties": {
+                          "amount_paid_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "attendance_date": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "attendance_note": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "attendance_status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NOT_MARKED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CHECKED_IN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CHECKED_OUT"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ABSENT"
+                                ]
+                              }
+                            ]
+                          },
+                          "authorized_pickup_names": {
+                            "type": "array",
+                            "items": {
+                              "minLength": 1,
+                              "type": "string"
+                            }
+                          },
+                          "balance_due_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "registration_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "camper_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "family_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "family_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "first_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "last_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "preferred_name": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "gender": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Female"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Male"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "school_grade": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "birth_date": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "type": "string"
+                          },
+                          "status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CONFIRMED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLISTED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CANCELLED"
+                                ]
+                              }
+                            ]
+                          },
+                          "source": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ADMIN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PARENT"
+                                ]
+                              }
+                            ]
+                          },
+                          "currency": {
+                            "type": "string",
+                            "enum": [
+                              "USD"
+                            ]
+                          },
+                          "deposit_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "deposit_due_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "checked_in_at": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "checked_out_at": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "payment_status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NOT_DUE"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "DEPOSIT_DUE"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PARTIAL"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PAID"
+                                ]
+                              }
+                            ]
+                          },
+                          "pickup_name": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
                               }
                             ]
                           },

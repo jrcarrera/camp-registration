@@ -8,6 +8,7 @@ import type {
   ProgramUpdate,
   SeasonCreate,
   SeasonFixture,
+  SessionAttendanceUpdate,
   SessionCreate,
   SessionDetail,
   SessionSummary,
@@ -24,6 +25,7 @@ import type { CatalogStore } from '@camp-registration/database';
 
 const readRoles = new Set(['parent_guardian', 'camp_staff', 'camp_admin', 'organization_admin']);
 const editRoles = new Set(['camp_admin', 'organization_admin']);
+const attendanceRoles = new Set(['camp_staff', 'camp_admin', 'organization_admin']);
 
 export class CatalogAuthorizationError extends Error {}
 export class CatalogValidationError extends Error {
@@ -47,6 +49,12 @@ export interface CatalogServiceApi {
   ): Promise<ProgramFixture>;
   createSeason(season: SeasonCreate, requestId: string): Promise<SeasonFixture>;
   createSession(session: SessionCreate, requestId: string): Promise<SessionDetail>;
+  updateSessionAttendance(
+    sessionId: string,
+    registrationId: string,
+    update: SessionAttendanceUpdate,
+    requestId: string,
+  ): Promise<SessionDetail>;
   updateSession(
     sessionId: string,
     update: SessionUpdate,
@@ -119,6 +127,26 @@ function validateSeason(season: SeasonCreate): void {
   if (Object.keys(errors).length > 0) {
     throw new CatalogValidationError(errors, 'Season details are invalid');
   }
+}
+
+function todayLocalDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function cleanOptionalText(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function validateSessionAttendance(update: SessionAttendanceUpdate): Record<string, string> {
+  const errors: Record<string, string> = {};
+  if (update.attendance_date && !isRealDate(update.attendance_date)) {
+    errors.attendance_date = 'Enter a valid attendance date.';
+  }
+  if (update.action === 'CHECK_OUT' && !cleanOptionalText(update.pickup_name)) {
+    errors.pickup_name = 'Enter who picked up the camper.';
+  }
+  return errors;
 }
 
 export class CatalogService implements CatalogServiceApi {
@@ -219,6 +247,32 @@ export class CatalogService implements CatalogServiceApi {
       },
       { ...session, id: randomUUID(), name: session.name.trim() },
     );
+  }
+
+  async updateSessionAttendance(
+    sessionId: string,
+    registrationId: string,
+    update: SessionAttendanceUpdate,
+    requestId: string,
+  ): Promise<SessionDetail> {
+    this.authorize(attendanceRoles);
+    const errors = validateSessionAttendance(update);
+    if (Object.keys(errors).length > 0) {
+      throw new CatalogValidationError(errors, 'Attendance details are invalid');
+    }
+    return this.store.updateSessionAttendance({
+      actorId: this.identity.subject,
+      organizationId: this.organizationId,
+      registrationId,
+      requestId,
+      sessionId,
+      update: {
+        action: update.action,
+        attendance_date: update.attendance_date ?? todayLocalDate(),
+        note: cleanOptionalText(update.note),
+        pickup_name: cleanOptionalText(update.pickup_name),
+      },
+    });
   }
 
   async updateSession(

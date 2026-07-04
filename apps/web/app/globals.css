@@ -279,6 +279,14 @@ h2 {
   font-size: 13px;
 }
 
+.sectionActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .systemStatus {
   display: flex;
   align-items: center;
@@ -431,6 +439,456 @@ tbody tr + tr td {
   color: #953724;
 }
 
+.attendanceControls {
+  min-width: 230px;
+  display: grid;
+  gap: 8px;
+}
+
+.attendanceStatusLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.attendanceStatusLine small,
+.attendanceNote {
+  color: #66736d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.attendanceStatus {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.attendanceStatusnot_marked {
+  border-color: #ccd4d0;
+  background: #f3f5f4;
+  color: #4f5d57;
+}
+
+.attendanceStatuschecked_in {
+  border-color: #a9cbbb;
+  background: #eaf3ee;
+  color: #0e543b;
+}
+
+.attendanceStatuschecked_out {
+  border-color: #b5c7d6;
+  background: #edf5fa;
+  color: #27516f;
+}
+
+.attendanceStatusabsent {
+  border-color: #e5b6a9;
+  background: #fff0ed;
+  color: #953724;
+}
+
+.attendanceControls label {
+  display: grid;
+  gap: 4px;
+  color: #68756f;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.attendanceControls input,
+.attendanceControls select {
+  width: 100%;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid #b9c3be;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #1f2c27;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.attendanceButtonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.attendanceControls button {
+  min-height: 34px;
+}
+
+.attendanceMessage {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #0e543b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.attendanceerror {
+  color: #953724;
+}
+
+.checkInHeader {
+  align-items: flex-end;
+}
+
+.checkInDesk {
+  display: grid;
+  gap: 18px;
+  padding-bottom: 64px;
+}
+
+.checkInSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-block: 1px solid #d8dedb;
+  background: #ffffff;
+}
+
+.checkInSummaryTile {
+  min-height: 102px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 18px 20px;
+  border-right: 1px solid #e1e6e3;
+}
+
+.checkInSummaryTile:last-child {
+  border-right: 0;
+}
+
+.checkInSummaryTile span {
+  color: #66736d;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.checkInSummaryTile strong {
+  color: #1c2c25;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.checkInSummaryTile small {
+  color: #53615b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.checkInSummaryActive {
+  box-shadow: inset 4px 0 0 #16805a;
+}
+
+.checkInToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.checkInSearch {
+  min-width: min(430px, 100%);
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid #bdc7c2;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #53615b;
+}
+
+.checkInSearch input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #1f2c27;
+  font-size: 14px;
+}
+
+.checkInSearch input::placeholder {
+  color: #7a867f;
+}
+
+.checkInFilters {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.checkInFilterButton {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 1px solid #c7d0cc;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #35423c;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.checkInFilterButton[aria-pressed='true'] {
+  border-color: #146b4d;
+  background: #eaf3ee;
+  color: #0e543b;
+}
+
+.checkInFilterButton span {
+  min-width: 22px;
+  min-height: 22px;
+  display: inline-grid;
+  place-items: center;
+  padding-inline: 6px;
+  border-radius: 4px;
+  background: #eef2f0;
+  color: #4f5d57;
+  font-size: 12px;
+}
+
+.checkInFilterButton[aria-pressed='true'] span {
+  background: #146b4d;
+  color: #ffffff;
+}
+
+.checkInDeskIntro {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid #cdd8d3;
+  border-radius: 5px;
+  background: #f9fbfa;
+  color: #3f4e47;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.checkInDeskIntro svg {
+  flex: 0 0 auto;
+  color: #2a6f97;
+}
+
+.checkInQueue {
+  display: grid;
+  gap: 10px;
+}
+
+.checkInCamperRow {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.2fr) minmax(180px, 0.65fr) minmax(280px, 0.9fr);
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #d5dcd8;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.checkInCampernot_marked {
+  box-shadow: inset 4px 0 0 #8d9893;
+}
+
+.checkInCamperchecked_in {
+  box-shadow: inset 4px 0 0 #16805a;
+}
+
+.checkInCamperchecked_out {
+  box-shadow: inset 4px 0 0 #2a6f97;
+}
+
+.checkInCamperabsent {
+  box-shadow: inset 4px 0 0 #c8553d;
+}
+
+.checkInCamperIdentity {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.checkInCamperIdentity h2 {
+  overflow: hidden;
+  margin: 0;
+  color: #1f2c27;
+  font-size: 17px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checkInCamperIdentity p {
+  margin: 3px 0 0;
+  color: #66736d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.checkInTimeLine {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: #52615a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.checkInTimeLine span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: #f0f3f2;
+}
+
+.checkInPickupBlock details {
+  border: 1px solid #d7dfdb;
+  border-radius: 5px;
+  background: #f8faf9;
+}
+
+.checkInPickupBlock summary {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  color: #35423c;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  list-style: none;
+}
+
+.checkInPickupBlock summary::-webkit-details-marker {
+  display: none;
+}
+
+.checkInPickupBlock ul,
+.checkInPickupBlock p {
+  margin: 0;
+  padding: 0 10px 10px;
+  color: #53615b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.checkInPickupBlock ul {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+}
+
+.checkInActions {
+  min-width: 0;
+  display: grid;
+  gap: 9px;
+}
+
+.checkInActions label {
+  display: grid;
+  gap: 4px;
+  color: #68756f;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.checkInActions input,
+.checkInActions select {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #b9c3be;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #1f2c27;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.checkInButtonSet {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.75fr);
+  gap: 8px;
+}
+
+.checkInPrimaryAction,
+.checkInCheckoutButton {
+  min-height: 44px;
+}
+
+.checkInFinalNote {
+  margin: 0;
+  color: #53615b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.checkInEmpty {
+  min-height: 190px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  border: 1px dashed #cbd3cf;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #6a7771;
+  text-align: center;
+}
+
+.checkInEmpty svg {
+  color: #2a6f97;
+}
+
+.checkInEmpty strong {
+  color: #26332d;
+  font-size: 14px;
+}
+
+.checkInEmpty span {
+  font-size: 13px;
+}
+
+.pickupNameList {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding-left: 16px;
+  color: #35423c;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .actionColumn,
 .rowAction {
   width: 42px;
@@ -537,15 +995,86 @@ tbody tr + tr td {
 }
 
 .queueSection {
-  min-height: 132px;
-  padding: 22px 20px;
+  min-height: 240px;
+  padding: 20px;
   background: #ffffff;
 }
 
-.queueSection p:last-child {
-  margin: 18px 0 0;
+.queueHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.queueHeader > span {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  background: #edf4f1;
+  color: #146b4d;
+}
+
+.queueList {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.queueItem {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid #e5e9e7;
+}
+
+.queueItem > div {
+  min-width: 0;
+}
+
+.queueItem strong,
+.queueItem span {
+  display: block;
+}
+
+.queueItem strong {
+  overflow: hidden;
+  color: #26332d;
+  font-size: 13px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queueItem span,
+.queueEmpty {
   color: #6a7771;
   font-size: 13px;
+  line-height: 1.45;
+}
+
+.queueItem span {
+  margin-top: 3px;
+}
+
+.queueValue {
+  justify-self: end;
+  min-width: fit-content;
+  color: #173d30;
+  font-size: 13px;
+  text-align: right;
+}
+
+.queueEmpty {
+  margin: 18px 0 0;
 }
 
 .pageHeader,
@@ -1921,6 +2450,80 @@ tbody tr + tr td {
     flex-direction: column;
   }
 
+  .sectionActions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .sectionActions .buttonPrimary,
+  .sectionActions .buttonSecondary,
+  .sectionActions .waitlistAction {
+    width: 100%;
+  }
+
+  .sectionActions .waitlistAction button {
+    width: 100%;
+  }
+
+  .checkInHeader {
+    align-items: stretch;
+  }
+
+  .checkInSummaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .checkInSummaryTile:nth-child(2) {
+    border-right: 0;
+  }
+
+  .checkInSummaryTile:nth-child(n + 3) {
+    border-top: 1px solid #e1e6e3;
+  }
+
+  .checkInToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .checkInSearch {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .checkInFilters {
+    justify-content: flex-start;
+  }
+
+  .checkInFilterButton {
+    flex: 1 1 132px;
+    justify-content: space-between;
+  }
+
+  .checkInDeskIntro {
+    align-items: flex-start;
+  }
+
+  .checkInCamperRow {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .checkInCamperIdentity h2 {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .checkInButtonSet {
+    grid-template-columns: 1fr;
+  }
+
+  .checkInActions .buttonPrimary,
+  .checkInActions .buttonSecondary {
+    width: 100%;
+  }
+
   .portalSummaryGrid {
     grid-template-columns: 1fr;
   }
@@ -2075,6 +2678,15 @@ tbody tr + tr td {
   }
 
   .paymentInlineForm button {
+    width: 100%;
+  }
+
+  .attendanceControls {
+    min-width: 0;
+  }
+
+  .attendanceButtonRow,
+  .attendanceControls button {
     width: 100%;
   }
 

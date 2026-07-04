@@ -75,10 +75,25 @@ export const PaymentStatusSchema = Type.Union([
   Type.Literal('PARTIAL'),
   Type.Literal('PAID'),
 ]);
+export const AttendanceStatusSchema = Type.Union([
+  Type.Literal('NOT_MARKED'),
+  Type.Literal('CHECKED_IN'),
+  Type.Literal('CHECKED_OUT'),
+  Type.Literal('ABSENT'),
+]);
+export const AttendanceActionSchema = Type.Union([
+  Type.Literal('CHECK_IN'),
+  Type.Literal('CHECK_OUT'),
+  Type.Literal('MARK_ABSENT'),
+]);
 
 export const RegisteredCamperSchema = Type.Object(
   {
     amount_paid_cents: Type.Integer({ minimum: 0 }),
+    attendance_date: Type.Union([LocalDateSchema, Type.Null()]),
+    attendance_note: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+    attendance_status: AttendanceStatusSchema,
+    authorized_pickup_names: Type.Array(Type.String({ minLength: 1 })),
     balance_due_cents: Type.Integer({ minimum: 0 }),
     registration_id: UuidSchema,
     camper_id: UuidSchema,
@@ -95,7 +110,10 @@ export const RegisteredCamperSchema = Type.Object(
     currency: Type.Literal('USD'),
     deposit_cents: Type.Integer({ minimum: 0 }),
     deposit_due_cents: Type.Integer({ minimum: 0 }),
+    checked_in_at: Type.Union([UtcTimestampSchema, Type.Null()]),
+    checked_out_at: Type.Union([UtcTimestampSchema, Type.Null()]),
     payment_status: PaymentStatusSchema,
+    pickup_name: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     price_cents: Type.Integer({ minimum: 0 }),
     registered_at: UtcTimestampSchema,
   },
@@ -234,6 +252,18 @@ export const SessionUpdateSchema = Type.Object(
   { additionalProperties: false, $id: 'SessionUpdate' },
 );
 
+export const SessionAttendanceUpdateSchema = Type.Object(
+  {
+    action: AttendanceActionSchema,
+    attendance_date: Type.Optional(LocalDateSchema),
+    note: Type.Optional(Type.Union([Type.String({ minLength: 1, maxLength: 500 }), Type.Null()])),
+    pickup_name: Type.Optional(
+      Type.Union([Type.String({ minLength: 1, maxLength: 160 }), Type.Null()]),
+    ),
+  },
+  { additionalProperties: false, $id: 'SessionAttendanceUpdate' },
+);
+
 export const SessionCreateSchema = Type.Object(
   {
     season_id: UuidSchema,
@@ -304,6 +334,11 @@ export const SessionParamsSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const SessionRegistrationParamsSchema = Type.Object(
+  { registrationId: UuidSchema, sessionId: UuidSchema },
+  { additionalProperties: false },
+);
+
 export const ProblemResponseSchema = Type.Object(
   {
     code: Type.String({ minLength: 1 }),
@@ -316,15 +351,19 @@ export const ProblemResponseSchema = Type.Object(
 export type CatalogContext = Static<typeof CatalogContextSchema>;
 export type RegistrationStatus = Static<typeof RegistrationStatusSchema>;
 export type RegistrationSource = Static<typeof RegistrationSourceSchema>;
+export type AttendanceAction = Static<typeof AttendanceActionSchema>;
+export type AttendanceStatus = Static<typeof AttendanceStatusSchema>;
 export type RegisteredCamper = Static<typeof RegisteredCamperSchema>;
 export type SessionSummary = Static<typeof SessionSummarySchema>;
 export type SessionDetail = Static<typeof SessionDetailSchema>;
 export type SessionListResponse = Static<typeof SessionListResponseSchema>;
 export type SessionUpdate = Static<typeof SessionUpdateSchema>;
+export type SessionAttendanceUpdate = Static<typeof SessionAttendanceUpdateSchema>;
 export type SessionCreate = Static<typeof SessionCreateSchema>;
 export type SeasonCreate = Static<typeof SeasonCreateSchema>;
 export type ProgramCreate = Static<typeof ProgramCreateSchema>;
 export type ProgramUpdate = Static<typeof ProgramUpdateSchema>;
 export type ProgramParams = Static<typeof ProgramParamsSchema>;
+export type SessionRegistrationParams = Static<typeof SessionRegistrationParamsSchema>;
 export type SessionParams = Static<typeof SessionParamsSchema>;
 export type ProblemResponse = Static<typeof ProblemResponseSchema>;

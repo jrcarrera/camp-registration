@@ -6,6 +6,7 @@ import type {
   ProgramUpdate,
   SeasonCreate,
   SeasonFixture,
+  SessionAttendanceUpdate,
   SessionCreate,
   SessionDetail,
   SessionSummary,
@@ -183,6 +184,11 @@ const sessionCreate: SessionCreate = {
   status: 'DRAFT',
 };
 
+const attendanceUpdate: SessionAttendanceUpdate = {
+  action: 'CHECK_IN',
+  note: 'Arrived at the front gate.',
+};
+
 describe('catalog routes', () => {
   const applications: Awaited<ReturnType<typeof buildApp>>[] = [];
 
@@ -221,6 +227,28 @@ describe('catalog routes', () => {
 
     expect(response.statusCode).toBe(200);
     expect(service.updateSession).toHaveBeenCalledWith(sessionId, update, 'session-update-test');
+  });
+
+  it('records session attendance and passes the request id to the service', async () => {
+    const service = fakeService();
+    const app = await buildApp({ catalogService: service });
+    applications.push(app);
+
+    const response = await app.inject({
+      headers: { 'x-request-id': 'attendance-update-test' },
+      method: 'POST',
+      payload: attendanceUpdate,
+      url: `/v1/sessions/${sessionId}/registrations/7fd94448-0fda-4a31-a2e7-f4a445289c7a/attendance`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual(detail);
+    expect(service.updateSessionAttendance).toHaveBeenCalledWith(
+      sessionId,
+      '7fd94448-0fda-4a31-a2e7-f4a445289c7a',
+      attendanceUpdate,
+      'attendance-update-test',
+    );
   });
 
   it('updates a program and passes the request id to the service', async () => {
@@ -347,6 +375,30 @@ describe('catalog service validation', () => {
     });
     expect(store.updateProgram).not.toHaveBeenCalled();
   });
+
+  it('requires a pickup name for checkout before persistence', async () => {
+    const store = {
+      updateSessionAttendance: vi.fn(),
+    } as unknown as CatalogStore;
+    const service = new CatalogService(store, localIdentity, organizationId);
+
+    await expect(
+      service.updateSessionAttendance(
+        sessionId,
+        '7fd94448-0fda-4a31-a2e7-f4a445289c7a',
+        {
+          action: 'CHECK_OUT',
+          pickup_name: '   ',
+        },
+        'attendance-validation-test',
+      ),
+    ).rejects.toMatchObject({
+      fieldErrors: {
+        pickup_name: 'Enter who picked up the camper.',
+      },
+    });
+    expect(store.updateSessionAttendance).not.toHaveBeenCalled();
+  });
 });
 
 const localIdentity: RequestIdentity = {
@@ -367,6 +419,7 @@ function fakeService(): CatalogServiceApi & {
   createProgram: ReturnType<typeof vi.fn<CatalogServiceApi['createProgram']>>;
   createSeason: ReturnType<typeof vi.fn<CatalogServiceApi['createSeason']>>;
   createSession: ReturnType<typeof vi.fn<CatalogServiceApi['createSession']>>;
+  updateSessionAttendance: ReturnType<typeof vi.fn<CatalogServiceApi['updateSessionAttendance']>>;
   updateProgram: ReturnType<typeof vi.fn<CatalogServiceApi['updateProgram']>>;
   updateSession: ReturnType<typeof vi.fn<CatalogServiceApi['updateSession']>>;
 } {
@@ -394,5 +447,6 @@ function fakeService(): CatalogServiceApi & {
     listSessions: vi.fn().mockResolvedValue([summary]),
     updateProgram: vi.fn().mockResolvedValue(updatedProgram),
     updateSession: vi.fn().mockResolvedValue({ ...detail, version: 2 }),
+    updateSessionAttendance: vi.fn().mockResolvedValue(detail),
   };
 }

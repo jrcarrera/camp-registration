@@ -1,13 +1,59 @@
-import type { SessionSummary } from '@camp-registration/contracts';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import type { RegisteredCamper, SessionDetail, SessionSummary } from '@camp-registration/contracts';
+import {
+  AlertCircle,
+  CheckCircle2,
+  CircleDollarSign,
+  ClipboardList,
+  Gauge,
+  Hourglass,
+} from 'lucide-react';
 
 import { SessionTable } from '../components/session-table';
-import { getCatalog, getSessions } from '../lib/api';
+import { getCatalog, getSession, getSessions } from '../lib/api';
 
 export const dynamic = 'force-dynamic';
 
+interface RegistrationActivity extends RegisteredCamper {
+  session_id: string;
+  session_name: string;
+}
+
+function money(cents: number): string {
+  return new Intl.NumberFormat('en-US', { currency: 'USD', style: 'currency' }).format(cents / 100);
+}
+
+function percent(value: number): string {
+  return `${Math.round(value)}%`;
+}
+
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    day: 'numeric',
+    month: 'short',
+  }).format(new Date(value));
+}
+
+function camperName(camper: Pick<RegisteredCamper, 'first_name' | 'last_name' | 'preferred_name'>) {
+  return `${camper.preferred_name ?? camper.first_name} ${camper.last_name}`;
+}
+
+function sessionFillRate(session: SessionSummary): number {
+  return session.capacity > 0 ? (session.registered_count / session.capacity) * 100 : 0;
+}
+
+function registrationActivity(sessions: SessionDetail[]): RegistrationActivity[] {
+  return sessions.flatMap((session) =>
+    session.registered_campers.map((camper) => ({
+      ...camper,
+      session_id: session.id,
+      session_name: session.name,
+    })),
+  );
+}
+
 export default async function HomePage() {
   let sessions: SessionSummary[] = [];
+  let sessionDetails: SessionDetail[] = [];
   let seasonName = 'Summer 2027';
   let loadError = false;
 
@@ -15,23 +61,64 @@ export default async function HomePage() {
     const [catalog, response] = await Promise.all([getCatalog(), getSessions()]);
     sessions = response.sessions;
     seasonName = catalog.seasons[0]?.name ?? seasonName;
+    sessionDetails = await Promise.all(sessions.map((session) => getSession(session.id)));
   } catch {
     loadError = true;
   }
 
+  const activeSessions = sessions.filter(
+    (session) => session.status !== 'CANCELLED' && session.status !== 'ARCHIVED',
+  );
+  const registrations = registrationActivity(sessionDetails);
+  const confirmedRegistrations = registrations.filter(
+    (registration) => registration.status === 'CONFIRMED',
+  );
+  const totalCapacity = activeSessions.reduce((total, session) => total + session.capacity, 0);
+  const registeredCount = activeSessions.reduce(
+    (total, session) => total + session.registered_count,
+    0,
+  );
+  const waitlistedCount = activeSessions.reduce(
+    (total, session) => total + session.waitlisted_count,
+    0,
+  );
+  const availableCount = activeSessions.reduce(
+    (total, session) => total + session.available_count,
+    0,
+  );
+  const balanceDueCents = confirmedRegistrations.reduce(
+    (total, registration) => total + registration.balance_due_cents,
+    0,
+  );
+  const fillRate = totalCapacity > 0 ? (registeredCount / totalCapacity) * 100 : 0;
+  const balanceFollowUps = confirmedRegistrations
+    .filter((registration) => registration.balance_due_cents > 0)
+    .sort((a, b) => b.balance_due_cents - a.balance_due_cents)
+    .slice(0, 5);
+  const waitlistOpenings = activeSessions
+    .filter((session) => session.waitlisted_count > 0 && session.available_count > 0)
+    .sort((a, b) => b.waitlisted_count - a.waitlisted_count)
+    .slice(0, 5);
+  const capacityRisks = activeSessions
+    .filter((session) => session.registered_count >= session.capacity * 0.9)
+    .sort((a, b) => sessionFillRate(b) - sessionFillRate(a))
+    .slice(0, 5);
+  const recentRegistrations = [...registrations]
+    .sort((a, b) => Date.parse(b.registered_at) - Date.parse(a.registered_at))
+    .slice(0, 5);
   const metrics = [
     {
       label: 'Registered campers',
       tone: 'green',
-      value: String(sessions.reduce((total, session) => total + session.registered_count, 0)),
+      value: String(registeredCount),
     },
     {
-      label: 'Published sessions',
+      label: 'Open seats',
       tone: 'blue',
-      value: String(sessions.filter(({ status }) => status === 'PUBLISHED').length),
+      value: String(availableCount),
     },
-    { label: 'Forms incomplete', tone: 'amber', value: '0' },
-    { label: 'Balances due', tone: 'coral', value: '$0' },
+    { label: 'Waitlisted campers', tone: 'amber', value: String(waitlistedCount) },
+    { label: 'Balances due', tone: 'coral', value: money(balanceDueCents) },
   ];
 
   return (
@@ -61,11 +148,134 @@ export default async function HomePage() {
         ))}
       </section>
 
+      <section className="operationalGrid" aria-label="Operational dashboard">
+        <div className="queueSection">
+          <div className="queueHeader">
+            <span aria-hidden="true">
+              <CircleDollarSign size={18} />
+            </span>
+            <div>
+              <p className="contextLabel">Payments</p>
+              <h2>Balance follow-up</h2>
+            </div>
+          </div>
+          {balanceFollowUps.length > 0 ? (
+            <ul className="queueList">
+              {balanceFollowUps.map((registration) => (
+                <li className="queueItem" key={registration.registration_id}>
+                  <div>
+                    <strong>{camperName(registration)}</strong>
+                    <span>
+                      {registration.family_name} · {registration.session_name}
+                    </span>
+                  </div>
+                  <strong className="queueValue">{money(registration.balance_due_cents)}</strong>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="queueEmpty">No confirmed balances require follow-up.</p>
+          )}
+        </div>
+
+        <div className="queueSection" id="campers">
+          <div className="queueHeader">
+            <span aria-hidden="true">
+              <Hourglass size={18} />
+            </span>
+            <div>
+              <p className="contextLabel">Waitlist</p>
+              <h2>Open capacity</h2>
+            </div>
+          </div>
+          {waitlistOpenings.length > 0 ? (
+            <ul className="queueList">
+              {waitlistOpenings.map((session) => (
+                <li className="queueItem" key={session.id}>
+                  <div>
+                    <strong>{session.name}</strong>
+                    <span>
+                      {session.waitlisted_count} waiting · {session.available_count} open
+                    </span>
+                  </div>
+                  <strong className="queueValue">{session.code}</strong>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="queueEmpty">No waitlisted sessions have open seats.</p>
+          )}
+        </div>
+
+        <div className="queueSection">
+          <div className="queueHeader">
+            <span aria-hidden="true">
+              <Gauge size={18} />
+            </span>
+            <div>
+              <p className="contextLabel">Capacity</p>
+              <h2>Fill-rate watch</h2>
+            </div>
+          </div>
+          {capacityRisks.length > 0 ? (
+            <ul className="queueList">
+              {capacityRisks.map((session) => (
+                <li className="queueItem" key={session.id}>
+                  <div>
+                    <strong>{session.name}</strong>
+                    <span>
+                      {session.registered_count} of {session.capacity} filled ·{' '}
+                      {session.waitlisted_count} waiting
+                    </span>
+                  </div>
+                  <strong className="queueValue">{percent(sessionFillRate(session))}</strong>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="queueEmpty">No active sessions are within 10% of capacity.</p>
+          )}
+        </div>
+
+        <div className="queueSection">
+          <div className="queueHeader">
+            <span aria-hidden="true">
+              <ClipboardList size={18} />
+            </span>
+            <div>
+              <p className="contextLabel">Activity</p>
+              <h2>Recent registrations</h2>
+            </div>
+          </div>
+          {recentRegistrations.length > 0 ? (
+            <ul className="queueList">
+              {recentRegistrations.map((registration) => (
+                <li className="queueItem" key={registration.registration_id}>
+                  <div>
+                    <strong>{camperName(registration)}</strong>
+                    <span>
+                      {registration.session_name} ·{' '}
+                      {registration.status === 'CONFIRMED' ? 'Attending' : 'Waitlisted'}
+                    </span>
+                  </div>
+                  <strong className="queueValue">{formatDate(registration.registered_at)}</strong>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="queueEmpty">No registrations have been recorded yet.</p>
+          )}
+        </div>
+      </section>
+
       <section className="contentSection" id="sessions">
         <div className="sectionHeading">
           <div>
             <p className="contextLabel">Current season</p>
             <h2>Sessions</h2>
+            <p className="sectionDescription">
+              {percent(fillRate)} filled across {totalCapacity} active spaces.
+            </p>
           </div>
           <div className={`systemStatus${loadError ? ' systemStatusError' : ''}`} role="status">
             {loadError ? (
@@ -83,19 +293,6 @@ export default async function HomePage() {
         </div>
 
         <SessionTable sessions={sessions} />
-      </section>
-
-      <section className="operationalGrid" aria-label="Operational queues">
-        <div className="queueSection" id="campers">
-          <p className="contextLabel">Enrollment</p>
-          <h2>Registration queue</h2>
-          <p>No registrations require review.</p>
-        </div>
-        <div className="queueSection" id="health">
-          <p className="contextLabel">Restricted access</p>
-          <h2>Health forms</h2>
-          <p>No health forms require review.</p>
-        </div>
       </section>
     </>
   );

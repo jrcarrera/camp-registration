@@ -2,7 +2,12 @@ import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testconta
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { CatalogConflictError, CatalogStore, type SessionDetailRecord } from './catalog-store.js';
+import {
+  CatalogConflictError,
+  CatalogReferenceError,
+  CatalogStore,
+  type SessionDetailRecord,
+} from './catalog-store.js';
 import { createDatabaseClient, type DatabaseClient } from './client.js';
 import { runMigrations } from './migrate.js';
 import { seedCatalog } from './seed.js';
@@ -127,6 +132,8 @@ describe('catalog store', () => {
     const waitlistedCamperId = 'e702e19c-3da9-426c-8ed7-8a0908128112';
     const registrationId = '20f3a0c5-cad9-4c1d-b77b-b4751805ad83';
     const waitlistedRegistrationId = 'a60e6122-a85a-4aaf-91d4-a45f7c9574f8';
+    const adultId = '579f1da1-c23d-45c5-a395-cb27d6317ad1';
+    const contactId = '8430250b-55f2-4c91-8f6f-47fb1f0bcb2c';
     const admin = new Pool({ connectionString: migrationUrl });
 
     await admin.query(
@@ -145,8 +152,21 @@ describe('catalog store', () => {
       `INSERT INTO campers (
          id, organization_id, family_id, first_name, last_name, birth_date,
          preferred_name, gender, school_grade, cabin_preference, accessibility_needs
-       ) VALUES ($1, $2, $3, 'Sam', 'Roster', '2010-09-12', null, 'Male', '10', null, null)`,
+      ) VALUES ($1, $2, $3, 'Sam', 'Roster', '2010-09-12', null, 'Male', '10', null, null)`,
       [waitlistedCamperId, organizationId, familyId],
+    );
+    await admin.query(
+      `INSERT INTO adults (
+         id, organization_id, family_id, first_name, last_name, authorized_pickup
+       ) VALUES ($1, $2, $3, 'Avery', 'Roster', true)`,
+      [adultId, organizationId, familyId],
+    );
+    await admin.query(
+      `INSERT INTO contacts (
+         id, organization_id, family_id, first_name, last_name, phone, relationship,
+         authorized_pickup
+       ) VALUES ($1, $2, $3, 'Morgan', 'Pickup', '555-0101', 'Neighbor', true)`,
+      [contactId, organizationId, familyId],
     );
     await admin.query(
       `INSERT INTO registrations (
@@ -185,9 +205,11 @@ describe('catalog store', () => {
           camper_id: camperId,
           family_id: familyId,
           family_name: 'Roster Test Family',
+          authorized_pickup_names: expect.arrayContaining(['Avery Roster', 'Morgan Pickup']),
           gender: 'Female',
           registration_id: registrationId,
           source: 'ADMIN',
+          attendance_status: 'NOT_MARKED',
           status: 'CONFIRMED',
         }),
         expect.objectContaining({
@@ -204,6 +226,101 @@ describe('catalog store', () => {
       waitlisted_female_count: 0,
       waitlisted_male_count: 1,
     });
+
+    const checkedIn = await store.updateSessionAttendance({
+      actorId: 'integration-admin',
+      organizationId,
+      registrationId,
+      requestId: 'attendance-check-in-request',
+      sessionId,
+      update: {
+        action: 'CHECK_IN',
+        attendance_date: '2027-07-04',
+        note: 'Arrived at north gate.',
+        pickup_name: null,
+      },
+    });
+    expect(
+      checkedIn.registered_campers.find((camper) => camper.registration_id === registrationId),
+    ).toMatchObject({
+      attendance_date: '2027-07-04',
+      attendance_note: 'Arrived at north gate.',
+      attendance_status: 'CHECKED_IN',
+      checked_out_at: null,
+      pickup_name: null,
+    });
+
+    await expect(
+      store.updateSessionAttendance({
+        actorId: 'integration-admin',
+        organizationId,
+        registrationId,
+        requestId: 'attendance-bad-pickup-request',
+        sessionId,
+        update: {
+          action: 'CHECK_OUT',
+          attendance_date: '2027-07-04',
+          note: null,
+          pickup_name: 'Unlisted Person',
+        },
+      }),
+    ).rejects.toBeInstanceOf(CatalogReferenceError);
+
+    const checkedOut = await store.updateSessionAttendance({
+      actorId: 'integration-admin',
+      organizationId,
+      registrationId,
+      requestId: 'attendance-check-out-request',
+      sessionId,
+      update: {
+        action: 'CHECK_OUT',
+        attendance_date: '2027-07-04',
+        note: 'Left with neighbor.',
+        pickup_name: 'Morgan Pickup',
+      },
+    });
+    expect(
+      checkedOut.registered_campers.find((camper) => camper.registration_id === registrationId),
+    ).toMatchObject({
+      attendance_date: '2027-07-04',
+      attendance_note: 'Left with neighbor.',
+      attendance_status: 'CHECKED_OUT',
+      pickup_name: 'Morgan Pickup',
+    });
+
+    const audit = new Pool({ connectionString: migrationUrl });
+    const attendanceAudit = await audit.query<{
+      action: string;
+      details: { action: string; attendance_date: string; status: string };
+    }>(
+      `SELECT action, details
+       FROM audit_events
+       WHERE organization_id = $1
+         AND target_id = $2
+         AND action = 'attendance.updated'
+       ORDER BY occurred_at`,
+      [organizationId, registrationId],
+    );
+    await audit.end();
+
+    expect(attendanceAudit.rows).toEqual([
+      expect.objectContaining({
+        action: 'attendance.updated',
+        details: expect.objectContaining({
+          action: 'CHECK_IN',
+          attendance_date: '2027-07-04',
+          status: 'CHECKED_IN',
+        }),
+      }),
+      expect.objectContaining({
+        action: 'attendance.updated',
+        details: expect.objectContaining({
+          action: 'CHECK_OUT',
+          attendance_date: '2027-07-04',
+          status: 'CHECKED_OUT',
+        }),
+      }),
+    ]);
   });
 
   it('creates tenant-scoped programs and sessions with audit events', async () => {

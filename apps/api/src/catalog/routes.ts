@@ -7,10 +7,12 @@ import {
   ProgramUpdateSchema,
   SeasonCreateSchema,
   SeasonFixtureSchema,
+  SessionAttendanceUpdateSchema,
   SessionCreateSchema,
   SessionDetailSchema,
   SessionListResponseSchema,
   SessionParamsSchema,
+  SessionRegistrationParamsSchema,
   SessionUpdateSchema,
   type CatalogContext,
   type ProgramCreate,
@@ -20,10 +22,12 @@ import {
   type ProblemResponse,
   type SeasonCreate,
   type SeasonFixture,
+  type SessionAttendanceUpdate,
   type SessionDetail,
   type SessionCreate,
   type SessionListResponse,
   type SessionParams,
+  type SessionRegistrationParams,
   type SessionUpdate,
 } from '@camp-registration/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
@@ -58,7 +62,9 @@ function sendProblem(reply: FastifyReply, error: unknown) {
         ? 'invalid_program'
         : error.message.startsWith('Season')
           ? 'invalid_season'
-          : 'invalid_session',
+          : error.message.startsWith('Attendance')
+            ? 'invalid_attendance'
+            : 'invalid_session',
       field_errors: error.fieldErrors,
       message: error.message,
     });
@@ -77,7 +83,11 @@ function sendProblem(reply: FastifyReply, error: unknown) {
     return reply.code(409).send({ code, message: error.message });
   }
   if (error instanceof CatalogReferenceError) {
-    const code = error.message.startsWith('Season') ? 'invalid_season' : 'invalid_program';
+    const code = error.message.startsWith('Season')
+      ? 'invalid_season'
+      : error.message.startsWith('Program')
+        ? 'invalid_program'
+        : 'invalid_registration';
     return reply.code(400).send({ code, message: error.message });
   }
   if (error instanceof CatalogCapacityError) {
@@ -281,6 +291,42 @@ export function registerCatalogRoutes(app: FastifyInstance, service: CatalogServ
       }
       try {
         return await catalogService.getSession(request.params.sessionId);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Body: SessionAttendanceUpdate;
+    Params: SessionRegistrationParams;
+    Reply: SessionDetail | ProblemResponse;
+  }>(
+    '/v1/sessions/:sessionId/registrations/:registrationId/attendance',
+    {
+      schema: {
+        body: SessionAttendanceUpdateSchema,
+        description: 'Record daily attendance, check-in, check-out, or absence for a camper.',
+        params: SessionRegistrationParamsSchema,
+        response: { 200: SessionDetailSchema, ...errorResponses },
+        tags: ['attendance', 'sessions'],
+      },
+    },
+    async (request, reply) => {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        return await catalogService.updateSessionAttendance(
+          request.params.sessionId,
+          request.params.registrationId,
+          request.body,
+          request.id,
+        );
       } catch (error) {
         return sendProblem(reply, error);
       }
