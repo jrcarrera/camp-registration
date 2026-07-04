@@ -36,6 +36,7 @@ const adminNavigation: NavigationItem[] = [
 const portalNavigation: NavigationItem[] = [
   { exact: true, href: '/portal', icon: House, label: 'My Family' },
   { href: '/portal/register', icon: ClipboardPlus, label: 'Register' },
+  { href: '/portal/readiness', icon: HeartPulse, label: 'Readiness' },
 ];
 
 export function ShellSidebar() {

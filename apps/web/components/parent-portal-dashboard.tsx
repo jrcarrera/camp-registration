@@ -529,10 +529,16 @@ export function ParentPortalDashboard({
             </span>
           </div>
         </div>
-        <Link className="buttonSecondary" href="/portal/register">
-          <Plus size={17} aria-hidden="true" />
-          Add registration
-        </Link>
+        <div className="inlineActions">
+          <Link className="buttonSecondary" href="/portal/readiness">
+            <HeartPulse size={17} aria-hidden="true" />
+            Camp readiness
+          </Link>
+          <Link className="buttonSecondary" href="/portal/register">
+            <Plus size={17} aria-hidden="true" />
+            Add registration
+          </Link>
+        </div>
       </div>
 
       <PortalMessage state={state} />

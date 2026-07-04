@@ -259,6 +259,17 @@ export class FamilyService implements FamilyServiceApi {
     if (!allowed) throw new FamilyAuthorizationError('Family registration is not permitted');
   }
 
+  private async authorizeFamilyManage(familyId: string): Promise<void> {
+    if (this.hasRole(editRoles)) return;
+    this.authorize(parentRoles);
+    const allowed = await this.store.adultIdentityCanManageFamily(
+      this.organizationId,
+      familyId,
+      this.identity.subject,
+    );
+    if (!allowed) throw new FamilyAuthorizationError('Family management is not permitted');
+  }
+
   private authorizeRegistration(source: FamilyRegistrationCreate['source']): void {
     if (source === 'ADMIN') {
       this.authorize(editRoles);
@@ -395,7 +406,7 @@ export class FamilyService implements FamilyServiceApi {
     camper: CamperCreate,
     requestId: string,
   ): Promise<FamilyDetail> {
-    this.authorize(editRoles);
+    await this.authorizeFamilyManage(familyId);
     validateCamper(camper);
     return this.store.createCamper(
       this.context(requestId),
@@ -409,7 +420,7 @@ export class FamilyService implements FamilyServiceApi {
     camper: CamperUpdate,
     requestId: string,
   ): Promise<FamilyDetail> {
-    this.authorize(editRoles);
+    await this.authorizeFamilyManage(familyId);
     validateCamper(camper);
     const email = nullable(camper.email);
     return this.store.updateCamper({
@@ -438,7 +449,7 @@ export class FamilyService implements FamilyServiceApi {
     contact: ContactCreate,
     requestId: string,
   ): Promise<FamilyDetail> {
-    this.authorize(editRoles);
+    await this.authorizeFamilyManage(familyId);
     validateContact(contact);
     const email = nullable(contact.email);
     return this.store.createContact(this.context(requestId), {
@@ -464,7 +475,7 @@ export class FamilyService implements FamilyServiceApi {
     contact: ContactUpdate,
     requestId: string,
   ): Promise<FamilyDetail> {
-    this.authorize(editRoles);
+    await this.authorizeFamilyManage(familyId);
     validateContact(contact);
     const email = nullable(contact.email);
     return this.store.updateContact({

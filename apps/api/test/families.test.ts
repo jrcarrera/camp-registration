@@ -503,6 +503,47 @@ describe('family service validation', () => {
     ).resolves.toEqual(registrationResult);
     expect(store.createRegistration).toHaveBeenCalled();
   });
+
+  it('requires linked adult management permission for parent profile and contact edits', async () => {
+    const store = {
+      adultIdentityCanManageFamily: vi.fn().mockResolvedValue(false),
+      createContact: vi.fn(),
+      updateCamper: vi.fn(),
+      updateContact: vi.fn(),
+    };
+    const service = new FamilyService(store as never, parentIdentity, organizationId);
+
+    await expect(
+      service.updateCamper(familyId, camperId, camperUpdate, 'parent-camper-denied-test'),
+    ).rejects.toBeInstanceOf(FamilyAuthorizationError);
+    await expect(
+      service.createContact(familyId, contactCreate, 'parent-contact-denied-test'),
+    ).rejects.toBeInstanceOf(FamilyAuthorizationError);
+    await expect(
+      service.updateContact(familyId, contactId, contactUpdate, 'parent-contact-denied-test'),
+    ).rejects.toBeInstanceOf(FamilyAuthorizationError);
+    expect(store.updateCamper).not.toHaveBeenCalled();
+    expect(store.createContact).not.toHaveBeenCalled();
+    expect(store.updateContact).not.toHaveBeenCalled();
+
+    store.adultIdentityCanManageFamily.mockResolvedValue(true);
+    store.updateCamper.mockResolvedValue(detail);
+    store.createContact.mockResolvedValue(detail);
+    store.updateContact.mockResolvedValue(detail);
+
+    await expect(
+      service.updateCamper(familyId, camperId, camperUpdate, 'parent-camper-allowed-test'),
+    ).resolves.toEqual(detail);
+    await expect(
+      service.createContact(familyId, contactCreate, 'parent-contact-allowed-test'),
+    ).resolves.toEqual(detail);
+    await expect(
+      service.updateContact(familyId, contactId, contactUpdate, 'parent-contact-allowed-test'),
+    ).resolves.toEqual(detail);
+    expect(store.updateCamper).toHaveBeenCalled();
+    expect(store.createContact).toHaveBeenCalled();
+    expect(store.updateContact).toHaveBeenCalled();
+  });
 });
 
 const localIdentity: RequestIdentity = {

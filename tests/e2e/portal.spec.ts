@@ -40,6 +40,61 @@ test('renders parent checkout without a family selector', async ({ page }) => {
   ).toBeVisible();
 });
 
+test('lets parents complete camp readiness details', async ({ page, request }) => {
+  const familyResponse = await request.get(`/api/v1/families/${adamsFamilyId}`, {
+    headers: parentHeaders,
+  });
+  expect(familyResponse.ok()).toBeTruthy();
+  const family = (await familyResponse.json()) as {
+    campers: Array<{ first_name: string; id: string; last_name: string }>;
+  };
+  expect(family.campers.length).toBeGreaterThan(0);
+  const camper = family.campers[0]!;
+  const note = `No health concerns for readiness ${Date.now().toString(36)}`;
+
+  await page.goto('/portal/readiness');
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Camp readiness' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Readiness' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+
+  const camperCard = page.getByTestId(`camper-readiness-${camper.id}`);
+  await expect(camperCard).toBeVisible();
+  await camperCard.getByLabel('School grade').fill('5');
+  await camperCard.getByLabel('Gender').selectOption('Female');
+  await camperCard.getByLabel('Health, allergies, medication, or accessibility notes').fill(note);
+  await camperCard.getByRole('button', { name: 'Save readiness' }).click();
+
+  await expect(page.getByRole('status')).toContainText(
+    `${camper.first_name} ${camper.last_name} readiness details saved.`,
+  );
+  await expect(
+    camperCard.getByText('Health, allergy, medication, or accessibility notes reviewed'),
+  ).toBeVisible();
+});
+
+test('lets parents add emergency and pickup contacts from readiness', async ({ page }) => {
+  const suffix = Date.now().toString(36);
+  const firstName = 'Pickup';
+  const lastName = `Ready${suffix}`;
+
+  await page.goto('/portal/readiness');
+
+  const contactForm = page.getByTestId(`contact-editor-new-${adamsFamilyId}`);
+  await contactForm.getByLabel('First name').fill(firstName);
+  await contactForm.getByLabel('Last name').fill(lastName);
+  await contactForm.getByLabel('Phone').fill('555-0123');
+  await contactForm.getByLabel('Email').fill(`pickup.${suffix}@example.test`);
+  await contactForm.getByLabel('Relationship').fill('Neighbor');
+  await contactForm.getByLabel('Emergency priority').fill('2');
+  await contactForm.getByRole('button', { name: 'Add contact' }).click();
+
+  await expect(page.getByRole('status')).toContainText('Contact added.');
+  await expect(page.getByText(`${firstName} ${lastName}`)).toBeVisible();
+});
+
 test('redirects the legacy registration route into the parent portal', async ({ page }) => {
   await page.goto('/register');
 
