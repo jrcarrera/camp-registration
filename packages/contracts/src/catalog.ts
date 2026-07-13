@@ -87,6 +87,35 @@ export const AttendanceActionSchema = Type.Union([
   Type.Literal('MARK_ABSENT'),
 ]);
 
+export const WaitlistOfferStatusSchema = Type.Union([
+  Type.Literal('PENDING'),
+  Type.Literal('ACCEPTED'),
+  Type.Literal('DECLINED'),
+  Type.Literal('EXPIRED'),
+  Type.Literal('CANCELLED'),
+]);
+
+export const WaitlistOfferSchema = Type.Object(
+  {
+    id: UuidSchema,
+    family_id: UuidSchema,
+    registration_id: UuidSchema,
+    session_id: UuidSchema,
+    status: WaitlistOfferStatusSchema,
+    offered_at: UtcTimestampSchema,
+    expires_at: UtcTimestampSchema,
+    responded_at: Type.Union([UtcTimestampSchema, Type.Null()]),
+  },
+  { additionalProperties: false },
+);
+
+export const WaitlistOfferCreateSchema = Type.Object(
+  {
+    expires_in_hours: Type.Optional(Type.Integer({ minimum: 1, maximum: 168 })),
+  },
+  { additionalProperties: false, $id: 'WaitlistOfferCreate' },
+);
+
 export const RegisteredCamperSchema = Type.Object(
   {
     amount_paid_cents: Type.Integer({ minimum: 0 }),
@@ -116,6 +145,7 @@ export const RegisteredCamperSchema = Type.Object(
     pickup_name: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     price_cents: Type.Integer({ minimum: 0 }),
     registered_at: UtcTimestampSchema,
+    waitlist_offer: Type.Optional(Type.Union([WaitlistOfferSchema, Type.Null()])),
   },
   { additionalProperties: false, $id: 'RegisteredCamper' },
 );
@@ -353,6 +383,8 @@ export type RegistrationStatus = Static<typeof RegistrationStatusSchema>;
 export type RegistrationSource = Static<typeof RegistrationSourceSchema>;
 export type AttendanceAction = Static<typeof AttendanceActionSchema>;
 export type AttendanceStatus = Static<typeof AttendanceStatusSchema>;
+export type WaitlistOffer = Static<typeof WaitlistOfferSchema>;
+export type WaitlistOfferCreate = Static<typeof WaitlistOfferCreateSchema>;
 export type RegisteredCamper = Static<typeof RegisteredCamperSchema>;
 export type SessionSummary = Static<typeof SessionSummarySchema>;
 export type SessionDetail = Static<typeof SessionDetailSchema>;

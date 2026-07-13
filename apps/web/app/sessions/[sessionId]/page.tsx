@@ -6,7 +6,7 @@ import type { RegisteredCamper } from '@camp-registration/contracts';
 import { RegistrationPaymentForm } from '../../../components/registration-payment-form';
 import { SessionAttendanceControls } from '../../../components/session-attendance-controls';
 import { SessionEditor } from '../../../components/session-editor';
-import { WaitlistPromoteButton } from '../../../components/waitlist-promote-button';
+import { WaitlistOfferButton } from '../../../components/waitlist-offer-button';
 import { ApiError, getCatalog, getSession } from '../../../lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -93,7 +93,7 @@ function RegisteredCampers({
             <ClipboardCheck size={17} aria-hidden="true" />
             Check-in desk
           </Link>
-          <WaitlistPromoteButton
+          <WaitlistOfferButton
             disabled={waitlistedCount === 0 || availableCount === 0}
             sessionId={sessionId}
           />
@@ -108,6 +108,7 @@ function RegisteredCampers({
               <th>Gender</th>
               <th>Grade</th>
               <th>Status</th>
+              <th>Waitlist offer</th>
               <th>Attendance</th>
               <th>Pickup</th>
               <th>Balance</th>
@@ -119,7 +120,7 @@ function RegisteredCampers({
           <tbody>
             {campers.length === 0 ? (
               <tr>
-                <td className="emptyState" colSpan={11}>
+                <td className="emptyState" colSpan={12}>
                   <strong>No campers</strong>
                   <span>Confirmed and waitlisted campers will appear here.</span>
                 </td>
@@ -150,6 +151,22 @@ function RegisteredCampers({
                     >
                       {camper.status === 'CONFIRMED' ? 'Attending' : 'Waitlisted'}
                     </span>
+                  </td>
+                  <td data-label="Waitlist offer">
+                    {camper.waitlist_offer ? (
+                      <span>
+                        {camper.waitlist_offer.status === 'PENDING'
+                          ? `Expires ${new Date(camper.waitlist_offer.expires_at).toLocaleString(
+                              'en-US',
+                            )}`
+                          : camper.waitlist_offer.status.charAt(0) +
+                            camper.waitlist_offer.status.slice(1).toLowerCase()}
+                      </span>
+                    ) : camper.status === 'WAITLISTED' ? (
+                      <span>Waiting</span>
+                    ) : (
+                      <span>—</span>
+                    )}
                   </td>
                   <td data-label="Attendance">
                     <SessionAttendanceControls camper={camper} sessionId={sessionId} />

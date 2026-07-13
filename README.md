@@ -6,7 +6,8 @@ An open-source platform for camp registration and camp operations.
 
 The project has a local-first MVP foundation with implemented catalog, family,
 camper, admin registration, parent portal dashboard, parent checkout,
-cancellation, and waitlist promotion workflows. Authentication is still
+cancellation, and time-boxed waitlist offer workflows with parent self-service
+acceptance or decline. Authentication is still
 local-development oriented; the domain layer already enforces linked-adult
 family ownership for parent actions.
 

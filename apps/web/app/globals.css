@@ -1279,6 +1279,31 @@ tbody tr + tr td {
   font-weight: 800;
 }
 
+.waitlistOfferPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid #e3c56f;
+  border-radius: 6px;
+  background: #fff9e7;
+}
+
+.waitlistOfferPanel > div:first-child {
+  min-width: 0;
+}
+
+.waitlistOfferPanel > div:first-child span {
+  color: #6f5a22;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.waitlistOfferPanel .inlineActions {
+  flex: 0 0 auto;
+}
+
 .dangerInlineButton {
   border-color: #e4bbb4;
   color: #963527;
@@ -2558,6 +2583,20 @@ tbody tr + tr td {
 
   .portalPlanItem .buttonSecondary {
     grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .waitlistOfferPanel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .waitlistOfferPanel .inlineActions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .waitlistOfferPanel .inlineActions button {
     width: 100%;
   }
 

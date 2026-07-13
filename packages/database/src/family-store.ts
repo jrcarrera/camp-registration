@@ -6,6 +6,7 @@ export type CamperGender = 'Female' | 'Male';
 export type FamilyRegistrationStatus = 'CONFIRMED' | 'WAITLISTED' | 'CANCELLED';
 export type FamilyRegistrationSource = 'ADMIN' | 'PARENT';
 export type FamilyPaymentStatus = 'NOT_DUE' | 'DEPOSIT_DUE' | 'PARTIAL' | 'PAID';
+export type WaitlistOfferStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' | 'CANCELLED';
 export type FamilyRegistrationPaymentMethod =
   | 'OFFLINE_CASH'
   | 'OFFLINE_CHECK'
@@ -83,6 +84,18 @@ export interface CamperSessionRegistrationRecord {
   status: FamilyRegistrationStatus;
   source: FamilyRegistrationSource;
   registered_at: string;
+  waitlist_offer: WaitlistOfferRecord | null;
+}
+
+export interface WaitlistOfferRecord {
+  id: string;
+  family_id: string;
+  registration_id: string;
+  session_id: string;
+  status: WaitlistOfferStatus;
+  offered_at: string;
+  expires_at: string;
+  responded_at: string | null;
 }
 
 export interface ContactRecord {
@@ -206,6 +219,8 @@ export interface CreateRegistrationPaymentRecord {
   note: string | null;
 }
 
+export type WaitlistOfferResponseAction = 'ACCEPT' | 'DECLINE';
+
 export interface CreateParentCheckoutRecord {
   family_id: string;
   new_camper: CreateCamperRecord | null;
@@ -232,6 +247,7 @@ export class FamilyRegistrationEligibilityError extends Error {
     super(message);
   }
 }
+export class FamilyWaitlistOfferConflictError extends Error {}
 
 interface Timestamped {
   updated_at: Date | string;
@@ -240,8 +256,21 @@ interface Timestamped {
 type FamilySummaryRow = Omit<FamilySummaryRecord, 'updated_at'> & Timestamped;
 type AdultRow = Omit<AdultRecord, 'updated_at'> & Timestamped;
 type CamperRow = Omit<CamperRecord, 'registrations' | 'updated_at'> & Timestamped;
-type CamperSessionRegistrationRow = Omit<CamperSessionRegistrationRecord, 'registered_at'> &
-  Timestamped & { camper_id: string };
+type CamperSessionRegistrationRow = Omit<
+  CamperSessionRegistrationRecord,
+  'registered_at' | 'waitlist_offer'
+> &
+  Timestamped & {
+    camper_id: string;
+    offer_expires_at: Date | string | null;
+    offer_family_id: string | null;
+    offer_id: string | null;
+    offer_offered_at: Date | string | null;
+    offer_registration_id: string | null;
+    offer_responded_at: Date | string | null;
+    offer_session_id: string | null;
+    offer_status: WaitlistOfferStatus | null;
+  };
 type ContactRow = Omit<ContactRecord, 'updated_at'> & Timestamped;
 
 interface RegistrationRow {
@@ -334,6 +363,30 @@ const paymentStatusSql = `
 
 function timestamp(value: Date | string): string {
   return value instanceof Date ? value.toISOString().replace('.000Z', 'Z') : value;
+}
+
+function waitlistOfferFromRow(row: CamperSessionRegistrationRow): WaitlistOfferRecord | null {
+  if (
+    !row.offer_id ||
+    !row.offer_family_id ||
+    !row.offer_registration_id ||
+    !row.offer_session_id ||
+    !row.offer_status ||
+    !row.offer_offered_at ||
+    !row.offer_expires_at
+  ) {
+    return null;
+  }
+  return {
+    expires_at: timestamp(row.offer_expires_at),
+    family_id: row.offer_family_id,
+    id: row.offer_id,
+    offered_at: timestamp(row.offer_offered_at),
+    registration_id: row.offer_registration_id,
+    responded_at: row.offer_responded_at ? timestamp(row.offer_responded_at) : null,
+    session_id: row.offer_session_id,
+    status: row.offer_status,
+  };
 }
 
 function mapFamilySummary(row: FamilySummaryRow): FamilySummaryRecord {
@@ -1024,6 +1077,22 @@ export class FamilyStore {
   ): Promise<FamilyRegistrationResultRecord> {
     return this.withTenant(context.organizationId, async (client) => {
       await this.ensureFamilyExists(client, context.organizationId, familyId);
+      const reference = await client.query<{ session_id: string }>(
+        `SELECT session_id
+         FROM registrations
+         WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
+        [context.organizationId, familyId, registrationId],
+      );
+      const sessionId = reference.rows[0]?.session_id;
+      if (!sessionId) throw new FamilyNotFoundError('Registration not found');
+
+      await client.query(
+        `SELECT id
+         FROM sessions
+         WHERE organization_id = $1 AND id = $2
+         FOR UPDATE`,
+        [context.organizationId, sessionId],
+      );
       const current = await client.query<RegistrationRow>(
         `SELECT id, family_id, camper_id, session_id, status, source
          FROM registrations
@@ -1035,6 +1104,30 @@ export class FamilyStore {
       if (!registration) throw new FamilyNotFoundError('Registration not found');
       if (registration.status === 'CANCELLED') {
         throw new FamilyConflictError('Registration is already cancelled');
+      }
+
+      const cancelledOffers = await client.query<{ id: string }>(
+        `UPDATE waitlist_offers
+         SET status = 'CANCELLED',
+             responded_at = transaction_timestamp(),
+             response_actor_id = $4,
+             updated_at = transaction_timestamp()
+         WHERE organization_id = $1
+           AND family_id = $2
+           AND registration_id = $3
+           AND status = 'PENDING'
+         RETURNING id`,
+        [context.organizationId, familyId, registrationId, context.actorId],
+      );
+      for (const offer of cancelledOffers.rows) {
+        await this.insertAudit(
+          client,
+          context,
+          'waitlist_offer.cancelled',
+          'waitlist_offer',
+          offer.id,
+          { registration_id: registrationId, session_id: registration.session_id },
+        );
       }
 
       await client.query(
@@ -1161,9 +1254,11 @@ export class FamilyStore {
     });
   }
 
-  async promoteNextWaitlistRegistration(
+  async createNextWaitlistOffer(
     context: FamilyWriteContext,
     sessionId: string,
+    offerId: string,
+    expiresInHours: number,
   ): Promise<FamilyRegistrationResultRecord> {
     return this.withTenant(context.organizationId, async (client) => {
       const session = await client.query<{ id: string; capacity: number; status: string }>(
@@ -1180,48 +1275,76 @@ export class FamilyStore {
         });
       }
       if (['CANCELLED', 'ARCHIVED'].includes(sessionRow.status)) {
-        throw new FamilyRegistrationEligibilityError('Session is not available for promotion', {
+        throw new FamilyRegistrationEligibilityError('Session is not available for an offer', {
           session_id: 'Select an active session.',
         });
       }
 
-      const confirmed = await client.query<{ count: number }>(
-        `SELECT count(*)::integer
-         FROM registrations
-         WHERE organization_id = $1
-           AND session_id = $2
-           AND status = 'CONFIRMED'`,
+      await this.expireWaitlistOffersInTenant(client, context, sessionId);
+
+      const capacity = await client.query<{ active_holds: number; confirmed: number }>(
+        `SELECT
+           (SELECT count(*)::integer
+            FROM registrations r
+            WHERE r.organization_id = $1
+              AND r.session_id = $2
+              AND r.status = 'CONFIRMED') AS confirmed,
+           (SELECT count(*)::integer
+            FROM waitlist_offers wo
+            WHERE wo.organization_id = $1
+              AND wo.session_id = $2
+              AND wo.status = 'PENDING'
+              AND wo.expires_at > transaction_timestamp()) AS active_holds`,
         [context.organizationId, sessionId],
       );
-      if ((confirmed.rows[0]?.count ?? 0) >= sessionRow.capacity) {
-        throw new FamilyRegistrationCapacityError('Session capacity is full');
+      const counts = capacity.rows[0] ?? { active_holds: 0, confirmed: 0 };
+      if (counts.confirmed + counts.active_holds >= sessionRow.capacity) {
+        throw new FamilyRegistrationCapacityError('No unreserved session capacity is available');
       }
 
       const waitlist = await client.query<RegistrationRow>(
-        `SELECT id, family_id, camper_id, session_id, status, source
-         FROM registrations
-         WHERE organization_id = $1
-           AND session_id = $2
-           AND status = 'WAITLISTED'
-         ORDER BY registered_at, id
+        `SELECT r.id, r.family_id, r.camper_id, r.session_id, r.status, r.source
+         FROM registrations r
+         WHERE r.organization_id = $1
+           AND r.session_id = $2
+           AND r.status = 'WAITLISTED'
+           AND NOT EXISTS (
+             SELECT 1
+             FROM waitlist_offers wo
+             WHERE wo.organization_id = r.organization_id
+               AND wo.registration_id = r.id
+               AND wo.status = 'PENDING'
+           )
+         ORDER BY r.registered_at, r.id
          LIMIT 1
-         FOR UPDATE`,
+         FOR UPDATE OF r`,
         [context.organizationId, sessionId],
       );
       const next = waitlist.rows[0];
       if (!next) throw new FamilyNotFoundError('No waitlisted registration is available');
 
       await client.query(
-        `UPDATE registrations
-         SET status = 'CONFIRMED',
-             updated_at = transaction_timestamp()
-         WHERE organization_id = $1 AND id = $2`,
-        [context.organizationId, next.id],
+        `INSERT INTO waitlist_offers (
+           id, organization_id, session_id, family_id, registration_id, status,
+           expires_at, created_by
+         ) VALUES (
+           $1, $2, $3, $4, $5, 'PENDING',
+           transaction_timestamp() + make_interval(hours => $6), $7
+         )`,
+        [
+          offerId,
+          context.organizationId,
+          sessionId,
+          next.family_id,
+          next.id,
+          expiresInHours,
+          context.actorId,
+        ],
       );
-      await this.insertAudit(client, context, 'registration.promoted', 'registration', next.id, {
-        camper_id: next.camper_id,
-        session_id: next.session_id,
-        source: next.source,
+      await this.insertAudit(client, context, 'waitlist_offer.created', 'waitlist_offer', offerId, {
+        expires_in_hours: expiresInHours,
+        registration_id: next.id,
+        session_id: sessionId,
       });
 
       return {
@@ -1229,6 +1352,242 @@ export class FamilyStore {
         registration: await this.getRegistrationInTenant(client, context.organizationId, next.id),
       };
     });
+  }
+
+  async respondToWaitlistOffer(
+    context: FamilyWriteContext,
+    familyId: string,
+    registrationId: string,
+    action: WaitlistOfferResponseAction,
+  ): Promise<FamilyRegistrationResultRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      await this.ensureFamilyExists(client, context.organizationId, familyId);
+      const reference = await client.query<{ session_id: string }>(
+        `SELECT session_id
+         FROM waitlist_offers
+         WHERE organization_id = $1 AND family_id = $2 AND registration_id = $3
+         ORDER BY offered_at DESC, id DESC
+         LIMIT 1`,
+        [context.organizationId, familyId, registrationId],
+      );
+      const sessionId = reference.rows[0]?.session_id;
+      if (!sessionId) throw new FamilyNotFoundError('Waitlist offer not found');
+
+      const session = await client.query<{ capacity: number }>(
+        `SELECT capacity
+         FROM sessions
+         WHERE organization_id = $1 AND id = $2
+         FOR UPDATE`,
+        [context.organizationId, sessionId],
+      );
+      const sessionRow = session.rows[0];
+      if (!sessionRow) throw new FamilyNotFoundError('Session not found');
+
+      await this.expireWaitlistOffersInTenant(client, context, sessionId);
+
+      const current = await client.query<{
+        camper_id: string;
+        id: string;
+        offer_id: string;
+        offer_status: WaitlistOfferStatus;
+        source: FamilyRegistrationSource;
+        status: FamilyRegistrationStatus;
+      }>(
+        `SELECT
+           r.id,
+           r.camper_id,
+           r.status,
+           r.source,
+           wo.id AS offer_id,
+           wo.status AS offer_status
+         FROM waitlist_offers wo
+         JOIN registrations r
+           ON r.organization_id = wo.organization_id
+          AND r.family_id = wo.family_id
+          AND r.id = wo.registration_id
+         WHERE wo.organization_id = $1
+           AND wo.family_id = $2
+           AND wo.registration_id = $3
+         ORDER BY wo.offered_at DESC, wo.id DESC
+         LIMIT 1
+         FOR UPDATE OF wo, r`,
+        [context.organizationId, familyId, registrationId],
+      );
+      const offer = current.rows[0];
+      if (!offer) throw new FamilyNotFoundError('Waitlist offer not found');
+      if (offer.offer_status === 'EXPIRED') {
+        return {
+          family: await this.requireFamilyInTenant(client, context.organizationId, familyId),
+          registration: await this.getRegistrationInTenant(
+            client,
+            context.organizationId,
+            registrationId,
+          ),
+        };
+      }
+      if (offer.offer_status !== 'PENDING' || offer.status !== 'WAITLISTED') {
+        throw new FamilyWaitlistOfferConflictError('Waitlist offer is no longer actionable');
+      }
+
+      if (action === 'ACCEPT') {
+        const confirmed = await client.query<{ count: number }>(
+          `SELECT count(*)::integer
+           FROM registrations
+           WHERE organization_id = $1 AND session_id = $2 AND status = 'CONFIRMED'`,
+          [context.organizationId, sessionId],
+        );
+        if ((confirmed.rows[0]?.count ?? 0) >= sessionRow.capacity) {
+          throw new FamilyRegistrationCapacityError('Session capacity is full');
+        }
+        await client.query(
+          `UPDATE waitlist_offers
+           SET status = 'ACCEPTED',
+               responded_at = transaction_timestamp(),
+               response_actor_id = $4,
+               updated_at = transaction_timestamp()
+           WHERE organization_id = $1 AND family_id = $2 AND registration_id = $3
+             AND status = 'PENDING'`,
+          [context.organizationId, familyId, registrationId, context.actorId],
+        );
+        await client.query(
+          `UPDATE registrations
+           SET status = 'CONFIRMED', updated_at = transaction_timestamp()
+           WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
+          [context.organizationId, familyId, registrationId],
+        );
+        await this.insertAudit(
+          client,
+          context,
+          'waitlist_offer.accepted',
+          'waitlist_offer',
+          offer.offer_id,
+          { registration_id: registrationId, session_id: sessionId },
+        );
+        await this.insertAudit(
+          client,
+          context,
+          'registration.promoted',
+          'registration',
+          registrationId,
+          { camper_id: offer.camper_id, session_id: sessionId, source: offer.source },
+        );
+      } else {
+        await client.query(
+          `UPDATE waitlist_offers
+           SET status = 'DECLINED',
+               responded_at = transaction_timestamp(),
+               response_actor_id = $4,
+               updated_at = transaction_timestamp()
+           WHERE organization_id = $1 AND family_id = $2 AND registration_id = $3
+             AND status = 'PENDING'`,
+          [context.organizationId, familyId, registrationId, context.actorId],
+        );
+        await client.query(
+          `UPDATE registrations
+           SET status = 'CANCELLED', updated_at = transaction_timestamp()
+           WHERE organization_id = $1 AND family_id = $2 AND id = $3`,
+          [context.organizationId, familyId, registrationId],
+        );
+        await this.insertAudit(
+          client,
+          context,
+          'waitlist_offer.declined',
+          'waitlist_offer',
+          offer.offer_id,
+          { registration_id: registrationId, session_id: sessionId },
+        );
+        await this.insertAudit(
+          client,
+          context,
+          'registration.cancelled',
+          'registration',
+          registrationId,
+          {
+            camper_id: offer.camper_id,
+            previous_status: 'WAITLISTED',
+            session_id: sessionId,
+            source: offer.source,
+          },
+        );
+      }
+
+      return {
+        family: await this.requireFamilyInTenant(client, context.organizationId, familyId),
+        registration: await this.getRegistrationInTenant(
+          client,
+          context.organizationId,
+          registrationId,
+        ),
+      };
+    });
+  }
+
+  private async expireWaitlistOffersInTenant(
+    client: PoolClient,
+    context: FamilyWriteContext,
+    sessionId: string,
+  ): Promise<void> {
+    const expired = await client.query<{
+      camper_id: string;
+      family_id: string;
+      offer_id: string;
+      registration_id: string;
+      source: FamilyRegistrationSource;
+    }>(
+      `UPDATE waitlist_offers wo
+       SET status = 'EXPIRED',
+           responded_at = transaction_timestamp(),
+           response_actor_id = $3,
+           updated_at = transaction_timestamp()
+       FROM registrations r
+       WHERE wo.organization_id = $1
+         AND wo.session_id = $2
+         AND wo.status = 'PENDING'
+         AND wo.expires_at <= transaction_timestamp()
+         AND r.organization_id = wo.organization_id
+         AND r.family_id = wo.family_id
+         AND r.id = wo.registration_id
+       RETURNING
+         wo.id AS offer_id,
+         wo.family_id,
+         wo.registration_id,
+         r.camper_id,
+         r.source`,
+      [context.organizationId, sessionId, context.actorId],
+    );
+    if (expired.rows.length === 0) return;
+
+    await client.query(
+      `UPDATE registrations
+       SET status = 'CANCELLED', updated_at = transaction_timestamp()
+       WHERE organization_id = $1
+         AND id = ANY($2::uuid[])
+         AND status = 'WAITLISTED'`,
+      [context.organizationId, expired.rows.map((row) => row.registration_id)],
+    );
+    for (const row of expired.rows) {
+      await this.insertAudit(
+        client,
+        context,
+        'waitlist_offer.expired',
+        'waitlist_offer',
+        row.offer_id,
+        { registration_id: row.registration_id, session_id: sessionId },
+      );
+      await this.insertAudit(
+        client,
+        context,
+        'registration.cancelled',
+        'registration',
+        row.registration_id,
+        {
+          camper_id: row.camper_id,
+          previous_status: 'WAITLISTED',
+          session_id: sessionId,
+          source: row.source,
+        },
+      );
+    }
   }
 
   private async createRegistrationInTenant(
@@ -1299,6 +1658,8 @@ export class FamilyStore {
       });
     }
 
+    await this.expireWaitlistOffersInTenant(client, context, registration.session_id);
+
     const ageAsOfDate =
       sessionRow.age_as_of === 'SEASON_START'
         ? `${sessionRow.season_year}-01-01`
@@ -1358,7 +1719,8 @@ export class FamilyStore {
        WHERE organization_id = $1
          AND session_id = $2
          AND family_id = $3
-         AND camper_id = $4`,
+         AND camper_id = $4
+         AND status IN ('CONFIRMED', 'WAITLISTED')`,
       [
         context.organizationId,
         registration.session_id,
@@ -1370,23 +1732,43 @@ export class FamilyStore {
       throw new FamilyRegistrationDuplicateError('Camper is already registered for this session');
     }
 
-    const confirmed = await client.query<{ count: number }>(
-      `SELECT count(*)::integer
-       FROM registrations
-       WHERE organization_id = $1
-         AND session_id = $2
-         AND status = 'CONFIRMED'`,
+    const capacityUsage = await client.query<{
+      active_holds: number;
+      confirmed: number;
+      waitlisted: number;
+    }>(
+      `SELECT
+         (SELECT count(*)::integer
+          FROM registrations r
+          WHERE r.organization_id = $1
+            AND r.session_id = $2
+            AND r.status = 'CONFIRMED') AS confirmed,
+         (SELECT count(*)::integer
+          FROM waitlist_offers wo
+          WHERE wo.organization_id = $1
+            AND wo.session_id = $2
+            AND wo.status = 'PENDING'
+            AND wo.expires_at > transaction_timestamp()) AS active_holds,
+         (SELECT count(*)::integer
+          FROM registrations r
+          WHERE r.organization_id = $1
+            AND r.session_id = $2
+            AND r.status = 'WAITLISTED') AS waitlisted`,
       [context.organizationId, registration.session_id],
     );
-    const confirmedCount = confirmed.rows[0]?.count ?? 0;
+    const usage = capacityUsage.rows[0] ?? { active_holds: 0, confirmed: 0, waitlisted: 0 };
     const status: FamilyRegistrationStatus =
-      confirmedCount < sessionRow.capacity
+      usage.confirmed + usage.active_holds < sessionRow.capacity && usage.waitlisted === 0
         ? 'CONFIRMED'
         : sessionRow.waitlist_enabled
           ? 'WAITLISTED'
           : 'CANCELLED';
     if (status === 'CANCELLED') {
-      throw new FamilyRegistrationCapacityError('Session capacity is full');
+      throw new FamilyRegistrationCapacityError(
+        usage.waitlisted > 0
+          ? 'Available capacity is reserved for the existing waitlist'
+          : 'Session capacity is full',
+      );
     }
 
     try {
@@ -1597,7 +1979,19 @@ export class FamilyStore {
          s.ends_on::text,
          r.status,
          r.source,
-         r.registered_at AS updated_at
+         r.registered_at AS updated_at,
+         offer.id AS offer_id,
+         offer.family_id AS offer_family_id,
+         offer.registration_id AS offer_registration_id,
+         offer.session_id AS offer_session_id,
+         CASE
+           WHEN offer.status = 'PENDING' AND offer.expires_at <= transaction_timestamp()
+             THEN 'EXPIRED'
+           ELSE offer.status
+         END AS offer_status,
+         offer.offered_at AS offer_offered_at,
+         offer.expires_at AS offer_expires_at,
+         offer.responded_at AS offer_responded_at
        FROM registrations r
        JOIN sessions s
          ON s.organization_id = r.organization_id
@@ -1611,6 +2005,15 @@ export class FamilyStore {
          WHERE rp.organization_id = r.organization_id
            AND rp.registration_id = r.id
        ) payments ON true
+       LEFT JOIN LATERAL (
+         SELECT wo.id, wo.family_id, wo.registration_id, wo.session_id, wo.status,
+                wo.offered_at, wo.expires_at, wo.responded_at
+         FROM waitlist_offers wo
+         WHERE wo.organization_id = r.organization_id
+           AND wo.registration_id = r.id
+         ORDER BY wo.offered_at DESC, wo.id DESC
+         LIMIT 1
+       ) offer ON true
        WHERE r.organization_id = $1 AND r.id = $2`,
       [organizationId, registrationId],
     );
@@ -1634,6 +2037,7 @@ export class FamilyStore {
       source: row.source,
       starts_on: row.starts_on,
       status: row.status,
+      waitlist_offer: waitlistOfferFromRow(row),
     };
   }
 
@@ -1701,7 +2105,19 @@ export class FamilyStore {
          s.ends_on::text,
          r.status,
          r.source,
-         r.registered_at AS updated_at
+         r.registered_at AS updated_at,
+         offer.id AS offer_id,
+         offer.family_id AS offer_family_id,
+         offer.registration_id AS offer_registration_id,
+         offer.session_id AS offer_session_id,
+         CASE
+           WHEN offer.status = 'PENDING' AND offer.expires_at <= transaction_timestamp()
+             THEN 'EXPIRED'
+           ELSE offer.status
+         END AS offer_status,
+         offer.offered_at AS offer_offered_at,
+         offer.expires_at AS offer_expires_at,
+         offer.responded_at AS offer_responded_at
        FROM registrations r
        JOIN sessions s
          ON s.organization_id = r.organization_id
@@ -1715,9 +2131,25 @@ export class FamilyStore {
          WHERE rp.organization_id = r.organization_id
            AND rp.registration_id = r.id
        ) payments ON true
+       LEFT JOIN LATERAL (
+         SELECT wo.id, wo.family_id, wo.registration_id, wo.session_id, wo.status,
+                wo.offered_at, wo.expires_at, wo.responded_at
+         FROM waitlist_offers wo
+         WHERE wo.organization_id = r.organization_id
+           AND wo.registration_id = r.id
+         ORDER BY wo.offered_at DESC, wo.id DESC
+         LIMIT 1
+       ) offer ON true
        WHERE r.organization_id = $1
          AND r.family_id = $2
          AND r.status IN ('CONFIRMED', 'WAITLISTED')
+         AND NOT (
+           r.status = 'WAITLISTED'
+           AND COALESCE(
+             offer.status = 'PENDING' AND offer.expires_at <= transaction_timestamp(),
+             false
+           )
+         )
        ORDER BY
          s.starts_on,
          CASE r.status WHEN 'CONFIRMED' THEN 0 WHEN 'WAITLISTED' THEN 1 ELSE 2 END,
@@ -1747,6 +2179,7 @@ export class FamilyStore {
         source: row.source,
         starts_on: row.starts_on,
         status: row.status,
+        waitlist_offer: waitlistOfferFromRow(row),
       });
       registrations.set(row.camper_id, camperRegistrations);
     }

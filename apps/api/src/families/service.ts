@@ -16,6 +16,7 @@ import type {
   FamilySummary,
   FamilyUpdate,
   ParentCheckoutCreate,
+  WaitlistOfferCreate,
 } from '@camp-registration/contracts';
 import {
   FamilyConflictError,
@@ -24,6 +25,7 @@ import {
   FamilyRegistrationCapacityError,
   FamilyRegistrationDuplicateError,
   FamilyRegistrationEligibilityError,
+  FamilyWaitlistOfferConflictError,
   type FamilyRegistrationPaymentMethod,
   type CamperGender,
   type FamilyStore,
@@ -91,8 +93,15 @@ export interface FamilyServiceApi {
     payment: FamilyRegistrationPaymentCreate,
     requestId: string,
   ): Promise<FamilyRegistrationResult>;
-  promoteNextWaitlistRegistration(
+  createNextWaitlistOffer(
     sessionId: string,
+    offer: WaitlistOfferCreate,
+    requestId: string,
+  ): Promise<FamilyRegistrationResult>;
+  respondToWaitlistOffer(
+    familyId: string,
+    registrationId: string,
+    action: 'ACCEPT' | 'DECLINE',
     requestId: string,
   ): Promise<FamilyRegistrationResult>;
 }
@@ -595,12 +604,33 @@ export class FamilyService implements FamilyServiceApi {
     });
   }
 
-  async promoteNextWaitlistRegistration(
+  async createNextWaitlistOffer(
     sessionId: string,
+    offer: WaitlistOfferCreate,
     requestId: string,
   ): Promise<FamilyRegistrationResult> {
     this.authorize(editRoles);
-    return this.store.promoteNextWaitlistRegistration(this.context(requestId), sessionId);
+    return this.store.createNextWaitlistOffer(
+      this.context(requestId),
+      sessionId,
+      randomUUID(),
+      offer.expires_in_hours ?? 48,
+    );
+  }
+
+  async respondToWaitlistOffer(
+    familyId: string,
+    registrationId: string,
+    action: 'ACCEPT' | 'DECLINE',
+    requestId: string,
+  ): Promise<FamilyRegistrationResult> {
+    await this.authorizeParentRegistration(familyId);
+    return this.store.respondToWaitlistOffer(
+      this.context(requestId),
+      familyId,
+      registrationId,
+      action,
+    );
   }
 }
 
@@ -609,4 +639,5 @@ export {
   FamilyRegistrationCapacityError,
   FamilyRegistrationDuplicateError,
   FamilyRegistrationEligibilityError,
+  FamilyWaitlistOfferConflictError,
 };

@@ -1,34 +1,36 @@
 'use client';
 
 import type { FamilyRegistrationResult, ProblemResponse } from '@camp-registration/contracts';
-import { ArrowUpCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, MailPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-interface PromoteState {
+interface OfferState {
   message: string | null;
   saving: boolean;
   tone: 'error' | 'success';
 }
 
-const cleanState: PromoteState = {
+const cleanState: OfferState = {
   message: null,
   saving: false,
   tone: 'success',
 };
 
-async function promote(sessionId: string): Promise<FamilyRegistrationResult | ProblemResponse> {
+async function createOffer(sessionId: string): Promise<FamilyRegistrationResult | ProblemResponse> {
   try {
-    const response = await fetch(`/api/v1/sessions/${sessionId}/waitlist/promote`, {
+    const response = await fetch(`/api/v1/sessions/${sessionId}/waitlist/offers`, {
+      body: JSON.stringify({ expires_in_hours: 48 }),
+      headers: { 'Content-Type': 'application/json' },
       method: 'POST',
     });
     return (await response.json()) as FamilyRegistrationResult | ProblemResponse;
   } catch {
-    return { code: 'request_failed', message: 'The waitlist could not be promoted.' };
+    return { code: 'request_failed', message: 'The waitlist offer could not be created.' };
   }
 }
 
-export function WaitlistPromoteButton({
+export function WaitlistOfferButton({
   disabled,
   sessionId,
 }: {
@@ -36,17 +38,20 @@ export function WaitlistPromoteButton({
   sessionId: string;
 }) {
   const router = useRouter();
-  const [state, setState] = useState<PromoteState>(cleanState);
+  const [state, setState] = useState<OfferState>(cleanState);
 
   const submit = async () => {
     setState({ ...cleanState, saving: true });
-    const result = await promote(sessionId);
+    const result = await createOffer(sessionId);
     if ('code' in result) {
       setState({ message: result.message, saving: false, tone: 'error' });
       return;
     }
+    const offer = result.registration.waitlist_offer;
     setState({
-      message: `${result.registration.session_name} waitlist promoted.`,
+      message: offer
+        ? `Offer reserved until ${new Date(offer.expires_at).toLocaleString('en-US')}.`
+        : 'Waitlist offer created.',
       saving: false,
       tone: 'success',
     });
@@ -61,8 +66,8 @@ export function WaitlistPromoteButton({
         disabled={disabled || state.saving}
         onClick={() => void submit()}
       >
-        <ArrowUpCircle size={17} aria-hidden="true" />
-        {state.saving ? 'Promoting...' : 'Promote waitlist'}
+        <MailPlus size={17} aria-hidden="true" />
+        {state.saving ? 'Creating offer...' : 'Offer next · 48 hours'}
       </button>
       {state.message && (
         <div

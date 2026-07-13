@@ -26,7 +26,8 @@ Implemented in this slice:
 - Audit events for family-domain writes
 - Parent-owned family filtering and parent registration authorization through
   linked adult `identity_subject`
-- Parent-style checkout, registration cancellation, and next waitlist promotion
+- Parent-style checkout, registration cancellation, and time-boxed waitlist
+  offers with self-service acceptance or decline
 - Web UI for listing families, creating families, and editing nested records
 - Route and database tests for family behavior
 - OpenAPI and generated TypeScript API types
@@ -54,6 +55,6 @@ Implemented in this slice:
   identity-management workflows
 - Family merge, split, transfer, archive, and restore workflows
 - Health forms, medications, allergies, and medical documents
-- Payments, capacity holds, sibling atomic checkout groups, and waitlist
-  offer/expiration workflows
+- Payments, sibling atomic checkout groups, scheduled offer expiration,
+  automatic waitlist advancement, and outbound offer notifications
 - Restricted pickup rules and custody-sensitive workflows

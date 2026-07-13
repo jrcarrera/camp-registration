@@ -460,9 +460,11 @@ flowchart TD
 
 Current implementation notes:
 
-- `active_hold_count` is always `0` today because holds are not implemented.
-- Confirmed registrations consume capacity. Waitlisted registrations do not.
-- Existing registrations block shrinking capacity below confirmed count.
+- `active_hold_count` counts unexpired `PENDING` waitlist offers.
+- Confirmed registrations and active waitlist offers consume capacity.
+  Waitlisted registrations without an active offer do not.
+- Existing registrations and active offers block shrinking capacity below the
+  reserved total.
 - Moving a session to another season is blocked once registrations or active
   holds exist.
 
@@ -551,8 +553,9 @@ flowchart TD
     age{"Age eligible?"}
     grade{"Grade eligible?"}
     duplicate{"Already registered for session?"}
-    count["Count CONFIRMED registrations"]
-    capacity{"Confirmed count < capacity?"}
+    count["Count CONFIRMED registrations, active offers, and existing waitlist"]
+    capacity{"Confirmed + active offers < capacity?"}
+    queue{"Existing waitlist?"}
     waitlist{"Waitlist enabled?"}
     confirmed["Insert registration CONFIRMED"]
     waitlisted["Insert registration WAITLISTED"]
@@ -567,7 +570,9 @@ flowchart TD
     age -->|"no"| problem
     grade -->|"no"| problem
     duplicate -->|"yes"| problem
-    capacity -->|"yes"| confirmed --> audit --> familyDetail
+    capacity -->|"yes"| queue
+    queue -->|"no"| confirmed --> audit --> familyDetail
+    queue -->|"yes"| waitlist
     capacity -->|"no"| waitlist
     waitlist -->|"yes"| waitlisted --> audit --> familyDetail
     waitlist -->|"no"| full
@@ -623,7 +628,10 @@ Parent-source behavior:
 - Camper must belong to the selected family.
 - Camper age and school grade must match the session rules.
 - Duplicate registrations are rejected.
-- If capacity is available, the registration is `CONFIRMED`.
+- If unreserved capacity is available, the registration is `CONFIRMED`.
+- If an existing waitlist remains after stale offers are expired, a new
+  registration joins the waitlist even when a seat is open. This preserves
+  queue order while staff offers the seat to the next family.
 - If capacity is full and waitlist is enabled, the registration is `WAITLISTED`.
 - If capacity is full and waitlist is disabled, the API returns
   `capacity_full`.
@@ -648,13 +656,13 @@ sequenceDiagram
     Store->>DB: Read camper and compute age as of session or season start
     Store->>DB: Normalize grade and compare to program grade bounds
     Store->>DB: Check duplicate registration
-    Store->>DB: Count CONFIRMED registrations for session
-    alt confirmed count below capacity
+    Store->>DB: Expire stale offers and count CONFIRMED registrations plus active offers
+    alt confirmed and active-offer count below capacity and no existing waitlist
         Store->>DB: INSERT registration status CONFIRMED
         Store->>DB: INSERT audit_events registration.created
         Store->>DB: Read updated family with camper registrations
         Store->>DB: COMMIT
-    else capacity full and waitlist enabled
+    else capacity reserved or an existing queue has priority, and waitlist enabled
         Store->>DB: INSERT registration status WAITLISTED
         Store->>DB: INSERT audit_events registration.created
         Store->>DB: Read updated family with camper registrations
@@ -672,14 +680,33 @@ Why the session row lock matters:
 - This serializes capacity decisions for that session.
 - The application does not trust browser-displayed counts.
 
+### Time-boxed waitlist offers
+
+- Staff creates an offer for the first eligible waitlisted registration ordered
+  by `registered_at, id`.
+- New registrations cannot take an open seat ahead of an existing waitlist.
+- The offer defaults to 48 hours and holds one capacity slot while its status is
+  `PENDING` and `expires_at` is still in the future.
+- A linked parent can accept or decline the offer from the parent portal.
+- Acceptance atomically changes the offer to `ACCEPTED` and the registration to
+  `CONFIRMED` while the session row is locked.
+- Decline changes the offer to `DECLINED` and the registration to `CANCELLED`.
+- Expiration changes the offer to `EXPIRED`, cancels the waitlisted
+  registration, and releases its capacity hold. Expired offers are excluded
+  from capacity immediately even before the cleanup write runs.
+- Staff creation, parent response, direct registration, and cancellation all
+  serialize on the session row so that capacity cannot be double-allocated.
+
 What is not implemented yet:
 
-- There is no `holds` table.
+- There is no independent checkout/cart hold table; `PENDING` waitlist offers
+  are the only capacity holds.
 - There is no payment step.
 - There is no multi-camper atomic sibling checkout.
-- Waitlist promotion is currently a staff/admin action that promotes the next
-  waitlisted registration by `registered_at, id`; there are no waitlist offers,
-  expiration notices, or payment-before-promotion steps yet.
+- There is no scheduled expiration worker, automatic offer advancement, or
+  outbound offer email/SMS delivery yet. Expiration semantics are enforced by
+  transaction time and stale offers are persisted as expired on the next
+  relevant write.
 - Registration cancellation is implemented as a status change to `CANCELLED`;
   refund rules and cancellation fees are not implemented yet.
 
@@ -813,8 +840,8 @@ Seed data:
 | Direct admin registration                 | Implemented                                              |
 | Parent-style direct registration          | Implemented as local workflow                            |
 | Waitlist insertion when full              | Implemented                                              |
-| Waitlist promotion                        | Not implemented                                          |
-| Capacity holds                            | Not implemented                                          |
+| Time-boxed waitlist offers                | Implemented with staff offer and parent accept/decline   |
+| Capacity holds                            | Implemented for unexpired pending waitlist offers        |
 | Payments and Stripe webhooks              | Not implemented                                          |
 | Health forms and medical data             | Not implemented                                          |
 | Email delivery                            | Not implemented                                          |

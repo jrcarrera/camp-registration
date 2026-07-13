@@ -454,7 +454,9 @@ export async function seedHighSchoolCampOneRegistrations(
         `INSERT INTO registrations (
            id, organization_id, session_id, family_id, camper_id, status, registered_at
          ) VALUES ($1, $2, $3, $4, $5, 'CONFIRMED', $6)
-         ON CONFLICT (organization_id, session_id, camper_id) DO NOTHING`,
+         ON CONFLICT (organization_id, session_id, camper_id)
+           WHERE status IN ('CONFIRMED', 'WAITLISTED')
+         DO NOTHING`,
         [
           deterministicUuid(`registration:${highSchoolCampOneSessionId}:${camper.camper_id}`),
           fixture.organization_id,
@@ -578,7 +580,9 @@ export async function seedHighSchoolWinterCampOneRegistrations(
         `INSERT INTO registrations (
            id, organization_id, session_id, family_id, camper_id, status, registered_at
          ) VALUES ($1, $2, $3, $4, $5, 'CONFIRMED', $6)
-         ON CONFLICT (organization_id, session_id, camper_id) DO NOTHING`,
+         ON CONFLICT (organization_id, session_id, camper_id)
+           WHERE status IN ('CONFIRMED', 'WAITLISTED')
+         DO NOTHING`,
         [
           deterministicUuid(`registration:${highSchoolWinterCampOneSessionId}:${camper.camper_id}`),
           fixture.organization_id,
@@ -595,7 +599,9 @@ export async function seedHighSchoolWinterCampOneRegistrations(
         `INSERT INTO registrations (
            id, organization_id, session_id, family_id, camper_id, status, registered_at
          ) VALUES ($1, $2, $3, $4, $5, 'WAITLISTED', $6)
-         ON CONFLICT (organization_id, session_id, camper_id) DO NOTHING`,
+         ON CONFLICT (organization_id, session_id, camper_id)
+           WHERE status IN ('CONFIRMED', 'WAITLISTED')
+         DO NOTHING`,
         [
           deterministicUuid(`registration:${highSchoolWinterCampOneSessionId}:${camper.camper_id}`),
           fixture.organization_id,

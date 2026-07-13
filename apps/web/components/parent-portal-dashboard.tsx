@@ -174,6 +174,23 @@ async function cancelRegistration(
   }
 }
 
+async function respondToWaitlistOffer(
+  familyId: string,
+  registrationId: string,
+  action: 'accept' | 'decline',
+  requestHeaders: Record<string, string>,
+): Promise<FamilyRegistrationResult | ProblemResponse> {
+  try {
+    const response = await fetch(
+      `/api/v1/families/${familyId}/registrations/${registrationId}/waitlist-offer/${action}`,
+      { headers: requestHeaders, method: 'POST' },
+    );
+    return (await response.json()) as FamilyRegistrationResult | ProblemResponse;
+  } catch {
+    return { code: 'request_failed', message: 'The waitlist offer could not be updated.' };
+  }
+}
+
 function PortalMessage({ state }: { state: PortalState }) {
   if (!state.message) return null;
   return (
@@ -216,10 +233,12 @@ function SummaryTile({
 function RegistrationPlan({
   items,
   onCancel,
+  onOfferAction,
   savingRegistrationId,
 }: {
   items: RegistrationItem[];
   onCancel: (item: RegistrationItem) => void;
+  onOfferAction: (item: RegistrationItem, action: 'accept' | 'decline') => void;
   savingRegistrationId: string | null;
 }) {
   return (
@@ -272,17 +291,52 @@ function RegistrationPlan({
                     </span>
                     <span>Added {formatTimestamp(registration.registered_at)}</span>
                   </div>
+                  {registration.waitlist_offer?.status === 'PENDING' && (
+                    <div className="waitlistOfferPanel">
+                      <div>
+                        <strong>A camp seat is ready for you</strong>
+                        <span>
+                          Accept by{' '}
+                          {new Date(registration.waitlist_offer.expires_at).toLocaleString('en-US')}
+                          . If the offer expires or is declined, this waitlist registration is
+                          released.
+                        </span>
+                      </div>
+                      <div className="inlineActions">
+                        <button
+                          className="buttonPrimary"
+                          type="button"
+                          disabled={savingRegistrationId !== null}
+                          onClick={() => onOfferAction(item, 'accept')}
+                        >
+                          <CheckCircle2 size={17} aria-hidden="true" />
+                          {saving ? 'Saving...' : 'Accept seat'}
+                        </button>
+                        <button
+                          className="buttonSecondary dangerInlineButton"
+                          type="button"
+                          disabled={savingRegistrationId !== null}
+                          onClick={() => onOfferAction(item, 'decline')}
+                        >
+                          <XCircle size={17} aria-hidden="true" />
+                          Decline
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <button
-                  className="buttonSecondary dangerInlineButton"
-                  type="button"
-                  disabled={savingRegistrationId !== null}
-                  onClick={() => onCancel(item)}
-                  title={`Cancel ${registration.session_name}`}
-                >
-                  <XCircle size={17} aria-hidden="true" />
-                  {saving ? 'Cancelling...' : 'Cancel'}
-                </button>
+                {registration.waitlist_offer?.status !== 'PENDING' && (
+                  <button
+                    className="buttonSecondary dangerInlineButton"
+                    type="button"
+                    disabled={savingRegistrationId !== null}
+                    onClick={() => onCancel(item)}
+                    title={`Cancel ${registration.session_name}`}
+                  >
+                    <XCircle size={17} aria-hidden="true" />
+                    {saving ? 'Cancelling...' : 'Cancel'}
+                  </button>
+                )}
               </article>
             );
           })}
@@ -518,6 +572,49 @@ export function ParentPortalDashboard({
     });
   };
 
+  const handleOfferAction = async (item: RegistrationItem, action: 'accept' | 'decline') => {
+    const { camper, family, registration } = item;
+    if (
+      action === 'decline' &&
+      !window.confirm(
+        `Decline the ${registration.session_name} offer for ${fullName(camper)}? This removes the waitlist registration.`,
+      )
+    ) {
+      return;
+    }
+
+    setState({
+      message: null,
+      savingRegistrationId: registration.registration_id,
+      tone: 'success',
+    });
+    const result = await respondToWaitlistOffer(
+      family.id,
+      registration.registration_id,
+      action,
+      requestHeaders,
+    );
+    if ('field_errors' in result || 'code' in result) {
+      setState(problemMessage(result));
+      return;
+    }
+
+    setFamilies((current) =>
+      current.map((candidate) => (candidate.id === result.family.id ? result.family : candidate)),
+    );
+    const outcome = result.registration.waitlist_offer?.status;
+    setState({
+      message:
+        outcome === 'ACCEPTED'
+          ? `${registration.session_name} is confirmed for ${fullName(camper)}.`
+          : outcome === 'EXPIRED'
+            ? `The ${registration.session_name} offer expired and the waitlist spot was released.`
+            : `The ${registration.session_name} offer was declined.`,
+      savingRegistrationId: null,
+      tone: outcome === 'EXPIRED' ? 'error' : 'success',
+    });
+  };
+
   return (
     <>
       <div className="portalSummaryGrid" aria-label="Family registration summary">
@@ -564,6 +661,7 @@ export function ParentPortalDashboard({
       <RegistrationPlan
         items={items}
         onCancel={handleCancel}
+        onOfferAction={handleOfferAction}
         savingRegistrationId={state.savingRegistrationId}
       />
 

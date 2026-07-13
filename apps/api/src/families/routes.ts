@@ -20,6 +20,7 @@ import {
   ParentCheckoutCreateSchema,
   ProblemResponseSchema,
   SessionParamsSchema,
+  WaitlistOfferCreateSchema,
   type AdultCreate,
   type AdultParams,
   type AdultUpdate,
@@ -41,6 +42,7 @@ import {
   type ParentCheckoutCreate,
   type ProblemResponse,
   type SessionParams,
+  type WaitlistOfferCreate,
 } from '@camp-registration/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
@@ -53,6 +55,7 @@ import {
   FamilyRegistrationDuplicateError,
   FamilyRegistrationEligibilityError,
   FamilyValidationError,
+  FamilyWaitlistOfferConflictError,
   type FamilyServiceApi,
 } from './service.js';
 
@@ -84,6 +87,9 @@ function sendProblem(reply: FastifyReply, error: unknown) {
   }
   if (error instanceof FamilyConflictError) {
     return reply.code(409).send({ code: 'version_conflict', message: error.message });
+  }
+  if (error instanceof FamilyWaitlistOfferConflictError) {
+    return reply.code(409).send({ code: 'waitlist_offer_conflict', message: error.message });
   }
   if (error instanceof FamilyDuplicateError) {
     return reply.code(409).send({ code: 'duplicate_family_record', message: error.message });
@@ -460,22 +466,81 @@ export function registerFamilyRoutes(app: FastifyInstance, service: FamilyServic
     },
   );
 
-  app.post<{ Params: SessionParams; Reply: FamilyRegistrationResult | ProblemResponse }>(
-    '/v1/sessions/:sessionId/waitlist/promote',
+  app.post<{
+    Body: WaitlistOfferCreate;
+    Params: SessionParams;
+    Reply: FamilyRegistrationResult | ProblemResponse;
+  }>(
+    '/v1/sessions/:sessionId/waitlist/offers',
     {
       schema: {
-        description: 'Promote the next waitlisted registration for a session.',
+        body: WaitlistOfferCreateSchema,
+        description: 'Offer available capacity to the next waitlisted registration.',
         params: SessionParamsSchema,
-        response: { 200: FamilyRegistrationResultSchema, ...errorResponses },
-        tags: ['registrations', 'sessions'],
+        response: { 201: FamilyRegistrationResultSchema, ...errorResponses },
+        tags: ['registrations', 'sessions', 'waitlist-offers'],
       },
     },
     async (request, reply) => {
       const familyService = resolveFamilyService(service, request);
       if (!familyService) return unavailable(reply);
       try {
-        return await familyService.promoteNextWaitlistRegistration(
+        const result = await familyService.createNextWaitlistOffer(
           request.params.sessionId,
+          request.body,
+          request.id,
+        );
+        return reply.code(201).send(result);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{ Params: FamilyRegistrationParams; Reply: FamilyRegistrationResult | ProblemResponse }>(
+    '/v1/families/:familyId/registrations/:registrationId/waitlist-offer/accept',
+    {
+      schema: {
+        description: 'Accept an active waitlist offer for a family registration.',
+        params: FamilyRegistrationParamsSchema,
+        response: { 200: FamilyRegistrationResultSchema, ...errorResponses },
+        tags: ['families', 'registrations', 'waitlist-offers'],
+      },
+    },
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
+      try {
+        return await familyService.respondToWaitlistOffer(
+          request.params.familyId,
+          request.params.registrationId,
+          'ACCEPT',
+          request.id,
+        );
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{ Params: FamilyRegistrationParams; Reply: FamilyRegistrationResult | ProblemResponse }>(
+    '/v1/families/:familyId/registrations/:registrationId/waitlist-offer/decline',
+    {
+      schema: {
+        description: 'Decline an active waitlist offer and release the waitlist registration.',
+        params: FamilyRegistrationParamsSchema,
+        response: { 200: FamilyRegistrationResultSchema, ...errorResponses },
+        tags: ['families', 'registrations', 'waitlist-offers'],
+      },
+    },
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
+      try {
+        return await familyService.respondToWaitlistOffer(
+          request.params.familyId,
+          request.params.registrationId,
+          'DECLINE',
           request.id,
         );
       } catch (error) {

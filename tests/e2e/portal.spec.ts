@@ -41,6 +41,47 @@ async function createPortalTestSession(
   return { id: session.id, name: session.name };
 }
 
+async function createCapacityOneSession(
+  request: APIRequestContext,
+  suffix: string,
+): Promise<{ id: string; name: string }> {
+  const programResponse = await request.post('/api/v1/programs', {
+    data: {
+      code: `E2E-WAIT-${suffix}`.toUpperCase(),
+      default_age_as_of: 'SESSION_START',
+      default_capacity: 1,
+      default_deposit_cents: 5000,
+      default_maximum_age: 12,
+      default_maximum_grade: 5,
+      default_minimum_age: 6,
+      default_minimum_grade: 1,
+      default_price_cents: 25000,
+      default_waitlist_enabled: true,
+      delivery_mode: 'DAY',
+      description: 'Capacity-one waitlist offer browser test.',
+      name: `E2E Waitlist Program ${suffix}`,
+    },
+  });
+  expect(programResponse.ok(), await programResponse.text()).toBeTruthy();
+  const program = (await programResponse.json()) as { id: string };
+  const response = await request.post('/api/v1/sessions', {
+    data: {
+      code: `E2E-WAIT-SESSION-${suffix}`.toUpperCase(),
+      ends_on: '2027-06-26',
+      name: `E2E Waitlist Session ${suffix}`,
+      program_id: program.id,
+      registration_closes_at: '2027-06-17T05:00:00Z',
+      registration_opens_at: '2026-01-15T15:00:00Z',
+      season_id: portalTestSeasonId,
+      starts_on: '2027-06-20',
+      status: 'PUBLISHED',
+    },
+  });
+  expect(response.ok(), await response.text()).toBeTruthy();
+  const session = (await response.json()) as { id: string; name: string };
+  return session;
+}
+
 test.describe.configure({ mode: 'serial' });
 
 test.beforeEach(async ({ request }) => {
@@ -353,4 +394,70 @@ test('lets parents cancel a registration from the camp plan', async ({ page, req
     `${session.name} registration cancelled for ${camperName}.`,
   );
   await expect(planItem).toBeHidden();
+});
+
+test('lets staff offer an open seat and the parent accept it', async ({ page, request }) => {
+  const suffix = uniqueSuffix();
+  const session = await createCapacityOneSession(request, suffix);
+  const waitlistedName = `Offer Camper${suffix}`;
+  const firstCheckout = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
+    data: {
+      new_camper: {
+        birth_date: '2018-02-01',
+        first_name: 'Seat',
+        gender: 'Female',
+        last_name: `Holder${suffix}`,
+        school_grade: '3',
+      },
+      session_id: session.id,
+    },
+    headers: parentHeaders,
+  });
+  expect(firstCheckout.ok(), await firstCheckout.text()).toBeTruthy();
+  const firstResult = (await firstCheckout.json()) as {
+    registration: { registration_id: string; status: string };
+  };
+  expect(firstResult.registration.status).toBe('CONFIRMED');
+
+  const secondCheckout = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
+    data: {
+      new_camper: {
+        birth_date: '2018-03-01',
+        first_name: 'Offer',
+        gender: 'Male',
+        last_name: `Camper${suffix}`,
+        school_grade: '3',
+      },
+      session_id: session.id,
+    },
+    headers: parentHeaders,
+  });
+  expect(secondCheckout.ok(), await secondCheckout.text()).toBeTruthy();
+  const secondResult = (await secondCheckout.json()) as {
+    registration: { registration_id: string; status: string };
+  };
+  expect(secondResult.registration.status).toBe('WAITLISTED');
+
+  const cancellation = await request.post(
+    `/api/v1/families/${adamsFamilyId}/registrations/${firstResult.registration.registration_id}/cancel`,
+    { headers: parentHeaders },
+  );
+  expect(cancellation.ok(), await cancellation.text()).toBeTruthy();
+
+  await page.goto(`/sessions/${session.id}`);
+  const waitlistedRow = page.locator('tr').filter({ hasText: waitlistedName });
+  await expect(waitlistedRow).toContainText('Waiting');
+  await page.getByRole('button', { name: 'Offer next · 48 hours' }).click();
+  await expect(page.getByRole('status')).toContainText('Offer reserved until');
+  await expect(waitlistedRow).toContainText('Expires');
+
+  await page.goto('/portal');
+  const planItem = page.getByLabel(`${session.name} for ${waitlistedName}`);
+  await expect(planItem).toContainText('A camp seat is ready for you');
+  await planItem.getByRole('button', { name: 'Accept seat' }).click();
+
+  await expect(page.getByRole('status')).toContainText(
+    `${session.name} is confirmed for ${waitlistedName}.`,
+  );
+  await expect(planItem).toContainText('Confirmed');
 });

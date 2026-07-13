@@ -1,6 +1,6 @@
 import { Type, type Static } from '@sinclair/typebox';
 
-import { LocalDateSchema, UtcTimestampSchema, UuidSchema } from './catalog.js';
+import { LocalDateSchema, UtcTimestampSchema, UuidSchema, WaitlistOfferSchema } from './catalog.js';
 
 const EmailSchema = Type.String({
   maxLength: 254,
@@ -48,6 +48,7 @@ export const CamperSessionRegistrationSchema = Type.Object(
     status: RegistrationStatusSchema,
     source: RegistrationSourceSchema,
     registered_at: UtcTimestampSchema,
+    waitlist_offer: Type.Optional(Type.Union([WaitlistOfferSchema, Type.Null()])),
   },
   { additionalProperties: false, $id: 'CamperSessionRegistration' },
 );
@@ -71,6 +72,7 @@ const FamilyRegistrationResultRegistrationSchema = Type.Object(
     status: RegistrationStatusSchema,
     source: RegistrationSourceSchema,
     registered_at: UtcTimestampSchema,
+    waitlist_offer: Type.Optional(Type.Union([WaitlistOfferSchema, Type.Null()])),
   },
   { additionalProperties: false },
 );

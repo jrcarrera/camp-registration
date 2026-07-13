@@ -11,6 +11,23 @@ export type CatalogRegistrationSource = 'ADMIN' | 'PARENT';
 export type CatalogPaymentStatus = 'NOT_DUE' | 'DEPOSIT_DUE' | 'PARTIAL' | 'PAID';
 export type CatalogAttendanceStatus = 'NOT_MARKED' | 'CHECKED_IN' | 'CHECKED_OUT' | 'ABSENT';
 export type CatalogAttendanceAction = 'CHECK_IN' | 'CHECK_OUT' | 'MARK_ABSENT';
+export type CatalogWaitlistOfferStatus =
+  | 'PENDING'
+  | 'ACCEPTED'
+  | 'DECLINED'
+  | 'EXPIRED'
+  | 'CANCELLED';
+
+export interface CatalogWaitlistOfferRecord {
+  id: string;
+  family_id: string;
+  registration_id: string;
+  session_id: string;
+  status: CatalogWaitlistOfferStatus;
+  offered_at: string;
+  expires_at: string;
+  responded_at: string | null;
+}
 
 export interface CatalogContextRecord {
   organization: { id: string; slug: string; name: string; timezone: string };
@@ -102,6 +119,7 @@ export interface RegisteredCamperRecord {
   pickup_name: string | null;
   price_cents: number;
   registered_at: string;
+  waitlist_offer: CatalogWaitlistOfferRecord | null;
 }
 
 export interface UpdateSessionRecord {
@@ -256,12 +274,20 @@ interface SessionRow {
 
 type RegisteredCamperRow = Omit<
   RegisteredCamperRecord,
-  'attendance_date' | 'checked_in_at' | 'checked_out_at' | 'registered_at'
+  'attendance_date' | 'checked_in_at' | 'checked_out_at' | 'registered_at' | 'waitlist_offer'
 > & {
   attendance_date: string | null;
   checked_in_at: Date | string | null;
   checked_out_at: Date | string | null;
   registered_at: Date | string;
+  offer_expires_at: Date | string | null;
+  offer_family_id: string | null;
+  offer_id: string | null;
+  offer_offered_at: Date | string | null;
+  offer_registration_id: string | null;
+  offer_responded_at: Date | string | null;
+  offer_session_id: string | null;
+  offer_status: CatalogWaitlistOfferStatus | null;
 };
 
 const sessionSelect = `
@@ -296,8 +322,13 @@ const sessionSelect = `
     COALESCE(registration_counts.waitlisted_count, 0)::integer AS waitlisted_count,
     COALESCE(registration_counts.waitlisted_female_count, 0)::integer AS waitlisted_female_count,
     COALESCE(registration_counts.waitlisted_male_count, 0)::integer AS waitlisted_male_count,
-    0::integer AS active_hold_count,
-    GREATEST(s.capacity - COALESCE(registration_counts.registered_count, 0), 0)::integer
+    COALESCE(active_offers.active_hold_count, 0)::integer AS active_hold_count,
+    GREATEST(
+      s.capacity
+        - COALESCE(registration_counts.registered_count, 0)
+        - COALESCE(active_offers.active_hold_count, 0),
+      0
+    )::integer
       AS available_count,
     o.timezone AS organization_timezone
   FROM sessions s
@@ -312,10 +343,39 @@ const sessionSelect = `
         AS registered_female_count,
       count(*) FILTER (WHERE r.status = 'CONFIRMED' AND c.gender = 'Male')::integer
         AS registered_male_count,
-      count(*) FILTER (WHERE r.status = 'WAITLISTED')::integer AS waitlisted_count,
-      count(*) FILTER (WHERE r.status = 'WAITLISTED' AND c.gender = 'Female')::integer
+      count(*) FILTER (
+        WHERE r.status = 'WAITLISTED'
+          AND NOT EXISTS (
+            SELECT 1 FROM waitlist_offers expired_offer
+            WHERE expired_offer.organization_id = r.organization_id
+              AND expired_offer.registration_id = r.id
+              AND expired_offer.status = 'PENDING'
+              AND expired_offer.expires_at <= transaction_timestamp()
+          )
+      )::integer AS waitlisted_count,
+      count(*) FILTER (
+        WHERE r.status = 'WAITLISTED'
+          AND c.gender = 'Female'
+          AND NOT EXISTS (
+            SELECT 1 FROM waitlist_offers expired_offer
+            WHERE expired_offer.organization_id = r.organization_id
+              AND expired_offer.registration_id = r.id
+              AND expired_offer.status = 'PENDING'
+              AND expired_offer.expires_at <= transaction_timestamp()
+          )
+      )::integer
         AS waitlisted_female_count,
-      count(*) FILTER (WHERE r.status = 'WAITLISTED' AND c.gender = 'Male')::integer
+      count(*) FILTER (
+        WHERE r.status = 'WAITLISTED'
+          AND c.gender = 'Male'
+          AND NOT EXISTS (
+            SELECT 1 FROM waitlist_offers expired_offer
+            WHERE expired_offer.organization_id = r.organization_id
+              AND expired_offer.registration_id = r.id
+              AND expired_offer.status = 'PENDING'
+              AND expired_offer.expires_at <= transaction_timestamp()
+          )
+      )::integer
         AS waitlisted_male_count
     FROM registrations r
     LEFT JOIN campers c
@@ -325,6 +385,14 @@ const sessionSelect = `
     WHERE r.organization_id = s.organization_id
       AND r.session_id = s.id
   ) registration_counts ON true
+  LEFT JOIN LATERAL (
+    SELECT count(*)::integer AS active_hold_count
+    FROM waitlist_offers wo
+    WHERE wo.organization_id = s.organization_id
+      AND wo.session_id = s.id
+      AND wo.status = 'PENDING'
+      AND wo.expires_at > transaction_timestamp()
+  ) active_offers ON true
 `;
 
 function timestamp(value: Date | string): string {
@@ -380,6 +448,25 @@ function mapRegisteredCamper(row: RegisteredCamperRow): RegisteredCamperRecord {
     checked_in_at: row.checked_in_at ? timestamp(row.checked_in_at) : null,
     checked_out_at: row.checked_out_at ? timestamp(row.checked_out_at) : null,
     registered_at: timestamp(row.registered_at),
+    waitlist_offer:
+      row.offer_id &&
+      row.offer_family_id &&
+      row.offer_registration_id &&
+      row.offer_session_id &&
+      row.offer_status &&
+      row.offer_offered_at &&
+      row.offer_expires_at
+        ? {
+            expires_at: timestamp(row.offer_expires_at),
+            family_id: row.offer_family_id,
+            id: row.offer_id,
+            offered_at: timestamp(row.offer_offered_at),
+            registration_id: row.offer_registration_id,
+            responded_at: row.offer_responded_at ? timestamp(row.offer_responded_at) : null,
+            session_id: row.offer_session_id,
+            status: row.offer_status,
+          }
+        : null,
   };
 }
 
@@ -1202,7 +1289,19 @@ export class CatalogStore {
          END AS payment_status,
          attendance.pickup_name,
          r.price_cents,
-         r.registered_at
+         r.registered_at,
+         offer.id AS offer_id,
+         offer.family_id AS offer_family_id,
+         offer.registration_id AS offer_registration_id,
+         offer.session_id AS offer_session_id,
+         CASE
+           WHEN offer.status = 'PENDING' AND offer.expires_at <= transaction_timestamp()
+             THEN 'EXPIRED'
+           ELSE offer.status
+         END AS offer_status,
+         offer.offered_at AS offer_offered_at,
+         offer.expires_at AS offer_expires_at,
+         offer.responded_at AS offer_responded_at
        FROM registrations r
        JOIN campers c
          ON c.organization_id = r.organization_id
@@ -1219,6 +1318,15 @@ export class CatalogStore {
          WHERE rp.organization_id = r.organization_id
            AND rp.registration_id = r.id
        ) payments ON true
+       LEFT JOIN LATERAL (
+         SELECT wo.id, wo.family_id, wo.registration_id, wo.session_id, wo.status,
+                wo.offered_at, wo.expires_at, wo.responded_at
+         FROM waitlist_offers wo
+         WHERE wo.organization_id = r.organization_id
+           AND wo.registration_id = r.id
+         ORDER BY wo.offered_at DESC, wo.id DESC
+         LIMIT 1
+       ) offer ON true
        LEFT JOIN LATERAL (
          SELECT
            ra.attendance_date,
@@ -1257,6 +1365,13 @@ export class CatalogStore {
        WHERE r.organization_id = $1
          AND r.session_id = $2
          AND r.status IN ('CONFIRMED', 'WAITLISTED')
+         AND NOT (
+           r.status = 'WAITLISTED'
+           AND COALESCE(
+             offer.status = 'PENDING' AND offer.expires_at <= transaction_timestamp(),
+             false
+           )
+         )
        ORDER BY
          CASE r.status WHEN 'CONFIRMED' THEN 0 WHEN 'WAITLISTED' THEN 1 ELSE 2 END,
          c.gender NULLS LAST,

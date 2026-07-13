@@ -267,6 +267,7 @@ describe('family store', () => {
     const secondCamperId = '9ba377e7-248b-4c0c-8d4f-5d7dbef27ca2';
     const firstRegistrationId = '8e85a2b8-51b4-4dc7-ab93-07b20f270c68';
     const secondRegistrationId = '4ab7de03-4512-4475-b3d2-97b48d9c91e8';
+    const repeatRegistrationId = 'f3ab83de-7718-44cd-9f95-1e45b47c99dd';
     const context = {
       actorId: 'integration-admin',
       organizationId,
@@ -419,9 +420,27 @@ describe('family store', () => {
       firstFamilyId,
       firstRegistrationId,
     );
-    const promoted = await store.promoteNextWaitlistRegistration(
-      { ...context, requestId: 'checkout-promote-test' },
+    const queuedAgain = await store.createRegistration(
+      { ...context, requestId: 'checkout-existing-queue-priority-test' },
+      {
+        camper_id: firstCamperId,
+        family_id: firstFamilyId,
+        id: repeatRegistrationId,
+        session_id: sessionId,
+        source: 'PARENT',
+      },
+    );
+    const offered = await store.createNextWaitlistOffer(
+      { ...context, requestId: 'checkout-offer-test' },
       sessionId,
+      'e8fd39c5-38ea-4546-b810-e1d56ac2230e',
+      48,
+    );
+    const promoted = await store.respondToWaitlistOffer(
+      { ...context, actorId: 'second-parent', requestId: 'checkout-accept-offer-test' },
+      secondFamilyId,
+      secondRegistrationId,
+      'ACCEPT',
     );
 
     expect(cancelled.registration).toMatchObject({
@@ -429,9 +448,25 @@ describe('family store', () => {
       status: 'CANCELLED',
     });
     expect(cancelled.family.campers[0]?.registrations).toEqual([]);
+    expect(queuedAgain.registration).toMatchObject({
+      registration_id: repeatRegistrationId,
+      status: 'WAITLISTED',
+    });
+    expect(offered.registration).toMatchObject({
+      registration_id: secondRegistrationId,
+      status: 'WAITLISTED',
+      waitlist_offer: {
+        id: 'e8fd39c5-38ea-4546-b810-e1d56ac2230e',
+        status: 'PENDING',
+      },
+    });
     expect(promoted.registration).toMatchObject({
       registration_id: secondRegistrationId,
       status: 'CONFIRMED',
+      waitlist_offer: {
+        id: 'e8fd39c5-38ea-4546-b810-e1d56ac2230e',
+        status: 'ACCEPTED',
+      },
     });
   });
 
