@@ -119,6 +119,7 @@ export interface RegisteredCamperRecord {
   pickup_name: string | null;
   price_cents: number;
   registered_at: string;
+  waitlist_position: number | null;
   waitlist_offer: CatalogWaitlistOfferRecord | null;
 }
 
@@ -1290,6 +1291,23 @@ export class CatalogStore {
          attendance.pickup_name,
          r.price_cents,
          r.registered_at,
+         CASE WHEN r.status = 'WAITLISTED' THEN (
+           SELECT count(*)::integer + 1
+           FROM registrations queued
+           WHERE queued.organization_id = r.organization_id
+             AND queued.session_id = r.session_id
+             AND queued.status = 'WAITLISTED'
+             AND NOT EXISTS (
+               SELECT 1
+               FROM waitlist_offers queued_offer
+               WHERE queued_offer.organization_id = queued.organization_id
+                 AND queued_offer.registration_id = queued.id
+                 AND queued_offer.status = 'PENDING'
+                 AND queued_offer.expires_at <= transaction_timestamp()
+             )
+             AND (queued.waitlist_position_at, queued.id)
+               < (r.waitlist_position_at, r.id)
+         ) ELSE NULL END AS waitlist_position,
          offer.id AS offer_id,
          offer.family_id AS offer_family_id,
          offer.registration_id AS offer_registration_id,
@@ -1374,9 +1392,11 @@ export class CatalogStore {
          )
        ORDER BY
          CASE r.status WHEN 'CONFIRMED' THEN 0 WHEN 'WAITLISTED' THEN 1 ELSE 2 END,
-         c.gender NULLS LAST,
-         lower(c.last_name),
-         lower(c.first_name),
+         CASE WHEN r.status = 'WAITLISTED' THEN r.waitlist_position_at END,
+         CASE WHEN r.status = 'WAITLISTED' THEN r.id END,
+         CASE WHEN r.status = 'CONFIRMED' THEN c.gender END NULLS LAST,
+         CASE WHEN r.status = 'CONFIRMED' THEN lower(c.last_name) END,
+         CASE WHEN r.status = 'CONFIRMED' THEN lower(c.first_name) END,
          c.id`,
       [organizationId, sessionId, attendanceDate ?? null],
     );

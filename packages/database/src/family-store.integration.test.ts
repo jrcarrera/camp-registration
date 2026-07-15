@@ -9,8 +9,10 @@ import {
   FamilyRegistrationDuplicateError,
   FamilyRegistrationEligibilityError,
   FamilyStore,
+  FamilyWaitlistOrderConflictError,
 } from './family-store.js';
 import { runMigrations } from './migrate.js';
+import { NotificationStore } from './notification-store.js';
 import { seedCatalog } from './seed.js';
 
 const organizationId = 'a60b272f-b028-4f1a-b666-3ef3cffd9827';
@@ -257,6 +259,130 @@ describe('family store', () => {
     );
   });
 
+  it('atomically reorders the waitlist and uses the edited priority for offers', async () => {
+    const store = new FamilyStore(runtimeDatabase);
+    const sessionId = '11111111-2222-4333-8444-555555555501';
+    const familyId = '11111111-2222-4333-8444-555555555502';
+    const camperIds = [
+      '11111111-2222-4333-8444-555555555503',
+      '11111111-2222-4333-8444-555555555504',
+      '11111111-2222-4333-8444-555555555505',
+    ];
+    const registrationIds = [
+      '11111111-2222-4333-8444-555555555506',
+      '11111111-2222-4333-8444-555555555507',
+      '11111111-2222-4333-8444-555555555508',
+    ];
+    const desiredOrder = [registrationIds[2]!, registrationIds[0]!, registrationIds[1]!];
+    const context = {
+      actorId: 'queue-admin',
+      organizationId,
+      requestId: 'waitlist-reorder-integration-test',
+    };
+    const admin = new Pool({ connectionString: migrationUrl });
+    await admin.query(
+      `INSERT INTO sessions (
+         id, organization_id, season_id, program_id, code, name, starts_on, ends_on,
+         registration_opens_at, registration_closes_at, capacity, minimum_age,
+         maximum_age, age_as_of, currency, price_cents, deposit_cents,
+         waitlist_enabled, status
+       ) VALUES (
+         $1, $2, 'd5d8a8b7-c4ff-43be-a849-60cbd5914c85',
+         '6d75c29b-e424-4da6-8191-db70859382fd', 'QUEUE-ORDER-01',
+         'Queue Order Test', '2027-07-01', '2027-07-07',
+         '2026-01-01T00:00:00Z', '2027-06-01T00:00:00Z', 1, 5, 18,
+         'SESSION_START', 'USD', 52500, 10000, true, 'PUBLISHED'
+       )`,
+      [sessionId, organizationId],
+    );
+    await admin.query(
+      `INSERT INTO families (id, organization_id, family_name)
+       VALUES ($1, $2, 'Queue Test Family')`,
+      [familyId, organizationId],
+    );
+    for (const [index, camperId] of camperIds.entries()) {
+      await admin.query(
+        `INSERT INTO campers (
+           id, organization_id, family_id, first_name, last_name, birth_date,
+           gender, school_grade
+         ) VALUES ($1, $2, $3, $4, 'Queue', '2012-04-12', 'Female', '8')`,
+        [camperId, organizationId, familyId, `Camper ${index + 1}`],
+      );
+      await admin.query(
+        `INSERT INTO registrations (
+           id, organization_id, session_id, family_id, camper_id, status, registered_at
+         ) VALUES ($1, $2, $3, $4, $5, 'WAITLISTED', $6::timestamptz)`,
+        [
+          registrationIds[index],
+          organizationId,
+          sessionId,
+          familyId,
+          camperId,
+          `2027-01-0${index + 1}T12:00:00Z`,
+        ],
+      );
+    }
+
+    const reordered = await store.reorderWaitlist(
+      context,
+      sessionId,
+      registrationIds,
+      desiredOrder,
+      'Keep two campers together and move the group first.',
+    );
+    expect(reordered).toMatchObject({ registration_ids: desiredOrder, session_id: sessionId });
+
+    const persisted = await admin.query<{ id: string }>(
+      `SELECT id
+       FROM registrations
+       WHERE organization_id = $1 AND session_id = $2 AND status = 'WAITLISTED'
+       ORDER BY waitlist_position_at, id`,
+      [organizationId, sessionId],
+    );
+    expect(persisted.rows.map((row) => row.id)).toEqual(desiredOrder);
+
+    const offered = await store.createNextWaitlistOffer(
+      { ...context, requestId: 'waitlist-reorder-offer-test' },
+      sessionId,
+      '11111111-2222-4333-8444-555555555509',
+      48,
+    );
+    expect(offered.registration.registration_id).toBe(desiredOrder[0]);
+
+    await expect(
+      store.reorderWaitlist(
+        { ...context, requestId: 'stale-waitlist-reorder-test' },
+        sessionId,
+        registrationIds,
+        desiredOrder,
+        'Attempt a stale reorder.',
+      ),
+    ).rejects.toBeInstanceOf(FamilyWaitlistOrderConflictError);
+
+    const audit = await admin.query<{
+      action: string;
+      actor_id: string;
+      details: { previous_registration_ids: string[]; reason: string; registration_ids: string[] };
+    }>(
+      `SELECT action, actor_id, details
+       FROM audit_events
+       WHERE organization_id = $1 AND target_id = $2 AND action = 'waitlist.reordered'`,
+      [organizationId, sessionId],
+    );
+    expect(audit.rows).toEqual([
+      {
+        action: 'waitlist.reordered',
+        actor_id: context.actorId,
+        details: {
+          previous_registration_ids: registrationIds,
+          reason: 'Keep two campers together and move the group first.',
+          registration_ids: desiredOrder,
+        },
+      },
+    ]);
+    await admin.end();
+  });
+
   it('creates confirmed and waitlisted registrations with source and duplicate checks', async () => {
     const store = new FamilyStore(runtimeDatabase);
     const dates = checkoutFixtureDates();
@@ -265,6 +391,8 @@ describe('family store', () => {
     const secondFamilyId = '95044083-24b3-46c6-8ff3-cb42c8774243';
     const firstCamperId = '09282baa-9a96-464a-ab70-d1a75054f625';
     const secondCamperId = '9ba377e7-248b-4c0c-8d4f-5d7dbef27ca2';
+    const firstAdultId = '65943bf7-f1bb-453f-a6b3-d98c43f718c5';
+    const secondAdultId = '08949d2c-f416-4ab7-b5a0-56eacdc67df3';
     const firstRegistrationId = '8e85a2b8-51b4-4dc7-ab93-07b20f270c68';
     const secondRegistrationId = '4ab7de03-4512-4475-b3d2-97b48d9c91e8';
     const repeatRegistrationId = 'f3ab83de-7718-44cd-9f95-1e45b47c99dd';
@@ -295,6 +423,24 @@ describe('family store', () => {
       family_name: 'Checkout First Family',
       id: firstFamilyId,
     });
+    await store.createAdult(context, {
+      account_owner: true,
+      authorized_pickup: true,
+      birth_date: null,
+      can_make_payments: true,
+      can_manage_family: true,
+      can_register: true,
+      email: 'first.checkout.parent@example.test',
+      email_normalized: 'first.checkout.parent@example.test',
+      emergency_contact: true,
+      family_id: firstFamilyId,
+      first_name: 'First',
+      id: firstAdultId,
+      identity_subject: 'first-checkout-parent',
+      last_name: 'Parent',
+      phone: '555-0201',
+      receives_operational_communication: true,
+    });
     await store.createCamper(context, {
       accessibility_needs: null,
       adult_id: null,
@@ -313,6 +459,24 @@ describe('family store', () => {
     await store.createFamily(context, {
       family_name: 'Checkout Second Family',
       id: secondFamilyId,
+    });
+    await store.createAdult(context, {
+      account_owner: true,
+      authorized_pickup: true,
+      birth_date: null,
+      can_make_payments: true,
+      can_manage_family: true,
+      can_register: true,
+      email: 'second.checkout.parent@example.test',
+      email_normalized: 'second.checkout.parent@example.test',
+      emergency_contact: true,
+      family_id: secondFamilyId,
+      first_name: 'Second',
+      id: secondAdultId,
+      identity_subject: 'second-checkout-parent',
+      last_name: 'Parent',
+      phone: '555-0202',
+      receives_operational_communication: true,
     });
     await store.createCamper(context, {
       accessibility_needs: null,
@@ -468,6 +632,144 @@ describe('family store', () => {
         status: 'ACCEPTED',
       },
     });
+
+    await store.cancelRegistration(
+      { ...context, requestId: 'checkout-cancel-promoted-test' },
+      secondFamilyId,
+      secondRegistrationId,
+    );
+    const followUpOfferId = 'b22ed34e-54ab-4809-835c-ae61c23419bc';
+    await store.createNextWaitlistOffer(
+      { ...context, requestId: 'checkout-follow-up-offer-test' },
+      sessionId,
+      followUpOfferId,
+      24,
+    );
+    const resent = await store.manageWaitlistOffer(
+      { ...context, requestId: 'checkout-resend-offer-test' },
+      sessionId,
+      followUpOfferId,
+      'RESEND',
+      null,
+    );
+    const skipped = await store.manageWaitlistOffer(
+      { ...context, requestId: 'checkout-skip-offer-test' },
+      sessionId,
+      followUpOfferId,
+      'SKIP',
+      'Operator moved this camper behind the current queue.',
+    );
+    expect(resent.registration.waitlist_offer).toMatchObject({
+      id: followUpOfferId,
+      status: 'PENDING',
+    });
+    expect(skipped.registration).toMatchObject({
+      registration_id: repeatRegistrationId,
+      status: 'WAITLISTED',
+      waitlist_offer: { id: followUpOfferId, status: 'CANCELLED' },
+    });
+
+    const automationContext = {
+      actorId: 'system:waitlist-worker',
+      organizationId,
+      requestId: 'checkout-waitlist-automation-test',
+    };
+    const automated = await store.processWaitlistAutomation(automationContext, 48, 12);
+    expect(automated).toMatchObject({ expired_offers: 0, offers_created: 1 });
+    const automationAdmin = new Pool({ connectionString: migrationUrl });
+    const automatedOffer = await automationAdmin.query<{ id: string }>(
+      `SELECT id
+       FROM waitlist_offers
+       WHERE organization_id = $1
+         AND registration_id = $2
+         AND status = 'PENDING'`,
+      [organizationId, repeatRegistrationId],
+    );
+    const automatedOfferId = automatedOffer.rows[0]?.id;
+    expect(automatedOfferId).toBeDefined();
+    if (automatedOfferId) {
+      await automationAdmin.query(
+        `UPDATE waitlist_offers
+         SET offered_at = transaction_timestamp() - interval '2 hours',
+             expires_at = transaction_timestamp() - interval '1 hour',
+             updated_at = transaction_timestamp()
+         WHERE organization_id = $1 AND id = $2`,
+        [organizationId, automatedOfferId],
+      );
+    }
+    await automationAdmin.end();
+    const expiredByWorker = await store.processWaitlistAutomation(automationContext, 48, 12);
+    expect(expiredByWorker).toMatchObject({ expired_offers: 1, offers_created: 0 });
+
+    const notificationAdmin = new Pool({ connectionString: migrationUrl });
+    const offeredNotifications = await notificationAdmin.query<{
+      notification_type: string;
+      status: string;
+    }>(
+      `SELECT notification_type, status
+       FROM notification_outbox
+       WHERE organization_id = $1 AND waitlist_offer_id = $2
+       ORDER BY created_at, id`,
+      [organizationId, 'e8fd39c5-38ea-4546-b810-e1d56ac2230e'],
+    );
+    expect(offeredNotifications.rows).toEqual([
+      { notification_type: 'WAITLIST_OFFERED', status: 'PENDING' },
+      { notification_type: 'WAITLIST_ACCEPTED', status: 'PENDING' },
+    ]);
+    const followUpNotifications = await notificationAdmin.query<{
+      notification_type: string;
+      status: string;
+    }>(
+      `SELECT notification_type, status
+       FROM notification_outbox
+       WHERE organization_id = $1 AND waitlist_offer_id = $2
+       ORDER BY created_at, id`,
+      [organizationId, followUpOfferId],
+    );
+    expect(followUpNotifications.rows).toEqual([
+      { notification_type: 'WAITLIST_OFFERED', status: 'PENDING' },
+      { notification_type: 'WAITLIST_OFFERED', status: 'PENDING' },
+      { notification_type: 'WAITLIST_CANCELLED', status: 'PENDING' },
+    ]);
+    const notificationStore = new NotificationStore(runtimeDatabase);
+    const claimed = await notificationStore.claimPending(
+      organizationId,
+      'integration-notification-worker',
+      10,
+    );
+    expect(claimed).toHaveLength(7);
+    const deliveredNotification = claimed[0];
+    const failedNotification = claimed[1];
+    expect(deliveredNotification).toBeDefined();
+    expect(failedNotification).toBeDefined();
+    if (deliveredNotification && failedNotification) {
+      await notificationStore.markDelivered(
+        organizationId,
+        'integration-notification-worker',
+        deliveredNotification.id,
+      );
+      await notificationStore.markFailed(
+        organizationId,
+        'integration-notification-worker',
+        failedNotification.id,
+        'SMTP unavailable',
+        1,
+      );
+      const deliveryStatuses = await notificationAdmin.query<{ id: string; status: string }>(
+        `SELECT id, status
+         FROM notification_outbox
+         WHERE organization_id = $1 AND id = ANY($2::uuid[])
+         ORDER BY id`,
+        [organizationId, [deliveredNotification.id, failedNotification.id]],
+      );
+      expect(deliveryStatuses.rows).toEqual(
+        [
+          { id: deliveredNotification.id, status: 'DELIVERED' },
+          { id: failedNotification.id, status: 'FAILED' },
+        ].sort((left, right) => left.id.localeCompare(right.id)),
+      );
+    }
+    await notificationAdmin.end();
   });
 
   it('claims adult identity and lists only owned families for that identity', async () => {

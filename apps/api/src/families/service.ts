@@ -17,6 +17,8 @@ import type {
   FamilyUpdate,
   ParentCheckoutCreate,
   WaitlistOfferCreate,
+  WaitlistQueueOrderResult,
+  WaitlistQueueOrderUpdate,
 } from '@camp-registration/contracts';
 import {
   FamilyConflictError,
@@ -26,13 +28,16 @@ import {
   FamilyRegistrationDuplicateError,
   FamilyRegistrationEligibilityError,
   FamilyWaitlistOfferConflictError,
+  FamilyWaitlistOrderConflictError,
   type FamilyRegistrationPaymentMethod,
   type CamperGender,
   type FamilyStore,
+  type WaitlistOfferStaffAction,
 } from '@camp-registration/database';
 
 const readRoles = new Set(['camp_staff', 'camp_admin', 'organization_admin']);
 const editRoles = new Set(['camp_staff', 'camp_admin', 'organization_admin']);
+const queueAdminRoles = new Set(['camp_admin', 'organization_admin']);
 const parentRoles = new Set(['parent_guardian']);
 
 export class FamilyAuthorizationError extends Error {}
@@ -104,6 +109,18 @@ export interface FamilyServiceApi {
     action: 'ACCEPT' | 'DECLINE',
     requestId: string,
   ): Promise<FamilyRegistrationResult>;
+  manageWaitlistOffer(
+    sessionId: string,
+    offerId: string,
+    action: WaitlistOfferStaffAction,
+    reason: string | null,
+    requestId: string,
+  ): Promise<FamilyRegistrationResult>;
+  reorderWaitlist(
+    sessionId: string,
+    update: WaitlistQueueOrderUpdate,
+    requestId: string,
+  ): Promise<WaitlistQueueOrderResult>;
 }
 
 function trimmed(value: string): string {
@@ -632,6 +649,63 @@ export class FamilyService implements FamilyServiceApi {
       action,
     );
   }
+
+  async manageWaitlistOffer(
+    sessionId: string,
+    offerId: string,
+    action: WaitlistOfferStaffAction,
+    reason: string | null,
+    requestId: string,
+  ): Promise<FamilyRegistrationResult> {
+    this.authorize(editRoles);
+    if (action !== 'RESEND' && !reason) {
+      throw new FamilyValidationError(
+        { reason: 'Enter a reason for cancelling or skipping this offer.' },
+        'Waitlist offer action is invalid',
+      );
+    }
+    return this.store.manageWaitlistOffer(
+      this.context(requestId),
+      sessionId,
+      offerId,
+      action,
+      reason,
+    );
+  }
+
+  async reorderWaitlist(
+    sessionId: string,
+    update: WaitlistQueueOrderUpdate,
+    requestId: string,
+  ): Promise<WaitlistQueueOrderResult> {
+    this.authorize(queueAdminRoles);
+    const expectedIds = update.expected_registration_ids;
+    const registrationIds = update.registration_ids;
+    const reason = trimmed(update.reason);
+    const expectedSet = new Set(expectedIds);
+    const registrationSet = new Set(registrationIds);
+    if (
+      reason.length < 3 ||
+      expectedSet.size !== expectedIds.length ||
+      registrationSet.size !== registrationIds.length ||
+      expectedSet.size !== registrationSet.size ||
+      !expectedIds.every((id) => registrationSet.has(id))
+    ) {
+      throw new FamilyValidationError(
+        {
+          waitlist_order: 'Include every waitlisted registration exactly once and enter a reason.',
+        },
+        'Waitlist order is invalid',
+      );
+    }
+    return this.store.reorderWaitlist(
+      this.context(requestId),
+      sessionId,
+      expectedIds,
+      registrationIds,
+      reason,
+    );
+  }
 }
 
 export { FamilyConflictError, FamilyDuplicateError, FamilyNotFoundError };
@@ -640,4 +714,5 @@ export {
   FamilyRegistrationDuplicateError,
   FamilyRegistrationEligibilityError,
   FamilyWaitlistOfferConflictError,
+  FamilyWaitlistOrderConflictError,
 };

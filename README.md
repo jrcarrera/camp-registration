@@ -7,7 +7,8 @@ An open-source platform for camp registration and camp operations.
 The project has a local-first MVP foundation with implemented catalog, family,
 camper, admin registration, parent portal dashboard, parent checkout,
 cancellation, and time-boxed waitlist offer workflows with parent self-service
-acceptance or decline. Authentication is still
+acceptance or decline, scheduled queue advancement, and transactional email
+delivery. Authentication is still
 local-development oriented; the domain layer already enforces linked-adult
 family ownership for parent actions.
 
@@ -38,6 +39,8 @@ The local services are:
 - Web application: <http://localhost:3000>
 - API and OpenAPI UI: <http://localhost:3001/docs>
 - Mailpit email inbox: <http://localhost:8025>
+- Waitlist worker: background service for expiration, advancement, reminders,
+  and outbox delivery
 - MinIO console: <http://localhost:9001>
 - PostgreSQL: `localhost:5432`
 
@@ -65,6 +68,7 @@ coverage will be added with the registration workflow.
 
 - [Data flow and process flows](docs/data-flow-and-process-flows.md)
 - [Architecture decision index](docs/adr/README.md)
+- [Waitlist automation and outbox decision](docs/adr/0012-waitlist-automation-outbox.md)
 - [Foundation stack decision](docs/adr/0001-foundation-stack.md)
 - [Terraform deployment boundary](infra/terraform/README.md)
 - [Contributor guidance](CONTRIBUTING.md)

@@ -116,6 +116,47 @@ export const WaitlistOfferCreateSchema = Type.Object(
   { additionalProperties: false, $id: 'WaitlistOfferCreate' },
 );
 
+export const WaitlistOfferParamsSchema = Type.Object(
+  {
+    offerId: UuidSchema,
+    sessionId: UuidSchema,
+  },
+  { additionalProperties: false, $id: 'WaitlistOfferParams' },
+);
+
+export const WaitlistOfferStaffActionCreateSchema = Type.Object(
+  {
+    reason: Type.Optional(Type.String({ minLength: 3, maxLength: 500 })),
+  },
+  { additionalProperties: false, $id: 'WaitlistOfferStaffActionCreate' },
+);
+
+export const WaitlistQueueOrderUpdateSchema = Type.Object(
+  {
+    expected_registration_ids: Type.Array(UuidSchema, {
+      maxItems: 500,
+      minItems: 1,
+      uniqueItems: true,
+    }),
+    reason: Type.String({ maxLength: 500, minLength: 3 }),
+    registration_ids: Type.Array(UuidSchema, {
+      maxItems: 500,
+      minItems: 1,
+      uniqueItems: true,
+    }),
+  },
+  { additionalProperties: false, $id: 'WaitlistQueueOrderUpdate' },
+);
+
+export const WaitlistQueueOrderResultSchema = Type.Object(
+  {
+    registration_ids: Type.Array(UuidSchema, { minItems: 1, uniqueItems: true }),
+    session_id: UuidSchema,
+    updated_at: UtcTimestampSchema,
+  },
+  { additionalProperties: false, $id: 'WaitlistQueueOrderResult' },
+);
+
 export const RegisteredCamperSchema = Type.Object(
   {
     amount_paid_cents: Type.Integer({ minimum: 0 }),
@@ -145,6 +186,7 @@ export const RegisteredCamperSchema = Type.Object(
     pickup_name: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
     price_cents: Type.Integer({ minimum: 0 }),
     registered_at: UtcTimestampSchema,
+    waitlist_position: Type.Optional(Type.Union([Type.Integer({ minimum: 1 }), Type.Null()])),
     waitlist_offer: Type.Optional(Type.Union([WaitlistOfferSchema, Type.Null()])),
   },
   { additionalProperties: false, $id: 'RegisteredCamper' },
@@ -385,6 +427,10 @@ export type AttendanceAction = Static<typeof AttendanceActionSchema>;
 export type AttendanceStatus = Static<typeof AttendanceStatusSchema>;
 export type WaitlistOffer = Static<typeof WaitlistOfferSchema>;
 export type WaitlistOfferCreate = Static<typeof WaitlistOfferCreateSchema>;
+export type WaitlistOfferParams = Static<typeof WaitlistOfferParamsSchema>;
+export type WaitlistOfferStaffActionCreate = Static<typeof WaitlistOfferStaffActionCreateSchema>;
+export type WaitlistQueueOrderUpdate = Static<typeof WaitlistQueueOrderUpdateSchema>;
+export type WaitlistQueueOrderResult = Static<typeof WaitlistQueueOrderResultSchema>;
 export type RegisteredCamper = Static<typeof RegisteredCamperSchema>;
 export type SessionSummary = Static<typeof SessionSummarySchema>;
 export type SessionDetail = Static<typeof SessionDetailSchema>;

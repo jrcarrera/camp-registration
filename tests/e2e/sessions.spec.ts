@@ -13,7 +13,7 @@ test('renders the API-backed dashboard and session catalog', async ({ page }) =>
 
   await expect(page.getByRole('heading', { level: 1, name: 'Camp Registration' })).toBeVisible();
   await expect(page.getByRole('status')).toContainText('Local system ready');
-  await expect(page.getByText('Published sessions')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Sessions' })).toBeVisible();
   await expect(
     page.getByRole('link', { name: /Day Camp Week 1(?: - E2E)? Day Camp · DAY-2027-01/ }),
   ).toBeVisible();

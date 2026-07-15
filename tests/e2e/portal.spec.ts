@@ -400,6 +400,8 @@ test('lets staff offer an open seat and the parent accept it', async ({ page, re
   const suffix = uniqueSuffix();
   const session = await createCapacityOneSession(request, suffix);
   const waitlistedName = `Offer Camper${suffix}`;
+  const groupedName = `Grouped Camper${suffix}`;
+  const priorityName = `Priority Camper${suffix}`;
   const firstCheckout = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
     data: {
       new_camper: {
@@ -419,24 +421,30 @@ test('lets staff offer an open seat and the parent accept it', async ({ page, re
   };
   expect(firstResult.registration.status).toBe('CONFIRMED');
 
-  const secondCheckout = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
-    data: {
-      new_camper: {
-        birth_date: '2018-03-01',
-        first_name: 'Offer',
-        gender: 'Male',
-        last_name: `Camper${suffix}`,
-        school_grade: '3',
+  const createWaitlistedCamper = async (birthDate: string, firstName: string, lastName: string) => {
+    const response = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
+      data: {
+        new_camper: {
+          birth_date: birthDate,
+          first_name: firstName,
+          gender: 'Male',
+          last_name: lastName,
+          school_grade: '3',
+        },
+        session_id: session.id,
       },
-      session_id: session.id,
-    },
-    headers: parentHeaders,
-  });
-  expect(secondCheckout.ok(), await secondCheckout.text()).toBeTruthy();
-  const secondResult = (await secondCheckout.json()) as {
-    registration: { registration_id: string; status: string };
+      headers: parentHeaders,
+    });
+    expect(response.ok(), await response.text()).toBeTruthy();
+    const result = (await response.json()) as {
+      registration: { registration_id: string; status: string };
+    };
+    expect(result.registration.status).toBe('WAITLISTED');
+    return result;
   };
-  expect(secondResult.registration.status).toBe('WAITLISTED');
+  await createWaitlistedCamper('2018-03-01', 'Offer', `Camper${suffix}`);
+  await createWaitlistedCamper('2018-04-01', 'Grouped', `Camper${suffix}`);
+  await createWaitlistedCamper('2018-05-01', 'Priority', `Camper${suffix}`);
 
   const cancellation = await request.post(
     `/api/v1/families/${adamsFamilyId}/registrations/${firstResult.registration.registration_id}/cancel`,
@@ -445,19 +453,40 @@ test('lets staff offer an open seat and the parent accept it', async ({ page, re
   expect(cancellation.ok(), await cancellation.text()).toBeTruthy();
 
   await page.goto(`/sessions/${session.id}`);
-  const waitlistedRow = page.locator('tr').filter({ hasText: waitlistedName });
+  const queueManager = page.locator('.waitlistQueueManager');
+  await queueManager.getByRole('checkbox', { name: new RegExp(waitlistedName) }).check();
+  await queueManager.getByRole('checkbox', { name: new RegExp(priorityName) }).check();
+  await queueManager.getByRole('button', { name: 'Group together' }).click();
+  await expect(queueManager.locator('li').nth(0)).toContainText(waitlistedName);
+  await expect(queueManager.locator('li').nth(1)).toContainText(priorityName);
+  await expect(queueManager.locator('li').nth(2)).toContainText(groupedName);
+  await queueManager.getByRole('button', { name: 'Down', exact: true }).click();
+  await expect(queueManager.locator('li').nth(0)).toContainText(groupedName);
+  await expect(queueManager.locator('li').nth(1)).toContainText(waitlistedName);
+  await expect(queueManager.locator('li').nth(2)).toContainText(priorityName);
+  await queueManager.getByLabel('Reason for change').fill('Keep selected campers together.');
+  await queueManager.getByRole('button', { name: 'Save order' }).click();
+  await expect(queueManager.getByRole('status')).toContainText('Waitlist order saved.');
+
+  const waitlistedRow = page.locator('tr').filter({ hasText: groupedName });
   await expect(waitlistedRow).toContainText('Waiting');
-  await page.getByRole('button', { name: 'Offer next · 48 hours' }).click();
-  await expect(page.getByRole('status')).toContainText('Offer reserved until');
+  await expect(waitlistedRow).toContainText('Queue #1');
+  await page.getByLabel('Waitlist offer claim window').selectOption('24');
+  await page.getByRole('button', { name: 'Offer next', exact: true }).click();
+  await expect(page.locator('.waitlistAction').getByRole('status')).toContainText(
+    'Offer reserved until',
+  );
   await expect(waitlistedRow).toContainText('Expires');
+  await waitlistedRow.getByRole('button', { name: 'Resend' }).click();
+  await expect(waitlistedRow.getByRole('status')).toContainText('Offer notification queued again.');
 
   await page.goto('/portal');
-  const planItem = page.getByLabel(`${session.name} for ${waitlistedName}`);
+  const planItem = page.getByLabel(`${session.name} for ${groupedName}`);
   await expect(planItem).toContainText('A camp seat is ready for you');
   await planItem.getByRole('button', { name: 'Accept seat' }).click();
 
   await expect(page.getByRole('status')).toContainText(
-    `${session.name} is confirmed for ${waitlistedName}.`,
+    `${session.name} is confirmed for ${groupedName}.`,
   );
   await expect(planItem).toContainText('Confirmed');
 });

@@ -25,6 +25,7 @@ import { buildApp } from '../src/app.js';
 import {
   FamilyAuthorizationError,
   FamilyService,
+  FamilyValidationError,
   type FamilyServiceApi,
 } from '../src/families/service.js';
 
@@ -212,6 +213,17 @@ const registrationResult: FamilyRegistrationResult = {
   },
 };
 
+const waitlistOrderUpdate = {
+  expected_registration_ids: [registrationResult.registration.registration_id],
+  reason: 'Keep siblings together.',
+  registration_ids: [registrationResult.registration.registration_id],
+};
+const waitlistOrderResult = {
+  registration_ids: [registrationResult.registration.registration_id],
+  session_id: registrationCreate.session_id,
+  updated_at: '2026-07-13T12:00:00Z',
+};
+
 describe('family routes', () => {
   const applications: Awaited<ReturnType<typeof buildApp>>[] = [];
 
@@ -391,6 +403,7 @@ describe('family routes', () => {
 
   it('cancels registrations and manages waitlist offers through the family API', async () => {
     const service = fakeService();
+    const offerId = 'ee38f527-ac85-4b18-954a-994e3a1d553f';
     const app = await buildApp({ familyService: service });
     applications.push(app);
 
@@ -415,11 +428,40 @@ describe('family routes', () => {
       method: 'POST',
       url: `/v1/families/${familyId}/registrations/${registrationResult.registration.registration_id}/waitlist-offer/decline`,
     });
+    const resendResponse = await app.inject({
+      headers: { 'x-request-id': 'waitlist-resend-route-test' },
+      method: 'POST',
+      payload: {},
+      url: `/v1/sessions/${registrationCreate.session_id}/waitlist/offers/${offerId}/resend`,
+    });
+    const cancelOfferResponse = await app.inject({
+      headers: { 'x-request-id': 'waitlist-cancel-offer-route-test' },
+      method: 'POST',
+      payload: { reason: 'Family requested a new claim window.' },
+      url: `/v1/sessions/${registrationCreate.session_id}/waitlist/offers/${offerId}/cancel`,
+    });
+    const skipResponse = await app.inject({
+      headers: { 'x-request-id': 'waitlist-skip-route-test' },
+      method: 'POST',
+      payload: { reason: 'Operator approved moving this camper behind the current queue.' },
+      url: `/v1/sessions/${registrationCreate.session_id}/waitlist/offers/${offerId}/skip`,
+    });
+    const reorderResponse = await app.inject({
+      headers: { 'x-request-id': 'waitlist-reorder-route-test' },
+      method: 'PUT',
+      payload: waitlistOrderUpdate,
+      url: `/v1/sessions/${registrationCreate.session_id}/waitlist/order`,
+    });
 
     expect(cancelResponse.statusCode).toBe(200);
     expect(offerResponse.statusCode).toBe(201);
     expect(acceptResponse.statusCode).toBe(200);
     expect(declineResponse.statusCode).toBe(200);
+    expect(resendResponse.statusCode).toBe(200);
+    expect(cancelOfferResponse.statusCode).toBe(200);
+    expect(skipResponse.statusCode).toBe(200);
+    expect(reorderResponse.statusCode).toBe(200);
+    expect(reorderResponse.json()).toEqual(waitlistOrderResult);
     expect(service.cancelRegistration).toHaveBeenCalledWith(
       familyId,
       registrationResult.registration.registration_id,
@@ -441,6 +483,32 @@ describe('family routes', () => {
       registrationResult.registration.registration_id,
       'DECLINE',
       'waitlist-decline-route-test',
+    );
+    expect(service.manageWaitlistOffer).toHaveBeenCalledWith(
+      registrationCreate.session_id,
+      offerId,
+      'RESEND',
+      null,
+      'waitlist-resend-route-test',
+    );
+    expect(service.manageWaitlistOffer).toHaveBeenCalledWith(
+      registrationCreate.session_id,
+      offerId,
+      'CANCEL',
+      'Family requested a new claim window.',
+      'waitlist-cancel-offer-route-test',
+    );
+    expect(service.manageWaitlistOffer).toHaveBeenCalledWith(
+      registrationCreate.session_id,
+      offerId,
+      'SKIP',
+      'Operator approved moving this camper behind the current queue.',
+      'waitlist-skip-route-test',
+    );
+    expect(service.reorderWaitlist).toHaveBeenCalledWith(
+      registrationCreate.session_id,
+      waitlistOrderUpdate,
+      'waitlist-reorder-route-test',
     );
   });
 
@@ -588,6 +656,7 @@ describe('family service validation', () => {
     const parentStore = {
       adultIdentityCanRegisterFamily: vi.fn().mockResolvedValue(false),
       createNextWaitlistOffer: vi.fn(),
+      reorderWaitlist: vi.fn(),
       respondToWaitlistOffer: vi.fn(),
     };
     const parentService = new FamilyService(parentStore as never, parentIdentity, organizationId);
@@ -607,6 +676,24 @@ describe('family service validation', () => {
         'parent-accept-offer-denied-test',
       ),
     ).rejects.toBeInstanceOf(FamilyAuthorizationError);
+    await expect(
+      parentService.reorderWaitlist(
+        registrationCreate.session_id,
+        waitlistOrderUpdate,
+        'parent-reorder-waitlist-denied-test',
+      ),
+    ).rejects.toBeInstanceOf(FamilyAuthorizationError);
+
+    const staffStore = { reorderWaitlist: vi.fn() };
+    const staffService = new FamilyService(staffStore as never, staffIdentity, organizationId);
+    await expect(
+      staffService.reorderWaitlist(
+        registrationCreate.session_id,
+        waitlistOrderUpdate,
+        'staff-reorder-waitlist-denied-test',
+      ),
+    ).rejects.toBeInstanceOf(FamilyAuthorizationError);
+    expect(staffStore.reorderWaitlist).not.toHaveBeenCalled();
 
     parentStore.adultIdentityCanRegisterFamily.mockResolvedValue(true);
     parentStore.respondToWaitlistOffer.mockResolvedValue(registrationResult);
@@ -625,7 +712,11 @@ describe('family service validation', () => {
       'ACCEPT',
     );
 
-    const adminStore = { createNextWaitlistOffer: vi.fn().mockResolvedValue(registrationResult) };
+    const adminStore = {
+      createNextWaitlistOffer: vi.fn().mockResolvedValue(registrationResult),
+      manageWaitlistOffer: vi.fn().mockResolvedValue(registrationResult),
+      reorderWaitlist: vi.fn().mockResolvedValue(waitlistOrderResult),
+    };
     const adminService = new FamilyService(adminStore as never, localIdentity, organizationId);
     await adminService.createNextWaitlistOffer(
       registrationCreate.session_id,
@@ -637,6 +728,41 @@ describe('family service validation', () => {
       registrationCreate.session_id,
       expect.any(String),
       48,
+    );
+    await expect(
+      adminService.manageWaitlistOffer(
+        registrationCreate.session_id,
+        'ee38f527-ac85-4b18-954a-994e3a1d553f',
+        'SKIP',
+        null,
+        'admin-skip-without-reason-test',
+      ),
+    ).rejects.toBeInstanceOf(FamilyValidationError);
+    await adminService.manageWaitlistOffer(
+      registrationCreate.session_id,
+      'ee38f527-ac85-4b18-954a-994e3a1d553f',
+      'SKIP',
+      'Operator approved moving the camper.',
+      'admin-skip-offer-test',
+    );
+    expect(adminStore.manageWaitlistOffer).toHaveBeenCalledWith(
+      expect.objectContaining({ actorId: localIdentity.subject, organizationId }),
+      registrationCreate.session_id,
+      'ee38f527-ac85-4b18-954a-994e3a1d553f',
+      'SKIP',
+      'Operator approved moving the camper.',
+    );
+    await adminService.reorderWaitlist(
+      registrationCreate.session_id,
+      waitlistOrderUpdate,
+      'admin-reorder-waitlist-test',
+    );
+    expect(adminStore.reorderWaitlist).toHaveBeenCalledWith(
+      expect.objectContaining({ actorId: localIdentity.subject, organizationId }),
+      registrationCreate.session_id,
+      waitlistOrderUpdate.expected_registration_ids,
+      waitlistOrderUpdate.registration_ids,
+      waitlistOrderUpdate.reason,
     );
   });
 
@@ -710,6 +836,18 @@ const parentIdentity: RequestIdentity = {
   subject: 'parent-subject',
 };
 
+const staffIdentity: RequestIdentity = {
+  ...localIdentity,
+  memberships: [
+    {
+      campIds: [],
+      organizationId,
+      roles: ['camp_staff'],
+    },
+  ],
+  subject: 'local-staff',
+};
+
 function fakeService(): FamilyServiceApi & {
   cancelRegistration: ReturnType<typeof vi.fn<FamilyServiceApi['cancelRegistration']>>;
   claimAdultIdentity: ReturnType<typeof vi.fn<FamilyServiceApi['claimAdultIdentity']>>;
@@ -720,6 +858,8 @@ function fakeService(): FamilyServiceApi & {
   createParentCheckout: ReturnType<typeof vi.fn<FamilyServiceApi['createParentCheckout']>>;
   createRegistration: ReturnType<typeof vi.fn<FamilyServiceApi['createRegistration']>>;
   createNextWaitlistOffer: ReturnType<typeof vi.fn<FamilyServiceApi['createNextWaitlistOffer']>>;
+  manageWaitlistOffer: ReturnType<typeof vi.fn<FamilyServiceApi['manageWaitlistOffer']>>;
+  reorderWaitlist: ReturnType<typeof vi.fn<FamilyServiceApi['reorderWaitlist']>>;
   recordRegistrationPayment: ReturnType<
     typeof vi.fn<FamilyServiceApi['recordRegistrationPayment']>
   >;
@@ -743,8 +883,10 @@ function fakeService(): FamilyServiceApi & {
     createRegistration: vi.fn().mockResolvedValue(registrationResult),
     getFamily: vi.fn().mockResolvedValue(detail),
     listFamilies: vi.fn().mockResolvedValue([summary]),
+    manageWaitlistOffer: vi.fn().mockResolvedValue(registrationResult),
     createNextWaitlistOffer: vi.fn().mockResolvedValue(registrationResult),
     recordRegistrationPayment: vi.fn().mockResolvedValue(registrationResult),
+    reorderWaitlist: vi.fn().mockResolvedValue(waitlistOrderResult),
     respondToWaitlistOffer: vi.fn().mockResolvedValue(registrationResult),
     updateAdult: vi.fn().mockResolvedValue(detail),
     updateCamper: vi.fn().mockResolvedValue(detail),

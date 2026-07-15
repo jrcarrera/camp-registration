@@ -17,3 +17,4 @@ clarifications and links to superseding decisions.
 | [0009](0009-adults-hold-access-campers-do-not-authenticate.md) | Accepted | Adult and camper access model      |
 | [0010](0010-camper-profile-health-data-boundary.md)            | Accepted | Camper profile and health boundary |
 | [0011](0011-family-domain-boundaries.md)                       | Accepted | Family domain boundaries           |
+| [0012](0012-waitlist-automation-outbox.md)                     | Accepted | Waitlist automation and outbox     |

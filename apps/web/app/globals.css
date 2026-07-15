@@ -2214,6 +2214,214 @@ tbody tr + tr td {
   gap: 8px;
 }
 
+.waitlistOfferCreator {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.waitlistOfferCreator label {
+  display: grid;
+  gap: 4px;
+  color: #53615b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.waitlistOfferCreator select {
+  min-height: 38px;
+  padding: 0 30px 0 10px;
+  border: 1px solid #b8c5bf;
+  border-radius: 6px;
+  background: #fff;
+  color: #1f2d27;
+}
+
+.waitlistOfferCell,
+.waitlistOfferControls {
+  display: grid;
+  gap: 7px;
+}
+
+.waitlistOfferControls .inlineActions {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.waitlistOfferControls button {
+  min-height: 32px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+.waitlistQueueManager {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid #d6c58f;
+  border-radius: 8px;
+  background: #fffbef;
+}
+
+.waitlistQueueHeader,
+.waitlistQueueSaveBar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.waitlistQueueHeader h3 {
+  margin: 2px 0 4px;
+  font-size: 18px;
+}
+
+.waitlistQueueHeader p:not(.contextLabel),
+.waitlistQueueNote {
+  max-width: 760px;
+  margin: 0;
+  color: #5d625e;
+  line-height: 1.45;
+}
+
+.waitlistQueueHeader > strong {
+  flex: 0 0 auto;
+  color: #6b5416;
+}
+
+.waitlistQueueToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.waitlistQueueToolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid #aebbb5;
+  border-radius: 6px;
+  background: #fff;
+  color: #24342d;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.waitlistQueueToolbar button:hover:not(:disabled) {
+  border-color: #146b4d;
+  color: #0e543b;
+}
+
+.waitlistQueueToolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.waitlistQueueList {
+  display: grid;
+  gap: 7px;
+  max-height: 380px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.waitlistQueueList li {
+  border: 1px solid #d8dedb;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.waitlistQueueList li.selected {
+  border-color: #3b8268;
+  box-shadow: 0 0 0 1px #3b8268;
+  background: #eff8f3;
+}
+
+.waitlistQueueList label {
+  display: flex;
+  align-items: center;
+  min-height: 54px;
+  gap: 11px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.waitlistQueueList input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  accent-color: #146b4d;
+}
+
+.waitlistQueuePosition {
+  min-width: 34px;
+  color: #73510d;
+  font-weight: 900;
+}
+
+.waitlistQueueName {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+
+.waitlistQueueName small {
+  overflow: hidden;
+  color: #66706b;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queueOfferBadge {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #fff0c2;
+  color: #6a4a09;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.waitlistQueueSaveBar {
+  align-items: flex-end;
+}
+
+.waitlistQueueSaveBar label {
+  display: grid;
+  min-width: min(460px, 100%);
+  gap: 5px;
+  color: #3f4c46;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.waitlistQueueSaveBar input {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #aebbb5;
+  border-radius: 6px;
+  background: #fff;
+  color: #1f2d27;
+  font: inherit;
+}
+
+.inlineError {
+  color: #963527;
+}
+
+.inlineSuccess {
+  color: #146b4d;
+}
+
 .registrationLinks {
   display: grid;
   gap: 8px;
@@ -2488,6 +2696,52 @@ tbody tr + tr td {
 
   .sectionActions .waitlistAction button {
     width: 100%;
+  }
+
+  .waitlistOfferCreator {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .waitlistOfferCreator label,
+  .waitlistOfferCreator select {
+    width: 100%;
+  }
+
+  .waitlistQueueManager {
+    padding: 14px;
+  }
+
+  .waitlistQueueHeader,
+  .waitlistQueueSaveBar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .waitlistQueueToolbar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .waitlistQueueToolbar button,
+  .waitlistQueueSaveBar label,
+  .waitlistQueueSaveBar .inlineActions,
+  .waitlistQueueSaveBar .inlineActions button {
+    width: 100%;
+  }
+
+  .waitlistQueueToolbar button:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .waitlistQueueList label {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .queueOfferBadge {
+    margin-left: 29px;
   }
 
   .checkInHeader {

@@ -21,6 +21,10 @@ import {
   ProblemResponseSchema,
   SessionParamsSchema,
   WaitlistOfferCreateSchema,
+  WaitlistOfferParamsSchema,
+  WaitlistOfferStaffActionCreateSchema,
+  WaitlistQueueOrderResultSchema,
+  WaitlistQueueOrderUpdateSchema,
   type AdultCreate,
   type AdultParams,
   type AdultUpdate,
@@ -43,6 +47,10 @@ import {
   type ProblemResponse,
   type SessionParams,
   type WaitlistOfferCreate,
+  type WaitlistOfferParams,
+  type WaitlistOfferStaffActionCreate,
+  type WaitlistQueueOrderResult,
+  type WaitlistQueueOrderUpdate,
 } from '@camp-registration/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
@@ -56,6 +64,7 @@ import {
   FamilyRegistrationEligibilityError,
   FamilyValidationError,
   FamilyWaitlistOfferConflictError,
+  FamilyWaitlistOrderConflictError,
   type FamilyServiceApi,
 } from './service.js';
 
@@ -90,6 +99,9 @@ function sendProblem(reply: FastifyReply, error: unknown) {
   }
   if (error instanceof FamilyWaitlistOfferConflictError) {
     return reply.code(409).send({ code: 'waitlist_offer_conflict', message: error.message });
+  }
+  if (error instanceof FamilyWaitlistOrderConflictError) {
+    return reply.code(409).send({ code: 'waitlist_order_conflict', message: error.message });
   }
   if (error instanceof FamilyDuplicateError) {
     return reply.code(409).send({ code: 'duplicate_family_record', message: error.message });
@@ -491,6 +503,132 @@ export function registerFamilyRoutes(app: FastifyInstance, service: FamilyServic
           request.id,
         );
         return reply.code(201).send(result);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.put<{
+    Body: WaitlistQueueOrderUpdate;
+    Params: SessionParams;
+    Reply: WaitlistQueueOrderResult | ProblemResponse;
+  }>(
+    '/v1/sessions/:sessionId/waitlist/order',
+    {
+      schema: {
+        body: WaitlistQueueOrderUpdateSchema,
+        description: 'Replace the authoritative waitlist order for a session.',
+        params: SessionParamsSchema,
+        response: { 200: WaitlistQueueOrderResultSchema, ...errorResponses },
+        tags: ['registrations', 'sessions', 'waitlist'],
+      },
+    },
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
+      try {
+        return await familyService.reorderWaitlist(
+          request.params.sessionId,
+          request.body,
+          request.id,
+        );
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Body: WaitlistOfferStaffActionCreate;
+    Params: WaitlistOfferParams;
+    Reply: FamilyRegistrationResult | ProblemResponse;
+  }>(
+    '/v1/sessions/:sessionId/waitlist/offers/:offerId/resend',
+    {
+      schema: {
+        body: WaitlistOfferStaffActionCreateSchema,
+        description: 'Queue another delivery of an active waitlist offer.',
+        params: WaitlistOfferParamsSchema,
+        response: { 200: FamilyRegistrationResultSchema, ...errorResponses },
+        tags: ['registrations', 'sessions', 'waitlist-offers'],
+      },
+    },
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
+      try {
+        return await familyService.manageWaitlistOffer(
+          request.params.sessionId,
+          request.params.offerId,
+          'RESEND',
+          request.body.reason?.trim() || null,
+          request.id,
+        );
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Body: WaitlistOfferStaffActionCreate;
+    Params: WaitlistOfferParams;
+    Reply: FamilyRegistrationResult | ProblemResponse;
+  }>(
+    '/v1/sessions/:sessionId/waitlist/offers/:offerId/cancel',
+    {
+      schema: {
+        body: WaitlistOfferStaffActionCreateSchema,
+        description: 'Cancel an active waitlist offer and keep its registration in queue.',
+        params: WaitlistOfferParamsSchema,
+        response: { 200: FamilyRegistrationResultSchema, ...errorResponses },
+        tags: ['registrations', 'sessions', 'waitlist-offers'],
+      },
+    },
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
+      try {
+        return await familyService.manageWaitlistOffer(
+          request.params.sessionId,
+          request.params.offerId,
+          'CANCEL',
+          request.body.reason?.trim() || null,
+          request.id,
+        );
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Body: WaitlistOfferStaffActionCreate;
+    Params: WaitlistOfferParams;
+    Reply: FamilyRegistrationResult | ProblemResponse;
+  }>(
+    '/v1/sessions/:sessionId/waitlist/offers/:offerId/skip',
+    {
+      schema: {
+        body: WaitlistOfferStaffActionCreateSchema,
+        description: 'Cancel an active offer and move its registration to the end of the queue.',
+        params: WaitlistOfferParamsSchema,
+        response: { 200: FamilyRegistrationResultSchema, ...errorResponses },
+        tags: ['registrations', 'sessions', 'waitlist-offers'],
+      },
+    },
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
+      try {
+        return await familyService.manageWaitlistOffer(
+          request.params.sessionId,
+          request.params.offerId,
+          'SKIP',
+          request.body.reason?.trim() || null,
+          request.id,
+        );
       } catch (error) {
         return sendProblem(reply, error);
       }

@@ -370,6 +370,7 @@ export interface paths {
                                 pickup_name: string | null;
                                 price_cents: number;
                                 registered_at: string;
+                                waitlist_position?: number | null;
                                 waitlist_offer?: {
                                     id: string;
                                     family_id: string;
@@ -970,6 +971,7 @@ export interface paths {
                                 pickup_name: string | null;
                                 price_cents: number;
                                 registered_at: string;
+                                waitlist_position?: number | null;
                                 waitlist_offer?: {
                                     id: string;
                                     family_id: string;
@@ -1169,6 +1171,7 @@ export interface paths {
                                 pickup_name: string | null;
                                 price_cents: number;
                                 registered_at: string;
+                                waitlist_position?: number | null;
                                 waitlist_offer?: {
                                     id: string;
                                     family_id: string;
@@ -1363,6 +1366,7 @@ export interface paths {
                                 pickup_name: string | null;
                                 price_cents: number;
                                 registered_at: string;
+                                waitlist_position?: number | null;
                                 waitlist_offer?: {
                                     id: string;
                                     family_id: string;
@@ -4298,6 +4302,866 @@ export interface paths {
             responses: {
                 /** @description Default Response */
                 201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            family: {
+                                id: string;
+                                organization_id: string;
+                                family_name: string;
+                                adult_count: number;
+                                camper_count: number;
+                                contact_count: number;
+                                version: number;
+                                updated_at: string;
+                                adults: {
+                                    id: string;
+                                    organization_id: string;
+                                    family_id: string;
+                                    identity_subject: string | null;
+                                    first_name: string;
+                                    last_name: string;
+                                    birth_date: string | null;
+                                    email: string | null;
+                                    phone: string | null;
+                                    account_owner: boolean;
+                                    can_manage_family: boolean;
+                                    can_register: boolean;
+                                    can_make_payments: boolean;
+                                    emergency_contact: boolean;
+                                    authorized_pickup: boolean;
+                                    receives_operational_communication: boolean;
+                                    version: number;
+                                    updated_at: string;
+                                }[];
+                                campers: {
+                                    id: string;
+                                    organization_id: string;
+                                    family_id: string;
+                                    adult_id: string | null;
+                                    first_name: string;
+                                    last_name: string;
+                                    birth_date: string;
+                                    email: string | null;
+                                    preferred_name: string | null;
+                                    gender: ("Female" | "Male") | null;
+                                    school_grade: string | null;
+                                    cabin_preference: string | null;
+                                    accessibility_needs: string | null;
+                                    registrations: {
+                                        amount_paid_cents: number;
+                                        balance_due_cents: number;
+                                        /** @enum {string} */
+                                        currency: "USD";
+                                        deposit_cents: number;
+                                        deposit_due_cents: number;
+                                        payment_status: "NOT_DUE" | "DEPOSIT_DUE" | "PARTIAL" | "PAID";
+                                        price_cents: number;
+                                        registration_id: string;
+                                        session_id: string;
+                                        session_code: string;
+                                        session_name: string;
+                                        program_name: string;
+                                        starts_on: string;
+                                        ends_on: string;
+                                        status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                        source: "ADMIN" | "PARENT";
+                                        registered_at: string;
+                                        waitlist_offer?: {
+                                            id: string;
+                                            family_id: string;
+                                            registration_id: string;
+                                            session_id: string;
+                                            status: "PENDING" | "ACCEPTED" | "DECLINED" | "EXPIRED" | "CANCELLED";
+                                            offered_at: string;
+                                            expires_at: string;
+                                            responded_at: string | null;
+                                        } | null;
+                                    }[];
+                                    version: number;
+                                    updated_at: string;
+                                }[];
+                                contacts: {
+                                    id: string;
+                                    organization_id: string;
+                                    family_id: string;
+                                    first_name: string;
+                                    last_name: string;
+                                    birth_date: string | null;
+                                    email: string | null;
+                                    phone: string;
+                                    relationship: string;
+                                    emergency_contact: boolean;
+                                    authorized_pickup: boolean;
+                                    receives_operational_communication: boolean;
+                                    emergency_priority: number | null;
+                                    version: number;
+                                    updated_at: string;
+                                }[];
+                            };
+                            registration: {
+                                amount_paid_cents: number;
+                                balance_due_cents: number;
+                                /** @enum {string} */
+                                currency: "USD";
+                                deposit_cents: number;
+                                deposit_due_cents: number;
+                                payment_status: "NOT_DUE" | "DEPOSIT_DUE" | "PARTIAL" | "PAID";
+                                price_cents: number;
+                                registration_id: string;
+                                session_id: string;
+                                session_code: string;
+                                session_name: string;
+                                program_name: string;
+                                starts_on: string;
+                                ends_on: string;
+                                status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                source: "ADMIN" | "PARENT";
+                                registered_at: string;
+                                waitlist_offer?: {
+                                    id: string;
+                                    family_id: string;
+                                    registration_id: string;
+                                    session_id: string;
+                                    status: "PENDING" | "ACCEPTED" | "DECLINED" | "EXPIRED" | "CANCELLED";
+                                    offered_at: string;
+                                    expires_at: string;
+                                    responded_at: string | null;
+                                } | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sessions/{sessionId}/waitlist/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Replace the authoritative waitlist order for a session. */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        expected_registration_ids: string[];
+                        reason: string;
+                        registration_ids: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            registration_ids: string[];
+                            session_id: string;
+                            updated_at: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sessions/{sessionId}/waitlist/offers/{offerId}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Queue another delivery of an active waitlist offer. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    offerId: string;
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            family: {
+                                id: string;
+                                organization_id: string;
+                                family_name: string;
+                                adult_count: number;
+                                camper_count: number;
+                                contact_count: number;
+                                version: number;
+                                updated_at: string;
+                                adults: {
+                                    id: string;
+                                    organization_id: string;
+                                    family_id: string;
+                                    identity_subject: string | null;
+                                    first_name: string;
+                                    last_name: string;
+                                    birth_date: string | null;
+                                    email: string | null;
+                                    phone: string | null;
+                                    account_owner: boolean;
+                                    can_manage_family: boolean;
+                                    can_register: boolean;
+                                    can_make_payments: boolean;
+                                    emergency_contact: boolean;
+                                    authorized_pickup: boolean;
+                                    receives_operational_communication: boolean;
+                                    version: number;
+                                    updated_at: string;
+                                }[];
+                                campers: {
+                                    id: string;
+                                    organization_id: string;
+                                    family_id: string;
+                                    adult_id: string | null;
+                                    first_name: string;
+                                    last_name: string;
+                                    birth_date: string;
+                                    email: string | null;
+                                    preferred_name: string | null;
+                                    gender: ("Female" | "Male") | null;
+                                    school_grade: string | null;
+                                    cabin_preference: string | null;
+                                    accessibility_needs: string | null;
+                                    registrations: {
+                                        amount_paid_cents: number;
+                                        balance_due_cents: number;
+                                        /** @enum {string} */
+                                        currency: "USD";
+                                        deposit_cents: number;
+                                        deposit_due_cents: number;
+                                        payment_status: "NOT_DUE" | "DEPOSIT_DUE" | "PARTIAL" | "PAID";
+                                        price_cents: number;
+                                        registration_id: string;
+                                        session_id: string;
+                                        session_code: string;
+                                        session_name: string;
+                                        program_name: string;
+                                        starts_on: string;
+                                        ends_on: string;
+                                        status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                        source: "ADMIN" | "PARENT";
+                                        registered_at: string;
+                                        waitlist_offer?: {
+                                            id: string;
+                                            family_id: string;
+                                            registration_id: string;
+                                            session_id: string;
+                                            status: "PENDING" | "ACCEPTED" | "DECLINED" | "EXPIRED" | "CANCELLED";
+                                            offered_at: string;
+                                            expires_at: string;
+                                            responded_at: string | null;
+                                        } | null;
+                                    }[];
+                                    version: number;
+                                    updated_at: string;
+                                }[];
+                                contacts: {
+                                    id: string;
+                                    organization_id: string;
+                                    family_id: string;
+                                    first_name: string;
+                                    last_name: string;
+                                    birth_date: string | null;
+                                    email: string | null;
+                                    phone: string;
+                                    relationship: string;
+                                    emergency_contact: boolean;
+                                    authorized_pickup: boolean;
+                                    receives_operational_communication: boolean;
+                                    emergency_priority: number | null;
+                                    version: number;
+                                    updated_at: string;
+                                }[];
+                            };
+                            registration: {
+                                amount_paid_cents: number;
+                                balance_due_cents: number;
+                                /** @enum {string} */
+                                currency: "USD";
+                                deposit_cents: number;
+                                deposit_due_cents: number;
+                                payment_status: "NOT_DUE" | "DEPOSIT_DUE" | "PARTIAL" | "PAID";
+                                price_cents: number;
+                                registration_id: string;
+                                session_id: string;
+                                session_code: string;
+                                session_name: string;
+                                program_name: string;
+                                starts_on: string;
+                                ends_on: string;
+                                status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                source: "ADMIN" | "PARENT";
+                                registered_at: string;
+                                waitlist_offer?: {
+                                    id: string;
+                                    family_id: string;
+                                    registration_id: string;
+                                    session_id: string;
+                                    status: "PENDING" | "ACCEPTED" | "DECLINED" | "EXPIRED" | "CANCELLED";
+                                    offered_at: string;
+                                    expires_at: string;
+                                    responded_at: string | null;
+                                } | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sessions/{sessionId}/waitlist/offers/{offerId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Cancel an active waitlist offer and keep its registration in queue. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    offerId: string;
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            family: {
+                                id: string;
+                                organization_id: string;
+                                family_name: string;
+                                adult_count: number;
+                                camper_count: number;
+                                contact_count: number;
+                                version: number;
+                                updated_at: string;
+                                adults: {
+                                    id: string;
+                                    organization_id: string;
+                                    family_id: string;
+                                    identity_subject: string | null;
+                                    first_name: string;
+                                    last_name: string;
+                                    birth_date: string | null;
+                                    email: string | null;
+                                    phone: string | null;
+                                    account_owner: boolean;
+                                    can_manage_family: boolean;
+                                    can_register: boolean;
+                                    can_make_payments: boolean;
+                                    emergency_contact: boolean;
+                                    authorized_pickup: boolean;
+                                    receives_operational_communication: boolean;
+                                    version: number;
+                                    updated_at: string;
+                                }[];
+                                campers: {
+                                    id: string;
+                                    organization_id: string;
+                                    family_id: string;
+                                    adult_id: string | null;
+                                    first_name: string;
+                                    last_name: string;
+                                    birth_date: string;
+                                    email: string | null;
+                                    preferred_name: string | null;
+                                    gender: ("Female" | "Male") | null;
+                                    school_grade: string | null;
+                                    cabin_preference: string | null;
+                                    accessibility_needs: string | null;
+                                    registrations: {
+                                        amount_paid_cents: number;
+                                        balance_due_cents: number;
+                                        /** @enum {string} */
+                                        currency: "USD";
+                                        deposit_cents: number;
+                                        deposit_due_cents: number;
+                                        payment_status: "NOT_DUE" | "DEPOSIT_DUE" | "PARTIAL" | "PAID";
+                                        price_cents: number;
+                                        registration_id: string;
+                                        session_id: string;
+                                        session_code: string;
+                                        session_name: string;
+                                        program_name: string;
+                                        starts_on: string;
+                                        ends_on: string;
+                                        status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                        source: "ADMIN" | "PARENT";
+                                        registered_at: string;
+                                        waitlist_offer?: {
+                                            id: string;
+                                            family_id: string;
+                                            registration_id: string;
+                                            session_id: string;
+                                            status: "PENDING" | "ACCEPTED" | "DECLINED" | "EXPIRED" | "CANCELLED";
+                                            offered_at: string;
+                                            expires_at: string;
+                                            responded_at: string | null;
+                                        } | null;
+                                    }[];
+                                    version: number;
+                                    updated_at: string;
+                                }[];
+                                contacts: {
+                                    id: string;
+                                    organization_id: string;
+                                    family_id: string;
+                                    first_name: string;
+                                    last_name: string;
+                                    birth_date: string | null;
+                                    email: string | null;
+                                    phone: string;
+                                    relationship: string;
+                                    emergency_contact: boolean;
+                                    authorized_pickup: boolean;
+                                    receives_operational_communication: boolean;
+                                    emergency_priority: number | null;
+                                    version: number;
+                                    updated_at: string;
+                                }[];
+                            };
+                            registration: {
+                                amount_paid_cents: number;
+                                balance_due_cents: number;
+                                /** @enum {string} */
+                                currency: "USD";
+                                deposit_cents: number;
+                                deposit_due_cents: number;
+                                payment_status: "NOT_DUE" | "DEPOSIT_DUE" | "PARTIAL" | "PAID";
+                                price_cents: number;
+                                registration_id: string;
+                                session_id: string;
+                                session_code: string;
+                                session_name: string;
+                                program_name: string;
+                                starts_on: string;
+                                ends_on: string;
+                                status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                source: "ADMIN" | "PARENT";
+                                registered_at: string;
+                                waitlist_offer?: {
+                                    id: string;
+                                    family_id: string;
+                                    registration_id: string;
+                                    session_id: string;
+                                    status: "PENDING" | "ACCEPTED" | "DECLINED" | "EXPIRED" | "CANCELLED";
+                                    offered_at: string;
+                                    expires_at: string;
+                                    responded_at: string | null;
+                                } | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sessions/{sessionId}/waitlist/offers/{offerId}/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Cancel an active offer and move its registration to the end of the queue. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    offerId: string;
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
                     headers: {
                         [name: string]: unknown;
                     };

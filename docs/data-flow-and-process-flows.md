@@ -12,14 +12,15 @@ that exists today, not from the full product roadmap.
 - `packages/contracts` defines shared request and response schemas.
 - `packages/database` owns PostgreSQL migrations, seed data, and store classes.
 - PostgreSQL is the only active persistent store in the implemented flows.
-- MinIO and Mailpit exist in local Docker Compose, but no current workflow writes
-  files or sends email.
+- MinIO and Mailpit exist in local Docker Compose. File storage is not wired in;
+  the waitlist worker sends transactional email through SMTP and uses Mailpit
+  locally.
 - Local development auth is a fixed identity configured by environment variables.
   A real identity provider and auth middleware are not wired in yet.
 - The working domains today are catalog, sessions, families, campers, contacts,
-  adults, and direct registrations.
-- Payments, capacity holds, health records, file uploads, transactional email,
-  registration cancellation, and payment webhooks are not implemented yet.
+  adults, registrations, waitlist offers, offline payments, and attendance.
+- Health records, file uploads, online payment collection, refunds, and payment
+  webhooks are not implemented yet.
 
 ## Source Map
 
@@ -683,7 +684,7 @@ Why the session row lock matters:
 ### Time-boxed waitlist offers
 
 - Staff creates an offer for the first eligible waitlisted registration ordered
-  by `registered_at, id`.
+  by `waitlist_position_at, id`.
 - New registrations cannot take an open seat ahead of an existing waitlist.
 - The offer defaults to 48 hours and holds one capacity slot while its status is
   `PENDING` and `expires_at` is still in the future.
@@ -696,6 +697,39 @@ Why the session row lock matters:
   from capacity immediately even before the cleanup write runs.
 - Staff creation, parent response, direct registration, and cancellation all
   serialize on the session row so that capacity cannot be double-allocated.
+- Staff can resend an active offer, cancel it while preserving queue position,
+  or skip it to move the registration to the end of the queue. Cancel and skip
+  require an audited reason.
+- The staff session roster displays the authoritative queue number calculated
+  from `waitlist_position_at, id`, so the visible order matches offer creation.
+- Camp and organization administrators can select one or more registrations and
+  move them together to the top, up, down, or bottom. Saving sends both the
+  originally loaded order and desired order, requires a reason, locks the
+  session, rejects stale edits, rewrites all queue positions atomically, and
+  records `waitlist.reordered` with the old and new registration ID lists.
+- Grouping is adjacency only. It does not reserve capacity or make offers and
+  acceptance atomic across multiple campers. Active offers retain their current
+  holds; the edited order controls future offer priority.
+- A tenant-scoped worker expires offers, creates the next offers for every open
+  seat, queues expiring-soon reminders, and delivers transactional email from a
+  PostgreSQL outbox.
+
+```mermaid
+sequenceDiagram
+    participant Worker as Waitlist worker
+    participant Store as FamilyStore
+    participant DB as PostgreSQL
+    participant SMTP as SMTP adapter
+
+    Worker->>Store: processWaitlistAutomation(tenant)
+    Store->>DB: Lock session and expire stale offers
+    Store->>DB: Cancel expired registration and enqueue EXPIRED message
+    Store->>DB: Create ordered offers for unreserved seats
+    Store->>DB: Enqueue OFFERED and reminder messages
+    Worker->>DB: Claim outbox rows FOR UPDATE SKIP LOCKED
+    Worker->>SMTP: Send template with deterministic Message-ID
+    Worker->>DB: Mark DELIVERED or schedule retry
+```
 
 What is not implemented yet:
 
@@ -703,10 +737,10 @@ What is not implemented yet:
   are the only capacity holds.
 - There is no payment step.
 - There is no multi-camper atomic sibling checkout.
-- There is no scheduled expiration worker, automatic offer advancement, or
-  outbound offer email/SMS delivery yet. Expiration semantics are enforced by
-  transaction time and stale offers are persisted as expired on the next
-  relevant write.
+- SMS, bounce/complaint processing, and a staff dead-letter replay screen are
+  not implemented. SMTP delivery uses retryable at-least-once semantics.
+- Production tenant discovery is not implemented. Each worker receives an
+  explicit organization allowlist so the runtime role never bypasses RLS.
 - Registration cancellation is implemented as a status change to `CANCELLED`;
   refund rules and cancellation fees are not implemented yet.
 
@@ -840,11 +874,11 @@ Seed data:
 | Direct admin registration                 | Implemented                                              |
 | Parent-style direct registration          | Implemented as local workflow                            |
 | Waitlist insertion when full              | Implemented                                              |
-| Time-boxed waitlist offers                | Implemented with staff offer and parent accept/decline   |
+| Time-boxed waitlist offers                | Implemented with parent, staff, and admin queue controls |
 | Capacity holds                            | Implemented for unexpired pending waitlist offers        |
 | Payments and Stripe webhooks              | Not implemented                                          |
 | Health forms and medical data             | Not implemented                                          |
-| Email delivery                            | Not implemented                                          |
+| Transactional waitlist email              | Implemented through SMTP and a retryable outbox          |
 | File uploads/object storage               | Not implemented                                          |
 | Real authentication provider              | Not implemented                                          |
 | Parent object ownership checks            | Implemented for family reads, checkout, and cancellation |

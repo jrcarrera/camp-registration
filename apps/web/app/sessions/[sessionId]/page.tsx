@@ -6,7 +6,11 @@ import type { RegisteredCamper } from '@camp-registration/contracts';
 import { RegistrationPaymentForm } from '../../../components/registration-payment-form';
 import { SessionAttendanceControls } from '../../../components/session-attendance-controls';
 import { SessionEditor } from '../../../components/session-editor';
-import { WaitlistOfferButton } from '../../../components/waitlist-offer-button';
+import { WaitlistQueueManager } from '../../../components/waitlist-queue-manager';
+import {
+  WaitlistOfferButton,
+  WaitlistOfferControls,
+} from '../../../components/waitlist-offer-button';
 import { ApiError, getCatalog, getSession } from '../../../lib/api';
 
 export const dynamic = 'force-dynamic';
@@ -77,7 +81,14 @@ function RegisteredCampers({
   sessionId: string;
 }) {
   const confirmedCount = campers.filter((camper) => camper.status === 'CONFIRMED').length;
-  const waitlistedCount = campers.filter((camper) => camper.status === 'WAITLISTED').length;
+  const waitlistedCampers = campers.filter((camper) => camper.status === 'WAITLISTED');
+  const waitlistedCount = waitlistedCampers.length;
+  const waitlistQueue = waitlistedCampers.map((camper) => ({
+    familyName: camper.family_name,
+    hasActiveOffer: camper.waitlist_offer?.status === 'PENDING',
+    name: `${camper.preferred_name ?? camper.first_name} ${camper.last_name}`,
+    registrationId: camper.registration_id,
+  }));
 
   return (
     <section className="contentSection" id="registered-campers" aria-labelledby="roster-heading">
@@ -99,6 +110,9 @@ function RegisteredCampers({
           />
         </div>
       </div>
+      {waitlistQueue.length > 0 && (
+        <WaitlistQueueManager campers={waitlistQueue} sessionId={sessionId} />
+      )}
       <div className="tableFrame">
         <table className="sessionsTable">
           <thead>
@@ -151,17 +165,26 @@ function RegisteredCampers({
                     >
                       {camper.status === 'CONFIRMED' ? 'Attending' : 'Waitlisted'}
                     </span>
+                    {camper.waitlist_position && <span>Queue #{camper.waitlist_position}</span>}
                   </td>
                   <td data-label="Waitlist offer">
                     {camper.waitlist_offer ? (
-                      <span>
-                        {camper.waitlist_offer.status === 'PENDING'
-                          ? `Expires ${new Date(camper.waitlist_offer.expires_at).toLocaleString(
-                              'en-US',
-                            )}`
-                          : camper.waitlist_offer.status.charAt(0) +
-                            camper.waitlist_offer.status.slice(1).toLowerCase()}
-                      </span>
+                      <div className="waitlistOfferCell">
+                        <span>
+                          {camper.waitlist_offer.status === 'PENDING'
+                            ? `Expires ${new Date(camper.waitlist_offer.expires_at).toLocaleString(
+                                'en-US',
+                              )}`
+                            : camper.waitlist_offer.status.charAt(0) +
+                              camper.waitlist_offer.status.slice(1).toLowerCase()}
+                        </span>
+                        {camper.waitlist_offer.status === 'PENDING' && (
+                          <WaitlistOfferControls
+                            offerId={camper.waitlist_offer.id}
+                            sessionId={sessionId}
+                          />
+                        )}
+                      </div>
                     ) : camper.status === 'WAITLISTED' ? (
                       <span>Waiting</span>
                     ) : (

@@ -211,6 +211,7 @@ describe('catalog store', () => {
           source: 'ADMIN',
           attendance_status: 'NOT_MARKED',
           status: 'CONFIRMED',
+          waitlist_position: null,
         }),
         expect.objectContaining({
           camper_id: waitlistedCamperId,
@@ -220,6 +221,7 @@ describe('catalog store', () => {
           registration_id: waitlistedRegistrationId,
           source: 'ADMIN',
           status: 'WAITLISTED',
+          waitlist_position: 1,
         }),
       ],
       waitlisted_count: 1,
