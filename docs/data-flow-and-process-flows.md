@@ -713,6 +713,10 @@ Why the session row lock matters:
 - A tenant-scoped worker expires offers, creates the next offers for every open
   seat, queues expiring-soon reminders, and delivers transactional email from a
   PostgreSQL outbox.
+- A transition with no eligible adult recipient creates a durable coverage
+  issue instead of silently succeeding. Staff can see coverage and terminal
+  delivery issues; camp and organization administrators can replay them with
+  an audited reason.
 
 ```mermaid
 sequenceDiagram
@@ -720,6 +724,7 @@ sequenceDiagram
     participant Store as FamilyStore
     participant DB as PostgreSQL
     participant SMTP as SMTP adapter
+    participant Admin as Camp administrator
 
     Worker->>Store: processWaitlistAutomation(tenant)
     Store->>DB: Lock session and expire stale offers
@@ -729,6 +734,7 @@ sequenceDiagram
     Worker->>DB: Claim outbox rows FOR UPDATE SKIP LOCKED
     Worker->>SMTP: Send template with deterministic Message-ID
     Worker->>DB: Mark DELIVERED or schedule retry
+    Admin->>DB: Re-evaluate coverage or reset FAILED delivery with audit event
 ```
 
 What is not implemented yet:
@@ -878,7 +884,7 @@ Seed data:
 | Capacity holds                            | Implemented for unexpired pending waitlist offers        |
 | Payments and Stripe webhooks              | Not implemented                                          |
 | Health forms and medical data             | Not implemented                                          |
-| Transactional waitlist email              | Implemented through SMTP and a retryable outbox          |
+| Transactional waitlist email              | Implemented with SMTP, issue visibility, and replay      |
 | File uploads/object storage               | Not implemented                                          |
 | Real authentication provider              | Not implemented                                          |
 | Parent object ownership checks            | Implemented for family reads, checkout, and cancellation |

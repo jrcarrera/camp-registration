@@ -29,6 +29,8 @@ Implemented in this slice:
 - Parent-style checkout, registration cancellation, and time-boxed waitlist
   offers with self-service acceptance or decline
 - Admin-only audited waitlist reordering with multi-camper block movement
+- Staff-visible notification coverage and terminal delivery issues with
+  admin-only audited replay
 - Web UI for listing families, creating families, and editing nested records
 - Route and database tests for family behavior
 - OpenAPI and generated TypeScript API types
@@ -56,6 +58,5 @@ Implemented in this slice:
   identity-management workflows
 - Family merge, split, transfer, archive, and restore workflows
 - Health forms, medications, allergies, and medical documents
-- Online payments, sibling atomic checkout groups, SMS, bounce processing, and
-  production tenant scheduling for waitlist automation
+- Online payments, sibling atomic checkout groups, SMS, and bounce processing
 - Restricted pickup rules and custody-sensitive workflows

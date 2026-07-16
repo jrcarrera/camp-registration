@@ -19,3 +19,4 @@ clarifications and links to superseding decisions.
 | [0011](0011-family-domain-boundaries.md)                       | Accepted | Family domain boundaries             |
 | [0012](0012-waitlist-automation-outbox.md)                     | Accepted | Waitlist automation and outbox       |
 | [0013](0013-waitlist-worker-tenant-discovery-and-health.md)    | Accepted | Waitlist worker discovery and health |
+| [0014](0014-waitlist-notification-issue-replay.md)             | Accepted | Notification issue replay            |

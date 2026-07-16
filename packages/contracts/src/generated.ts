@@ -6323,6 +6323,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            can_replay_notifications: boolean;
                             consecutive_failures: number;
                             expired_offer_count: number;
                             failed_delivery_count: number;
@@ -6331,6 +6332,19 @@ export interface paths {
                             last_error_code: string | null;
                             last_started_at: string | null;
                             last_succeeded_at: string | null;
+                            no_recipient_count: number;
+                            notification_issues: {
+                                attempt_count: number;
+                                camper_name: string;
+                                family_name: string;
+                                id: string;
+                                issue_type: "NO_ELIGIBLE_RECIPIENT" | "DELIVERY_FAILED";
+                                notification_type: "WAITLIST_OFFERED" | "WAITLIST_EXPIRING_SOON" | "WAITLIST_ACCEPTED" | "WAITLIST_DECLINED" | "WAITLIST_EXPIRED" | "WAITLIST_CANCELLED";
+                                observed_at: string;
+                                recipient_hint: string | null;
+                                replay_count: number;
+                                session_name: string;
+                            }[];
                             pending_delivery_count: number;
                             recent_cycle: {
                                 delivered_count: number;
@@ -6377,6 +6391,117 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/operations/waitlist/notifications/{issueType}/{issueId}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Re-evaluate a missing-recipient notification or replay a terminal delivery failure. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    issueId: string;
+                    issueType: "coverage" | "delivery";
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        reason: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            issue_id: string;
+                            issue_open: boolean;
+                            issue_type: "NO_ELIGIBLE_RECIPIENT" | "DELIVERY_FAILED";
+                            queued_count: number;
+                            replayed_at: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;

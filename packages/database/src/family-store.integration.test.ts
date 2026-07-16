@@ -14,6 +14,7 @@ import {
 import { runMigrations } from './migrate.js';
 import { NotificationStore } from './notification-store.js';
 import { seedCatalog } from './seed.js';
+import { WaitlistOperationsStore } from './waitlist-operations-store.js';
 
 const organizationId = 'a60b272f-b028-4f1a-b666-3ef3cffd9827';
 const otherOrganizationId = 'd193b5ee-818c-43e0-969d-26ea651ac38c';
@@ -594,12 +595,52 @@ describe('family store', () => {
         source: 'PARENT',
       },
     );
+    const coverageAdmin = new Pool({ connectionString: migrationUrl });
+    await coverageAdmin.query(
+      `UPDATE adults
+       SET receives_operational_communication = false
+       WHERE organization_id = $1 AND id = $2`,
+      [organizationId, secondAdultId],
+    );
+    await coverageAdmin.end();
     const offered = await store.createNextWaitlistOffer(
       { ...context, requestId: 'checkout-offer-test' },
       sessionId,
       'e8fd39c5-38ea-4546-b810-e1d56ac2230e',
       48,
     );
+    const operationsStore = new WaitlistOperationsStore(runtimeDatabase);
+    const coverageIssues = await operationsStore.listNotificationIssues(organizationId);
+    const coverageIssue = coverageIssues.find(
+      (issue) =>
+        issue.issue_type === 'NO_ELIGIBLE_RECIPIENT' &&
+        issue.notification_type === 'WAITLIST_OFFERED' &&
+        issue.camper_name === 'Sam Checkout',
+    );
+    expect(coverageIssue).toBeDefined();
+    if (!coverageIssue) throw new Error('Expected a missing-recipient coverage issue');
+    const stillMissing = await operationsStore.replayNotificationIssue(
+      { ...context, requestId: 'checkout-coverage-recheck-test' },
+      'NO_ELIGIBLE_RECIPIENT',
+      coverageIssue.id,
+      'Confirm contact settings before retrying.',
+    );
+    expect(stillMissing).toMatchObject({ issue_open: true, queued_count: 0 });
+    const recipientAdmin = new Pool({ connectionString: migrationUrl });
+    await recipientAdmin.query(
+      `UPDATE adults
+       SET receives_operational_communication = true
+       WHERE organization_id = $1 AND id = $2`,
+      [organizationId, secondAdultId],
+    );
+    await recipientAdmin.end();
+    const coverageReplay = await operationsStore.replayNotificationIssue(
+      { ...context, requestId: 'checkout-coverage-replay-test' },
+      'NO_ELIGIBLE_RECIPIENT',
+      coverageIssue.id,
+      'Family opted back into operational communication.',
+    );
+    expect(coverageReplay).toMatchObject({ issue_open: false, queued_count: 1 });
     const promoted = await store.respondToWaitlistOffer(
       { ...context, actorId: 'second-parent', requestId: 'checkout-accept-offer-test' },
       secondFamilyId,
@@ -768,6 +809,31 @@ describe('family store', () => {
           { id: failedNotification.id, status: 'FAILED' },
         ].sort((left, right) => left.id.localeCompare(right.id)),
       );
+      const deliveryIssues = await operationsStore.listNotificationIssues(organizationId);
+      expect(deliveryIssues).toContainEqual(
+        expect.objectContaining({
+          id: failedNotification.id,
+          issue_type: 'DELIVERY_FAILED',
+          recipient_hint: expect.stringMatching(/^\*\*\*@/),
+        }),
+      );
+      const deliveryReplay = await operationsStore.replayNotificationIssue(
+        { ...context, requestId: 'checkout-delivery-replay-test' },
+        'DELIVERY_FAILED',
+        failedNotification.id,
+        'Mail service recovered after an outage.',
+      );
+      expect(deliveryReplay).toMatchObject({ issue_open: false, queued_count: 1 });
+      const replayedDelivery = await notificationAdmin.query<{
+        attempt_count: number;
+        status: string;
+      }>(
+        `SELECT attempt_count, status
+         FROM notification_outbox
+         WHERE organization_id = $1 AND id = $2`,
+        [organizationId, failedNotification.id],
+      );
+      expect(replayedDelivery.rows).toEqual([{ attempt_count: 0, status: 'PENDING' }]);
     }
     await notificationAdmin.end();
   });

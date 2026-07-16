@@ -1032,7 +1032,7 @@ tbody tr + tr td {
 
 .operationsMetrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   margin: 0;
   padding: 0;
   border-top: 1px solid #e5e9e7;
@@ -1061,6 +1061,117 @@ tbody tr + tr td {
   overflow-wrap: anywhere;
   color: #26332d;
   font-size: 14px;
+}
+
+.notificationIssues {
+  padding-top: 17px;
+  border-top: 1px solid #e5e9e7;
+}
+
+.notificationIssuesHeading,
+.notificationReplayHeading,
+.notificationReplayActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notificationIssuesHeading h3,
+.notificationReplayHeading h3 {
+  margin: 0;
+  color: #26332d;
+  font-size: 14px;
+}
+
+.notificationIssuesHeading > span {
+  color: #6a7771;
+  font-size: 12px;
+}
+
+.notificationIssueList {
+  display: grid;
+  gap: 0;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notificationIssueList li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid #e5e9e7;
+}
+
+.notificationIssueList strong,
+.notificationIssueList span,
+.notificationIssueList small {
+  display: block;
+}
+
+.notificationIssueList strong {
+  color: #26332d;
+  font-size: 13px;
+}
+
+.notificationIssueList span {
+  margin-top: 3px;
+  color: #59665f;
+  font-size: 13px;
+}
+
+.notificationIssueList small {
+  margin-top: 4px;
+  color: #8a5d11;
+  font-size: 12px;
+}
+
+.notificationReplayButton {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.notificationReplayPanel {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid #cbd7d1;
+  border-radius: 6px;
+  background: #f7faf8;
+}
+
+.notificationReplayHeading .contextLabel {
+  margin-bottom: 3px;
+}
+
+.notificationReplayActions {
+  justify-content: flex-end;
+}
+
+.operationNotice,
+.operationError {
+  margin: 10px 0 0;
+  padding: 9px 11px;
+  border-radius: 5px;
+  font-size: 13px;
+}
+
+.operationNotice {
+  border: 1px solid #a9cbbb;
+  background: #eaf3ee;
+  color: #0e543b;
+}
+
+.operationError {
+  border: 1px solid #dfb2ab;
+  background: #fff0ed;
+  color: #8a2f22;
 }
 
 .queueHeader {
@@ -3067,8 +3178,25 @@ tbody tr + tr td {
     border-left: 0;
   }
 
+  .operationsMetrics li:nth-child(5) {
+    border-left: 0;
+  }
+
   .operationsMetrics li:nth-child(n + 3) {
     border-top: 1px solid #e5e9e7;
+  }
+
+  .notificationIssueList li {
+    grid-template-columns: 1fr;
+  }
+
+  .notificationReplayButton {
+    width: 100%;
+  }
+
+  .notificationReplayActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .fieldGrid,

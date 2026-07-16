@@ -70,6 +70,7 @@ coverage will be added with the registration workflow.
 - [Architecture decision index](docs/adr/README.md)
 - [Waitlist automation and outbox decision](docs/adr/0012-waitlist-automation-outbox.md)
 - [Waitlist worker discovery and health decision](docs/adr/0013-waitlist-worker-tenant-discovery-and-health.md)
+- [Waitlist notification issue and replay decision](docs/adr/0014-waitlist-notification-issue-replay.md)
 - [Foundation stack decision](docs/adr/0001-foundation-stack.md)
 - [Terraform deployment boundary](infra/terraform/README.md)
 - [Contributor guidance](CONTRIBUTING.md)

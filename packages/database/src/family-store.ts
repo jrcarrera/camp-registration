@@ -2627,13 +2627,13 @@ export class FamilyStore {
     deliverySequence: number,
   ): Promise<number> {
     const recipients = await client.query<{
-      recipient_email: string;
-      recipient_id: string;
+      recipient_email: string | null;
+      recipient_id: string | null;
       template_data: WaitlistNotificationTemplateData;
     }>(
       `SELECT
-         a.id AS recipient_id,
-         a.email AS recipient_email,
+         a.recipient_id,
+         a.recipient_email,
          jsonb_build_object(
            'camper_name', concat_ws(' ', COALESCE(c.preferred_name, c.first_name), c.last_name),
            'expires_at', wo.expires_at,
@@ -2660,20 +2660,59 @@ export class FamilyStore {
         AND s.id = r.session_id
        JOIN organizations o
          ON o.id = r.organization_id
-       JOIN adults a
+       LEFT JOIN waitlist_notification_recipients a
          ON a.organization_id = r.organization_id
         AND a.family_id = r.family_id
-        AND a.archived_at IS NULL
-        AND a.email IS NOT NULL
-        AND a.receives_operational_communication
-        AND (a.account_owner OR a.can_register)
        WHERE wo.organization_id = $1 AND wo.id = $2
-       ORDER BY a.id`,
+       ORDER BY a.recipient_id`,
       [organizationId, offerId],
     );
 
+    const first = recipients.rows[0];
+    if (first && !first.recipient_id) {
+      const idempotencyKey = ['waitlist', offerId, notificationType, String(deliverySequence)].join(
+        ':',
+      );
+      await client.query(
+        `INSERT INTO notification_coverage_issues (
+           id,
+           organization_id,
+           family_id,
+           session_id,
+           registration_id,
+           waitlist_offer_id,
+           notification_type,
+           template_data,
+           idempotency_key
+         )
+         SELECT
+           $3,
+           wo.organization_id,
+           wo.family_id,
+           wo.session_id,
+           wo.registration_id,
+           wo.id,
+           $4,
+           $5::jsonb,
+           $6
+         FROM waitlist_offers wo
+         WHERE wo.organization_id = $1 AND wo.id = $2
+         ON CONFLICT (organization_id, idempotency_key) DO NOTHING`,
+        [
+          organizationId,
+          offerId,
+          randomUUID(),
+          notificationType,
+          JSON.stringify(first.template_data),
+          idempotencyKey,
+        ],
+      );
+      return 0;
+    }
+
     let queued = 0;
     for (const recipient of recipients.rows) {
+      if (!recipient.recipient_id || !recipient.recipient_email) continue;
       const idempotencyKey = [
         'waitlist',
         offerId,

@@ -13,11 +13,20 @@ test('renders the API-backed dashboard and session catalog', async ({ page }) =>
 
   await expect(page.getByRole('heading', { level: 1, name: 'Camp Registration' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Waitlist operations' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 3, name: 'Notification issues' })).toBeVisible();
+  await expect(page.getByText('No notification issues require staff action.')).toBeVisible();
   await expect(page.getByRole('status')).toContainText('Local system ready');
   await expect(page.getByRole('heading', { level: 2, name: 'Sessions' })).toBeVisible();
   await expect(
     page.getByRole('link', { name: /Day Camp Week 1(?: - E2E)? Day Camp · DAY-2027-01/ }),
   ).toBeVisible();
+
+  const dashboardLayout = await page.evaluate(() => ({
+    documentWidth: document.documentElement.scrollWidth,
+    horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth,
+    viewportWidth: window.innerWidth,
+  }));
+  expect(dashboardLayout.horizontalOverflow).toBe(false);
 
   await page.getByRole('link', { exact: true, name: 'Sessions' }).click();
   await expect(page).toHaveURL('/sessions');

@@ -26368,6 +26368,7 @@
                   "additionalProperties": false,
                   "type": "object",
                   "required": [
+                    "can_replay_notifications",
                     "consecutive_failures",
                     "expired_offer_count",
                     "failed_delivery_count",
@@ -26376,10 +26377,15 @@
                     "last_error_code",
                     "last_started_at",
                     "last_succeeded_at",
+                    "no_recipient_count",
+                    "notification_issues",
                     "pending_delivery_count",
                     "recent_cycle"
                   ],
                   "properties": {
+                    "can_replay_notifications": {
+                      "type": "boolean"
+                    },
                     "consecutive_failures": {
                       "minimum": 0,
                       "type": "integer"
@@ -26464,6 +26470,127 @@
                         }
                       ]
                     },
+                    "no_recipient_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "notification_issues": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "attempt_count",
+                          "camper_name",
+                          "family_name",
+                          "id",
+                          "issue_type",
+                          "notification_type",
+                          "observed_at",
+                          "recipient_hint",
+                          "replay_count",
+                          "session_name"
+                        ],
+                        "properties": {
+                          "attempt_count": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "camper_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "family_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "issue_type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NO_ELIGIBLE_RECIPIENT"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "DELIVERY_FAILED"
+                                ]
+                              }
+                            ]
+                          },
+                          "notification_type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLIST_OFFERED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLIST_EXPIRING_SOON"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLIST_ACCEPTED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLIST_DECLINED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLIST_EXPIRED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLIST_CANCELLED"
+                                ]
+                              }
+                            ]
+                          },
+                          "observed_at": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                            "type": "string"
+                          },
+                          "recipient_hint": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "replay_count": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "session_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          }
+                        },
+                        "title": "WaitlistNotificationIssue"
+                      }
+                    },
                     "pending_delivery_count": {
                       "minimum": 0,
                       "type": "integer"
@@ -26512,6 +26639,245 @@
             }
           },
           "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/operations/waitlist/notifications/{issueType}/{issueId}/replay": {
+      "post": {
+        "tags": [
+          "operations",
+          "waitlist"
+        ],
+        "description": "Re-evaluate a missing-recipient notification or replay a terminal delivery failure.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "minLength": 3,
+                    "maxLength": 500,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "issueId",
+            "required": true
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "coverage"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "delivery"
+                  ]
+                }
+              ]
+            },
+            "in": "path",
+            "name": "issueType",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "issue_id",
+                    "issue_open",
+                    "issue_type",
+                    "queued_count",
+                    "replayed_at"
+                  ],
+                  "properties": {
+                    "issue_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "issue_open": {
+                      "type": "boolean"
+                    },
+                    "issue_type": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "NO_ELIGIBLE_RECIPIENT"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "DELIVERY_FAILED"
+                          ]
+                        }
+                      ]
+                    },
+                    "queued_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "replayed_at": {
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Default Response",
             "content": {
               "application/json": {
