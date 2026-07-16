@@ -6299,6 +6299,90 @@ export interface paths {
         };
         trace?: never;
     };
+    "/v1/operations/waitlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Tenant-scoped waitlist automation and notification delivery health. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            consecutive_failures: number;
+                            expired_offer_count: number;
+                            failed_delivery_count: number;
+                            health: "HEALTHY" | "DEGRADED" | "STALE" | "NOT_RUNNING";
+                            last_completed_at: string | null;
+                            last_error_code: string | null;
+                            last_started_at: string | null;
+                            last_succeeded_at: string | null;
+                            pending_delivery_count: number;
+                            recent_cycle: {
+                                delivered_count: number;
+                                delivery_failure_count: number;
+                                expired_offer_count: number;
+                                offers_created_count: number;
+                                reminders_queued_count: number;
+                                sessions_scanned_count: number;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;

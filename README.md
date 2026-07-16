@@ -40,7 +40,7 @@ The local services are:
 - API and OpenAPI UI: <http://localhost:3001/docs>
 - Mailpit email inbox: <http://localhost:8025>
 - Waitlist worker: background service for expiration, advancement, reminders,
-  and outbox delivery
+  outbox delivery, automatic tenant discovery, and persistent health reporting
 - MinIO console: <http://localhost:9001>
 - PostgreSQL: `localhost:5432`
 
@@ -69,6 +69,7 @@ coverage will be added with the registration workflow.
 - [Data flow and process flows](docs/data-flow-and-process-flows.md)
 - [Architecture decision index](docs/adr/README.md)
 - [Waitlist automation and outbox decision](docs/adr/0012-waitlist-automation-outbox.md)
+- [Waitlist worker discovery and health decision](docs/adr/0013-waitlist-worker-tenant-discovery-and-health.md)
 - [Foundation stack decision](docs/adr/0001-foundation-stack.md)
 - [Terraform deployment boundary](infra/terraform/README.md)
 - [Contributor guidance](CONTRIBUTING.md)

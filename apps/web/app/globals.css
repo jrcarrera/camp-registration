@@ -1000,6 +1000,69 @@ tbody tr + tr td {
   background: #ffffff;
 }
 
+.queueSectionOperations {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+
+.operationsHeader {
+  flex-wrap: wrap;
+}
+
+.operationsBadge {
+  margin-left: auto;
+  padding: 5px 9px;
+  border: 1px solid #a9cbbb;
+  border-radius: 999px;
+  background: #eaf3ee;
+  color: #0e543b;
+  font-size: 11px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.operationsBadgeDEGRADED,
+.operationsBadgeSTALE,
+.operationsBadgeNOT_RUNNING,
+.operationsBadgeUNKNOWN {
+  border-color: #e2bf6f;
+  background: #fff4d8;
+  color: #73510d;
+}
+
+.operationsMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid #e5e9e7;
+  list-style: none;
+}
+
+.operationsMetrics li {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.operationsMetrics li + li {
+  border-left: 1px solid #e5e9e7;
+}
+
+.operationsMetrics span {
+  color: #6a7771;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.operationsMetrics strong {
+  overflow-wrap: anywhere;
+  color: #26332d;
+  font-size: 14px;
+}
+
 .queueHeader {
   display: flex;
   align-items: center;
@@ -2994,6 +3057,18 @@ tbody tr + tr td {
 
   .operationalGrid {
     grid-template-columns: 1fr;
+  }
+
+  .operationsMetrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .operationsMetrics li:nth-child(3) {
+    border-left: 0;
+  }
+
+  .operationsMetrics li:nth-child(n + 3) {
+    border-top: 1px solid #e5e9e7;
   }
 
   .fieldGrid,

@@ -12,6 +12,7 @@ test('renders the API-backed dashboard and session catalog', async ({ page }) =>
   await page.goto('/');
 
   await expect(page.getByRole('heading', { level: 1, name: 'Camp Registration' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Waitlist operations' })).toBeVisible();
   await expect(page.getByRole('status')).toContainText('Local system ready');
   await expect(page.getByRole('heading', { level: 2, name: 'Sessions' })).toBeVisible();
   await expect(

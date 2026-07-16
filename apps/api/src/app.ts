@@ -10,7 +10,12 @@ import {
   type ReadinessResponse,
   type UnavailableResponse,
 } from '@camp-registration/contracts';
-import { CatalogStore, FamilyStore, type DatabaseClient } from '@camp-registration/database';
+import {
+  CatalogStore,
+  FamilyStore,
+  WaitlistOperationsStore,
+  type DatabaseClient,
+} from '@camp-registration/database';
 import Fastify, {
   type FastifyBaseLogger,
   type FastifyInstance,
@@ -21,6 +26,8 @@ import { registerCatalogRoutes } from './catalog/routes.js';
 import { CatalogService, type CatalogServiceApi } from './catalog/service.js';
 import { registerFamilyRoutes } from './families/routes.js';
 import { FamilyService, type FamilyServiceApi } from './families/service.js';
+import { registerOperationsRoutes } from './operations/routes.js';
+import { OperationsService, type OperationsServiceApi } from './operations/service.js';
 
 export interface BuildAppOptions {
   catalogService?: CatalogServiceApi;
@@ -28,6 +35,7 @@ export interface BuildAppOptions {
   familyService?: FamilyServiceApi;
   identity?: RequestIdentity;
   logger?: boolean | FastifyBaseLogger;
+  operationsService?: OperationsServiceApi;
   organizationId?: string;
   requestContext?: (request: FastifyRequest) => RequestServiceContext | undefined;
 }
@@ -88,6 +96,21 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         }
       : undefined);
   registerFamilyRoutes(app, familyService);
+
+  const operationsStore = options.database
+    ? new WaitlistOperationsStore(options.database)
+    : undefined;
+  const operationsService =
+    options.operationsService ??
+    (operationsStore
+      ? (request: FastifyRequest) => {
+          const context = resolveRequestContext(request);
+          return context
+            ? new OperationsService(operationsStore, context.identity, context.organizationId)
+            : undefined;
+        }
+      : undefined);
+  registerOperationsRoutes(app, operationsService);
 
   app.get<{ Reply: HealthResponse }>(
     '/health',

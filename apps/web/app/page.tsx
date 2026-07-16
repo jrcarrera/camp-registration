@@ -1,5 +1,11 @@
-import type { RegisteredCamper, SessionDetail, SessionSummary } from '@camp-registration/contracts';
+import type {
+  RegisteredCamper,
+  SessionDetail,
+  SessionSummary,
+  WaitlistOperationsStatus,
+} from '@camp-registration/contracts';
 import {
+  Activity,
   AlertCircle,
   CheckCircle2,
   CircleDollarSign,
@@ -9,7 +15,7 @@ import {
 } from 'lucide-react';
 
 import { SessionTable } from '../components/session-table';
-import { getCatalog, getSession, getSessions } from '../lib/api';
+import { getCatalog, getSession, getSessions, getWaitlistOperations } from '../lib/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +37,26 @@ function formatDate(value: string): string {
     day: 'numeric',
     month: 'short',
   }).format(new Date(value));
+}
+
+function formatTimestamp(value: string | null, timeZone: string): string {
+  if (!value) return 'Never';
+  return new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'medium',
+    timeZone,
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
+function automationLabel(status: WaitlistOperationsStatus | null): string {
+  if (!status) return 'Unavailable';
+  const labels: Record<WaitlistOperationsStatus['health'], string> = {
+    DEGRADED: 'Needs attention',
+    HEALTHY: 'Healthy',
+    NOT_RUNNING: 'Not running',
+    STALE: 'Delayed',
+  };
+  return labels[status.health];
 }
 
 function camperName(camper: Pick<RegisteredCamper, 'first_name' | 'last_name' | 'preferred_name'>) {
@@ -55,15 +81,24 @@ export default async function HomePage() {
   let sessions: SessionSummary[] = [];
   let sessionDetails: SessionDetail[] = [];
   let seasonName = 'Summer 2027';
+  let organizationTimeZone = 'UTC';
   let loadError = false;
+  let waitlistOperations: WaitlistOperationsStatus | null = null;
 
   try {
     const [catalog, response] = await Promise.all([getCatalog(), getSessions()]);
     sessions = response.sessions;
     seasonName = catalog.seasons[0]?.name ?? seasonName;
+    organizationTimeZone = catalog.organization.timezone;
     sessionDetails = await Promise.all(sessions.map((session) => getSession(session.id)));
   } catch {
     loadError = true;
+  }
+
+  try {
+    waitlistOperations = await getWaitlistOperations();
+  } catch {
+    waitlistOperations = null;
   }
 
   const activeSessions = sessions.filter(
@@ -149,6 +184,49 @@ export default async function HomePage() {
       </section>
 
       <section className="operationalGrid" aria-label="Operational dashboard">
+        <div className="queueSection queueSectionOperations">
+          <div className="queueHeader operationsHeader">
+            <span aria-hidden="true">
+              <Activity size={18} />
+            </span>
+            <div>
+              <p className="contextLabel">Automation</p>
+              <h2>Waitlist operations</h2>
+            </div>
+            <strong
+              className={`operationsBadge operationsBadge${waitlistOperations?.health ?? 'UNKNOWN'}`}
+            >
+              {automationLabel(waitlistOperations)}
+            </strong>
+          </div>
+          {waitlistOperations ? (
+            <ul className="operationsMetrics" aria-label="Waitlist automation status">
+              <li>
+                <span>Last completed cycle</span>
+                <strong>
+                  {formatTimestamp(waitlistOperations.last_completed_at, organizationTimeZone)}
+                </strong>
+              </li>
+              <li>
+                <span>Pending deliveries</span>
+                <strong>{waitlistOperations.pending_delivery_count}</strong>
+              </li>
+              <li>
+                <span>Failed deliveries</span>
+                <strong>{waitlistOperations.failed_delivery_count}</strong>
+              </li>
+              <li>
+                <span>Expired offers awaiting processing</span>
+                <strong>{waitlistOperations.expired_offer_count}</strong>
+              </li>
+            </ul>
+          ) : (
+            <p className="queueEmpty">
+              Waitlist automation health could not be loaded. Registration data remains available.
+            </p>
+          )}
+        </div>
+
         <div className="queueSection">
           <div className="queueHeader">
             <span aria-hidden="true">

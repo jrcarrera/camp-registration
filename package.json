@@ -27,7 +27,8 @@
     "test:e2e:server": "docker compose up -d --wait postgres && MIGRATION_DATABASE_URL=postgresql://camp:camp@127.0.0.1:5432/camp_registration pnpm db:migrate && MIGRATION_DATABASE_URL=postgresql://camp:camp@127.0.0.1:5432/camp_registration pnpm db:seed:winter-families && DATABASE_URL=postgresql://camp_app:camp-app-local@127.0.0.1:5432/camp_registration LOCAL_AUTH_ENABLED=true LOCAL_ACTOR_ID=e2e-camp-admin LOCAL_ORGANIZATION_ID=a60b272f-b028-4f1a-b666-3ef3cffd9827 API_INTERNAL_BASE_URL=http://127.0.0.1:3001 pnpm dev",
     "test:load": "k6 run tests/load/health-smoke.js",
     "typecheck": "pnpm packages:build && pnpm -r --if-present run typecheck",
-    "worker:waitlist": "pnpm --filter @camp-registration/api worker:waitlist"
+    "worker:waitlist": "pnpm --filter @camp-registration/api worker:waitlist",
+    "worker:waitlist:health": "pnpm --filter @camp-registration/api worker:waitlist:health"
   },
   "pnpm": {
     "overrides": {

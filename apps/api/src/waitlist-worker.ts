@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
-import { createDatabaseClient, FamilyStore, NotificationStore } from '@camp-registration/database';
+import {
+  createDatabaseClient,
+  FamilyStore,
+  NotificationStore,
+  WaitlistOperationsStore,
+} from '@camp-registration/database';
 
 import { SmtpEmailSender } from './notifications/email.js';
 import { WaitlistWorker, type WaitlistWorkerLogger } from './waitlist/worker.js';
@@ -30,18 +35,6 @@ const logger: WaitlistWorkerLogger = {
 };
 
 const database = createDatabaseClient({ connectionString: requiredSetting('DATABASE_URL') });
-const organizationIds = (
-  process.env.WAITLIST_WORKER_ORGANIZATION_IDS ??
-  process.env.LOCAL_ORGANIZATION_ID ??
-  ''
-)
-  .split(',')
-  .map((value) => value.trim())
-  .filter(Boolean);
-if (organizationIds.length === 0) {
-  throw new Error('WAITLIST_WORKER_ORGANIZATION_IDS or LOCAL_ORGANIZATION_ID is required');
-}
-
 const smtpUsername = process.env.SMTP_USERNAME?.trim();
 const smtpPassword = process.env.SMTP_PASSWORD;
 const emailSender = new SmtpEmailSender({
@@ -55,13 +48,13 @@ const emailSender = new SmtpEmailSender({
 const worker = new WaitlistWorker(
   new FamilyStore(database),
   new NotificationStore(database),
+  new WaitlistOperationsStore(database),
   emailSender,
   logger,
   {
     batchSize: integerSetting('WAITLIST_WORKER_BATCH_SIZE', 50, 1, 500),
     defaultOfferHours: integerSetting('WAITLIST_DEFAULT_OFFER_HOURS', 48, 1, 168),
     maximumDeliveryAttempts: integerSetting('NOTIFICATION_MAX_ATTEMPTS', 5, 1, 20),
-    organizationIds,
     portalBaseUrl: process.env.PORTAL_BASE_URL?.trim() || 'http://localhost:3000',
     reminderLeadHours: integerSetting('WAITLIST_REMINDER_LEAD_HOURS', 12, 1, 72),
     workerId: process.env.WAITLIST_WORKER_ID?.trim() || `waitlist-worker:${randomUUID()}`,

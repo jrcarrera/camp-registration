@@ -26352,6 +26352,230 @@
         }
       }
     },
+    "/v1/operations/waitlist": {
+      "get": {
+        "tags": [
+          "operations",
+          "waitlist"
+        ],
+        "description": "Tenant-scoped waitlist automation and notification delivery health.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "consecutive_failures",
+                    "expired_offer_count",
+                    "failed_delivery_count",
+                    "health",
+                    "last_completed_at",
+                    "last_error_code",
+                    "last_started_at",
+                    "last_succeeded_at",
+                    "pending_delivery_count",
+                    "recent_cycle"
+                  ],
+                  "properties": {
+                    "consecutive_failures": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "expired_offer_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "failed_delivery_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "health": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "HEALTHY"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "DEGRADED"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "STALE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "NOT_RUNNING"
+                          ]
+                        }
+                      ]
+                    },
+                    "last_completed_at": {
+                      "anyOf": [
+                        {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "last_error_code": {
+                      "anyOf": [
+                        {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "last_started_at": {
+                      "anyOf": [
+                        {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "last_succeeded_at": {
+                      "anyOf": [
+                        {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "pending_delivery_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "recent_cycle": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "delivered_count",
+                        "delivery_failure_count",
+                        "expired_offer_count",
+                        "offers_created_count",
+                        "reminders_queued_count",
+                        "sessions_scanned_count"
+                      ],
+                      "properties": {
+                        "delivered_count": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "delivery_failure_count": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "expired_offer_count": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "offers_created_count": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "reminders_queued_count": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "sessions_scanned_count": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [

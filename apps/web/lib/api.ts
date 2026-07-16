@@ -5,6 +5,7 @@ import type {
   ProblemResponse,
   SessionDetail,
   SessionListResponse,
+  WaitlistOperationsStatus,
 } from '@camp-registration/contracts';
 
 const apiBaseUrl = process.env.API_INTERNAL_BASE_URL ?? 'http://127.0.0.1:3001';
@@ -54,6 +55,10 @@ export async function getParentCatalog(headers = getParentApiHeaders()): Promise
 
 export async function getSessions(): Promise<SessionListResponse> {
   return getJson('/v1/sessions');
+}
+
+export async function getWaitlistOperations(): Promise<WaitlistOperationsStatus> {
+  return getJson('/v1/operations/waitlist');
 }
 
 export async function getParentSessions(

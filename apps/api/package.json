@@ -13,7 +13,8 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "worker:waitlist": "tsx src/waitlist-worker.ts"
+    "worker:waitlist": "tsx src/waitlist-worker.ts",
+    "worker:waitlist:health": "tsx src/waitlist-worker-health.ts"
   },
   "dependencies": {
     "@camp-registration/auth": "workspace:*",

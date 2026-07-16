@@ -26,7 +26,6 @@ function workerOptions() {
     batchSize: 25,
     defaultOfferHours: 48,
     maximumDeliveryAttempts: 5,
-    organizationIds: [organizationId],
     portalBaseUrl: 'http://localhost:3000',
     reminderLeadHours: 12,
     workerId: 'test-waitlist-worker',
@@ -49,10 +48,16 @@ describe('waitlist worker', () => {
       markFailed: vi.fn(),
     };
     const emailSender = { send: vi.fn().mockResolvedValue(undefined) };
+    const operationsStore = {
+      listEnabledOrganizationIds: vi.fn().mockResolvedValue([organizationId]),
+      recordCycleCompleted: vi.fn().mockResolvedValue(undefined),
+      recordCycleStarted: vi.fn().mockResolvedValue(undefined),
+    };
     const logger = { error: vi.fn(), info: vi.fn() };
     const worker = new WaitlistWorker(
       familyStore as never,
       notificationStore as never,
+      operationsStore as never,
       emailSender,
       logger,
       workerOptions(),
@@ -79,6 +84,12 @@ describe('waitlist worker', () => {
       'test-waitlist-worker',
       notification.id,
     );
+    expect(operationsStore.recordCycleCompleted).toHaveBeenCalledWith(
+      organizationId,
+      'test-waitlist-worker',
+      expect.objectContaining({ delivered_count: 1, expired_offer_count: 1 }),
+      null,
+    );
   });
 
   it('releases failed deliveries for retry without logging recipient details', async () => {
@@ -98,10 +109,16 @@ describe('waitlist worker', () => {
     const emailSender = {
       send: vi.fn().mockRejectedValue(new Error('SMTP rejected parent@example.test')),
     };
+    const operationsStore = {
+      listEnabledOrganizationIds: vi.fn().mockResolvedValue([organizationId]),
+      recordCycleCompleted: vi.fn().mockResolvedValue(undefined),
+      recordCycleStarted: vi.fn().mockResolvedValue(undefined),
+    };
     const logger = { error: vi.fn(), info: vi.fn() };
     const worker = new WaitlistWorker(
       familyStore as never,
       notificationStore as never,
+      operationsStore as never,
       emailSender,
       logger,
       workerOptions(),
@@ -116,6 +133,45 @@ describe('waitlist worker', () => {
       5,
     );
     expect(JSON.stringify(logger.error.mock.calls)).not.toContain('parent@example.test');
+    expect(operationsStore.recordCycleCompleted).toHaveBeenCalledWith(
+      organizationId,
+      'test-waitlist-worker',
+      expect.objectContaining({ delivery_failure_count: 1 }),
+      null,
+    );
+  });
+
+  it('records a degraded cycle when tenant automation fails', async () => {
+    const familyStore = {
+      processWaitlistAutomation: vi.fn().mockRejectedValue(new Error('database unavailable')),
+    };
+    const notificationStore = {
+      claimPending: vi.fn().mockResolvedValue([]),
+      markDelivered: vi.fn(),
+      markFailed: vi.fn(),
+    };
+    const operationsStore = {
+      listEnabledOrganizationIds: vi.fn().mockResolvedValue([organizationId]),
+      recordCycleCompleted: vi.fn().mockResolvedValue(undefined),
+      recordCycleStarted: vi.fn().mockResolvedValue(undefined),
+    };
+    const worker = new WaitlistWorker(
+      familyStore as never,
+      notificationStore as never,
+      operationsStore as never,
+      { send: vi.fn() },
+      { error: vi.fn(), info: vi.fn() },
+      workerOptions(),
+    );
+
+    await worker.runCycle();
+
+    expect(operationsStore.recordCycleCompleted).toHaveBeenCalledWith(
+      organizationId,
+      'test-waitlist-worker',
+      expect.any(Object),
+      'waitlist_automation_failed',
+    );
   });
 });
 

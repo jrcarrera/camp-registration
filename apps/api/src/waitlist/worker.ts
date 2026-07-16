@@ -6,6 +6,7 @@ import type {
   NotificationOutboxRecord,
   NotificationStore,
   WaitlistAutomationResult,
+  WaitlistOperationsStore,
 } from '@camp-registration/database';
 
 import { buildWaitlistEmail, type EmailSender } from '../notifications/email.js';
@@ -19,7 +20,6 @@ export interface WaitlistWorkerOptions {
   batchSize: number;
   defaultOfferHours: number;
   maximumDeliveryAttempts: number;
-  organizationIds: string[];
   portalBaseUrl: string;
   reminderLeadHours: number;
   workerId: string;
@@ -47,6 +47,10 @@ export class WaitlistWorker {
       NotificationStore,
       'claimPending' | 'markDelivered' | 'markFailed'
     >,
+    private readonly operationsStore: Pick<
+      WaitlistOperationsStore,
+      'listEnabledOrganizationIds' | 'recordCycleCompleted' | 'recordCycleStarted'
+    >,
     private readonly emailSender: EmailSender,
     private readonly logger: WaitlistWorkerLogger,
     private readonly options: WaitlistWorkerOptions,
@@ -54,10 +58,11 @@ export class WaitlistWorker {
 
   async runCycle(): Promise<WaitlistWorkerCycleResult> {
     const cycleId = randomUUID();
+    const organizationIds = await this.operationsStore.listEnabledOrganizationIds();
     const total: WaitlistWorkerCycleResult = {
       delivered: 0,
       failed: 0,
-      organizations: this.options.organizationIds.length,
+      organizations: organizationIds.length,
       waitlist: {
         expired_offers: 0,
         offers_created: 0,
@@ -66,12 +71,32 @@ export class WaitlistWorker {
       },
     };
 
-    for (const organizationId of this.options.organizationIds) {
+    for (const organizationId of organizationIds) {
       const context: FamilyWriteContext = {
         actorId: 'system:waitlist-worker',
         organizationId,
         requestId: `waitlist-worker:${cycleId}`,
       };
+      const organizationMetrics = {
+        delivered_count: 0,
+        delivery_failure_count: 0,
+        expired_offer_count: 0,
+        offers_created_count: 0,
+        reminders_queued_count: 0,
+        sessions_scanned_count: 0,
+      };
+      let errorCode: string | null = null;
+      try {
+        await this.operationsStore.recordCycleStarted(organizationId, this.options.workerId);
+      } catch (error) {
+        this.logger.error(
+          {
+            error_type: error instanceof Error ? error.name : 'UnknownError',
+            organization_id: organizationId,
+          },
+          'waitlist worker heartbeat start failed',
+        );
+      }
       try {
         const waitlist = await this.familyStore.processWaitlistAutomation(
           context,
@@ -82,7 +107,12 @@ export class WaitlistWorker {
         total.waitlist.offers_created += waitlist.offers_created;
         total.waitlist.reminders_queued += waitlist.reminders_queued;
         total.waitlist.sessions_scanned += waitlist.sessions_scanned;
+        organizationMetrics.expired_offer_count = waitlist.expired_offers;
+        organizationMetrics.offers_created_count = waitlist.offers_created;
+        organizationMetrics.reminders_queued_count = waitlist.reminders_queued;
+        organizationMetrics.sessions_scanned_count = waitlist.sessions_scanned;
       } catch (error) {
+        errorCode = 'waitlist_automation_failed';
         this.logger.error(
           {
             error_type: error instanceof Error ? error.name : 'UnknownError',
@@ -100,6 +130,7 @@ export class WaitlistWorker {
           this.options.batchSize,
         );
       } catch (error) {
+        errorCode = errorCode ? 'multiple_cycle_steps_failed' : 'notification_claim_failed';
         this.logger.error(
           {
             error_type: error instanceof Error ? error.name : 'UnknownError',
@@ -107,10 +138,44 @@ export class WaitlistWorker {
           },
           'notification outbox claim failed',
         );
-        continue;
+        messages = [];
       }
       for (const record of messages) {
-        await this.deliver(organizationId, record, total);
+        try {
+          if (await this.deliver(organizationId, record)) {
+            total.delivered += 1;
+            organizationMetrics.delivered_count += 1;
+          } else {
+            total.failed += 1;
+            organizationMetrics.delivery_failure_count += 1;
+          }
+        } catch (error) {
+          errorCode = errorCode ? 'multiple_cycle_steps_failed' : 'notification_state_failed';
+          this.logger.error(
+            {
+              error_type: error instanceof Error ? error.name : 'UnknownError',
+              notification_id: record.id,
+              organization_id: organizationId,
+            },
+            'waitlist notification state update failed',
+          );
+        }
+      }
+      try {
+        await this.operationsStore.recordCycleCompleted(
+          organizationId,
+          this.options.workerId,
+          organizationMetrics,
+          errorCode,
+        );
+      } catch (error) {
+        this.logger.error(
+          {
+            error_type: error instanceof Error ? error.name : 'UnknownError',
+            organization_id: organizationId,
+          },
+          'waitlist worker heartbeat completion failed',
+        );
       }
     }
 
@@ -133,12 +198,11 @@ export class WaitlistWorker {
   private async deliver(
     organizationId: string,
     record: NotificationOutboxRecord,
-    total: WaitlistWorkerCycleResult,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       await this.emailSender.send(buildWaitlistEmail(record, this.options.portalBaseUrl));
       await this.notificationStore.markDelivered(organizationId, this.options.workerId, record.id);
-      total.delivered += 1;
+      return true;
     } catch (error) {
       await this.notificationStore.markFailed(
         organizationId,
@@ -147,7 +211,6 @@ export class WaitlistWorker {
         safeDeliveryError(error),
         this.options.maximumDeliveryAttempts,
       );
-      total.failed += 1;
       this.logger.error(
         {
           error_type: error instanceof Error ? error.name : 'UnknownError',
@@ -156,6 +219,7 @@ export class WaitlistWorker {
         },
         'waitlist notification delivery failed',
       );
+      return false;
     }
   }
 }
