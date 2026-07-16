@@ -24,7 +24,6 @@ const notification: NotificationOutboxRecord = {
 function workerOptions() {
   return {
     batchSize: 25,
-    defaultOfferHours: 48,
     maximumDeliveryAttempts: 5,
     portalBaseUrl: 'http://localhost:3000',
     reminderLeadHours: 12,
@@ -70,7 +69,6 @@ describe('waitlist worker', () => {
     });
     expect(familyStore.processWaitlistAutomation).toHaveBeenCalledWith(
       expect.objectContaining({ actorId: 'system:waitlist-worker', organizationId }),
-      48,
       12,
     );
     expect(emailSender.send).toHaveBeenCalledWith(

@@ -31,6 +31,8 @@ Implemented in this slice:
 - Admin-only audited waitlist reordering with multi-camper block movement
 - Staff-visible notification coverage and terminal delivery issues with
   admin-only audited replay
+- Tenant-owned waitlist claim-window policy with administrator settings and
+  per-offer overrides
 - Web UI for listing families, creating families, and editing nested records
 - Route and database tests for family behavior
 - OpenAPI and generated TypeScript API types

@@ -1,5 +1,7 @@
 import {
   CatalogContextSchema,
+  OrganizationFixtureSchema,
+  OrganizationSettingsUpdateSchema,
   ProblemResponseSchema,
   ProgramCreateSchema,
   ProgramFixtureSchema,
@@ -15,6 +17,8 @@ import {
   SessionRegistrationParamsSchema,
   SessionUpdateSchema,
   type CatalogContext,
+  type OrganizationFixture,
+  type OrganizationSettingsUpdate,
   type ProgramCreate,
   type ProgramFixture,
   type ProgramParams,
@@ -124,6 +128,35 @@ export function registerCatalogRoutes(app: FastifyInstance, service: CatalogServ
       }
       try {
         return await catalogService.getContext();
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.patch<{
+    Body: OrganizationSettingsUpdate;
+    Reply: OrganizationFixture | ProblemResponse;
+  }>(
+    '/v1/organization/settings',
+    {
+      schema: {
+        body: OrganizationSettingsUpdateSchema,
+        description: 'Update tenant-owned organization operating defaults.',
+        response: { 200: OrganizationFixtureSchema, ...errorResponses },
+        tags: ['organization', 'settings'],
+      },
+    },
+    async (request, reply) => {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        return await catalogService.updateOrganizationSettings(request.body, request.id);
       } catch (error) {
         return sendProblem(reply, error);
       }

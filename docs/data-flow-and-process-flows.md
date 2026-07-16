@@ -686,8 +686,9 @@ Why the session row lock matters:
 - Staff creates an offer for the first eligible waitlisted registration ordered
   by `waitlist_position_at, id`.
 - New registrations cannot take an open seat ahead of an existing waitlist.
-- The offer defaults to 48 hours and holds one capacity slot while its status is
-  `PENDING` and `expires_at` is still in the future.
+- The offer uses the tenant-owned organization claim-window policy by default
+  and holds one capacity slot while its status is `PENDING` and `expires_at` is
+  still in the future. Staff may select a bounded one-off override.
 - A linked parent can accept or decline the offer from the parent portal.
 - Acceptance atomically changes the offer to `ACCEPTED` and the registration to
   `CONFIRMED` while the session row is locked.
@@ -727,6 +728,7 @@ sequenceDiagram
     participant Admin as Camp administrator
 
     Worker->>Store: processWaitlistAutomation(tenant)
+    Store->>DB: Read organization claim-window policy
     Store->>DB: Lock session and expire stale offers
     Store->>DB: Cancel expired registration and enqueue EXPIRED message
     Store->>DB: Create ordered offers for unreserved seats

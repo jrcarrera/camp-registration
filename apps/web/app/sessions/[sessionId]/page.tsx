@@ -61,6 +61,7 @@ export default async function SessionEditorPage({
         <RegisteredCampers
           availableCount={session.available_count}
           campers={session.registered_campers}
+          defaultOfferDurationHours={catalog.organization.waitlist_offer_duration_hours}
           sessionId={session.id}
         />
       </>
@@ -74,10 +75,12 @@ export default async function SessionEditorPage({
 function RegisteredCampers({
   availableCount,
   campers,
+  defaultOfferDurationHours,
   sessionId,
 }: {
   availableCount: number;
   campers: RegisteredCamper[];
+  defaultOfferDurationHours: 24 | 48 | 72 | 168;
   sessionId: string;
 }) {
   const confirmedCount = campers.filter((camper) => camper.status === 'CONFIRMED').length;
@@ -105,6 +108,7 @@ function RegisteredCampers({
             Check-in desk
           </Link>
           <WaitlistOfferButton
+            defaultExpiresInHours={defaultOfferDurationHours}
             disabled={waitlistedCount === 0 || availableCount === 0}
             sessionId={sessionId}
           />

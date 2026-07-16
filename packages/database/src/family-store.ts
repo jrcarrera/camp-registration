@@ -1372,15 +1372,21 @@ export class FamilyStore {
     context: FamilyWriteContext,
     sessionId: string,
     offerId: string,
-    expiresInHours: number,
+    expiresInHours: number | null,
   ): Promise<FamilyRegistrationResultRecord> {
     await this.expireWaitlistOffers(context, sessionId);
     return this.withTenant(context.organizationId, async (client) => {
-      const session = await client.query<{ id: string; capacity: number; status: string }>(
-        `SELECT id, capacity, status
-         FROM sessions
-         WHERE organization_id = $1 AND id = $2
-         FOR UPDATE`,
+      const session = await client.query<{
+        capacity: number;
+        id: string;
+        status: string;
+        waitlist_offer_duration_hours: number;
+      }>(
+        `SELECT s.id, s.capacity, s.status, o.waitlist_offer_duration_hours
+         FROM sessions s
+         JOIN organizations o ON o.id = s.organization_id
+         WHERE s.organization_id = $1 AND s.id = $2
+         FOR UPDATE OF s`,
         [context.organizationId, sessionId],
       );
       const sessionRow = session.rows[0];
@@ -1394,6 +1400,8 @@ export class FamilyStore {
           session_id: 'Select an active session.',
         });
       }
+      const effectiveExpiresInHours =
+        expiresInHours ?? sessionRow.waitlist_offer_duration_hours;
 
       const capacity = await client.query<{ active_holds: number; confirmed: number }>(
         `SELECT
@@ -1450,12 +1458,13 @@ export class FamilyStore {
           sessionId,
           next.family_id,
           next.id,
-          expiresInHours,
+          effectiveExpiresInHours,
           context.actorId,
         ],
       );
       await this.insertAudit(client, context, 'waitlist_offer.created', 'waitlist_offer', offerId, {
-        expires_in_hours: expiresInHours,
+        duration_source: expiresInHours === null ? 'ORGANIZATION_DEFAULT' : 'STAFF_OVERRIDE',
+        expires_in_hours: effectiveExpiresInHours,
         registration_id: next.id,
         session_id: sessionId,
       });
@@ -1490,7 +1499,6 @@ export class FamilyStore {
 
   async processWaitlistAutomation(
     context: FamilyWriteContext,
-    expiresInHours: number,
     reminderLeadHours: number,
   ): Promise<WaitlistAutomationResult> {
     const sessionIds = await this.withTenant(context.organizationId, async (client) => {
@@ -1553,7 +1561,7 @@ export class FamilyStore {
       expiredOffers += await this.expireWaitlistOffers(context, sessionId);
       while (true) {
         try {
-          await this.createNextWaitlistOffer(context, sessionId, randomUUID(), expiresInHours);
+          await this.createNextWaitlistOffer(context, sessionId, randomUUID(), null);
           offersCreated += 1;
         } catch (error) {
           if (

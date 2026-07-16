@@ -70,6 +70,7 @@ const context: CatalogContext = {
     name: 'Test Camp',
     slug: 'test-camp',
     timezone: 'America/Chicago',
+    waitlist_offer_duration_hours: 48,
   },
   programs: [
     {
@@ -211,6 +212,29 @@ describe('catalog routes', () => {
     expect(listResponse.json()).toEqual({ sessions: [summary] });
     expect(detailResponse.statusCode).toBe(200);
     expect(detailResponse.json()).toEqual(detail);
+  });
+
+  it('updates organization settings through the documented API', async () => {
+    const service = fakeService();
+    const app = await buildApp({ catalogService: service });
+    applications.push(app);
+
+    const response = await app.inject({
+      headers: { 'x-request-id': 'organization-settings-test' },
+      method: 'PATCH',
+      payload: { waitlist_offer_duration_hours: 72 },
+      url: '/v1/organization/settings',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      ...context.organization,
+      waitlist_offer_duration_hours: 72,
+    });
+    expect(service.updateOrganizationSettings).toHaveBeenCalledWith(
+      { waitlist_offer_duration_hours: 72 },
+      'organization-settings-test',
+    );
   });
 
   it('updates a session and passes the request id to the service', async () => {
@@ -421,6 +445,9 @@ function fakeService(): CatalogServiceApi & {
   createSession: ReturnType<typeof vi.fn<CatalogServiceApi['createSession']>>;
   updateSessionAttendance: ReturnType<typeof vi.fn<CatalogServiceApi['updateSessionAttendance']>>;
   updateProgram: ReturnType<typeof vi.fn<CatalogServiceApi['updateProgram']>>;
+  updateOrganizationSettings: ReturnType<
+    typeof vi.fn<CatalogServiceApi['updateOrganizationSettings']>
+  >;
   updateSession: ReturnType<typeof vi.fn<CatalogServiceApi['updateSession']>>;
 } {
   return {
@@ -446,6 +473,10 @@ function fakeService(): CatalogServiceApi & {
     getSession: vi.fn().mockResolvedValue(detail),
     listSessions: vi.fn().mockResolvedValue([summary]),
     updateProgram: vi.fn().mockResolvedValue(updatedProgram),
+    updateOrganizationSettings: vi.fn().mockResolvedValue({
+      ...context.organization,
+      waitlist_offer_duration_hours: 72,
+    }),
     updateSession: vi.fn().mockResolvedValue({ ...detail, version: 2 }),
     updateSessionAttendance: vi.fn().mockResolvedValue(detail),
   };

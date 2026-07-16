@@ -2028,6 +2028,49 @@ tbody tr + tr td {
   line-height: 1.5;
 }
 
+.settingsPageHeader {
+  align-items: center;
+}
+
+.settingsHeaderIcon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: #eaf3ee;
+  color: #146b4d;
+}
+
+.organizationSettingsFields {
+  max-width: 520px;
+  display: grid;
+  gap: 14px;
+}
+
+.settingsPolicySummary {
+  margin: 0;
+  padding: 12px;
+  border-left: 3px solid #2a6f97;
+  background: #f3f7f9;
+  color: #59665f;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.settingsPolicySummary strong {
+  color: #26332d;
+}
+
+.organizationSettingsFields .notice {
+  margin: 0;
+}
+
+.settingsSaveButton {
+  justify-self: start;
+}
+
 .fieldGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2764,6 +2807,14 @@ tbody tr + tr td {
 @media (max-width: 620px) {
   .appShell {
     display: block;
+  }
+
+  .settingsHeaderIcon {
+    display: none;
+  }
+
+  .settingsSaveButton {
+    width: 100%;
   }
 
   .sidebar {

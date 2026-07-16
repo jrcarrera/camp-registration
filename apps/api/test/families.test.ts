@@ -727,7 +727,7 @@ describe('family service validation', () => {
       expect.objectContaining({ actorId: localIdentity.subject, organizationId }),
       registrationCreate.session_id,
       expect.any(String),
-      48,
+      null,
     );
     await expect(
       adminService.manageWaitlistOffer(

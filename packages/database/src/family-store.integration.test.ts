@@ -715,11 +715,19 @@ describe('family store', () => {
       organizationId,
       requestId: 'checkout-waitlist-automation-test',
     };
-    const automated = await store.processWaitlistAutomation(automationContext, 48, 12);
+    const automationPolicyAdmin = new Pool({ connectionString: migrationUrl });
+    await automationPolicyAdmin.query(
+      `UPDATE organizations
+       SET waitlist_offer_duration_hours = 24
+       WHERE id = $1`,
+      [organizationId],
+    );
+    await automationPolicyAdmin.end();
+    const automated = await store.processWaitlistAutomation(automationContext, 12);
     expect(automated).toMatchObject({ expired_offers: 0, offers_created: 1 });
     const automationAdmin = new Pool({ connectionString: migrationUrl });
-    const automatedOffer = await automationAdmin.query<{ id: string }>(
-      `SELECT id
+    const automatedOffer = await automationAdmin.query<{ expires_in_hours: number; id: string }>(
+      `SELECT id, extract(epoch FROM (expires_at - offered_at)) / 3600 AS expires_in_hours
        FROM waitlist_offers
        WHERE organization_id = $1
          AND registration_id = $2
@@ -728,6 +736,7 @@ describe('family store', () => {
     );
     const automatedOfferId = automatedOffer.rows[0]?.id;
     expect(automatedOfferId).toBeDefined();
+    expect(Number(automatedOffer.rows[0]?.expires_in_hours)).toBeCloseTo(24, 3);
     if (automatedOfferId) {
       await automationAdmin.query(
         `UPDATE waitlist_offers
@@ -738,8 +747,14 @@ describe('family store', () => {
         [organizationId, automatedOfferId],
       );
     }
+    await automationAdmin.query(
+      `UPDATE organizations
+       SET waitlist_offer_duration_hours = 48
+       WHERE id = $1`,
+      [organizationId],
+    );
     await automationAdmin.end();
-    const expiredByWorker = await store.processWaitlistAutomation(automationContext, 48, 12);
+    const expiredByWorker = await store.processWaitlistAutomation(automationContext, 12);
     expect(expiredByWorker).toMatchObject({ expired_offers: 1, offers_created: 0 });
 
     const notificationAdmin = new Pool({ connectionString: migrationUrl });

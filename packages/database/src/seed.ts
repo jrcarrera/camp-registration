@@ -5,7 +5,13 @@ import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
 
 interface CatalogFixture {
-  organizations: Array<{ id: string; slug: string; name: string; timezone: string }>;
+  organizations: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    timezone: string;
+    waitlist_offer_duration_hours: number;
+  }>;
   seasons: Array<{ id: string; organization_id: string; name: string; year: number }>;
   programs: Array<{
     id: string;
@@ -137,10 +143,17 @@ export async function seedCatalog(connectionString: string): Promise<void> {
 
     for (const organization of fixture.organizations) {
       await client.query(
-        `INSERT INTO organizations (id, slug, name, timezone)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO organizations (
+           id, slug, name, timezone, waitlist_offer_duration_hours
+         ) VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (id) DO NOTHING`,
-        [organization.id, organization.slug, organization.name, organization.timezone],
+        [
+          organization.id,
+          organization.slug,
+          organization.name,
+          organization.timezone,
+          organization.waitlist_offer_duration_hours,
+        ],
       );
     }
 

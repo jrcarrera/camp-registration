@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import type { RequestIdentity } from '@camp-registration/auth';
 import type {
   CatalogContext,
+  OrganizationFixture,
+  OrganizationSettingsUpdate,
   ProgramCreate,
   ProgramFixture,
   ProgramUpdate,
@@ -39,6 +41,10 @@ export class CatalogValidationError extends Error {
 
 export interface CatalogServiceApi {
   getContext(): Promise<CatalogContext>;
+  updateOrganizationSettings(
+    settings: OrganizationSettingsUpdate,
+    requestId: string,
+  ): Promise<OrganizationFixture>;
   listSessions(): Promise<SessionSummary[]>;
   getSession(sessionId: string): Promise<SessionDetail>;
   createProgram(program: ProgramCreate, requestId: string): Promise<ProgramFixture>;
@@ -171,6 +177,19 @@ export class CatalogService implements CatalogServiceApi {
   async getContext(): Promise<CatalogContext> {
     this.authorize(readRoles);
     return this.store.getContext(this.organizationId);
+  }
+
+  async updateOrganizationSettings(
+    settings: OrganizationSettingsUpdate,
+    requestId: string,
+  ): Promise<OrganizationFixture> {
+    this.authorize(editRoles);
+    return this.store.updateOrganizationSettings({
+      actorId: this.identity.subject,
+      organizationId: this.organizationId,
+      requestId,
+      waitlistOfferDurationHours: settings.waitlist_offer_duration_hours,
+    });
   }
 
   async listSessions(): Promise<SessionSummary[]> {

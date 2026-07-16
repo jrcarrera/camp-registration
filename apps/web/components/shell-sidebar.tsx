@@ -90,7 +90,12 @@ export function ShellSidebar() {
               <House size={18} aria-hidden="true" />
               <span>Parent portal</span>
             </Link>
-            <Link className="navLink settingsLink" href="/#settings" title="Settings">
+            <Link
+              aria-current={pathname === '/settings' ? 'page' : undefined}
+              className="navLink settingsLink"
+              href="/settings"
+              title="Settings"
+            >
               <Settings size={18} aria-hidden="true" />
               <span>Settings</span>
             </Link>

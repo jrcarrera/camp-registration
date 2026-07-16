@@ -631,7 +631,7 @@ export class FamilyService implements FamilyServiceApi {
       this.context(requestId),
       sessionId,
       randomUUID(),
-      offer.expires_in_hours ?? 48,
+      offer.expires_in_hours ?? null,
     );
   }
 

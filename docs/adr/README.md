@@ -20,3 +20,4 @@ clarifications and links to superseding decisions.
 | [0012](0012-waitlist-automation-outbox.md)                     | Accepted | Waitlist automation and outbox       |
 | [0013](0013-waitlist-worker-tenant-discovery-and-health.md)    | Accepted | Waitlist worker discovery and health |
 | [0014](0014-waitlist-notification-issue-replay.md)             | Accepted | Notification issue replay            |
+| [0015](0015-organization-waitlist-offer-duration-policy.md)    | Accepted | Organization offer duration policy   |

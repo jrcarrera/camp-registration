@@ -30,7 +30,13 @@ export interface CatalogWaitlistOfferRecord {
 }
 
 export interface CatalogContextRecord {
-  organization: { id: string; slug: string; name: string; timezone: string };
+  organization: {
+    id: string;
+    slug: string;
+    name: string;
+    timezone: string;
+    waitlist_offer_duration_hours: 24 | 48 | 72 | 168;
+  };
   seasons: Array<{ id: string; organization_id: string; name: string; year: number }>;
   programs: Array<{
     id: string;
@@ -197,6 +203,10 @@ export interface CreateCatalogContext {
   actorId: string;
   organizationId: string;
   requestId: string;
+}
+
+export interface UpdateOrganizationSettingsContext extends CreateCatalogContext {
+  waitlistOfferDurationHours: 24 | 48 | 72 | 168;
 }
 
 export interface UpdateSessionContext {
@@ -496,7 +506,9 @@ export class CatalogStore {
   async getContext(organizationId: string): Promise<CatalogContextRecord> {
     return this.withTenant(organizationId, async (client) => {
       const organization = await client.query<CatalogContextRecord['organization']>(
-        'SELECT id, slug, name, timezone FROM organizations WHERE id = $1',
+        `SELECT id, slug, name, timezone, waitlist_offer_duration_hours
+         FROM organizations
+         WHERE id = $1`,
         [organizationId],
       );
       if (!organization.rows[0]) {
@@ -538,6 +550,48 @@ export class CatalogStore {
         seasons: seasons.rows,
         programs: programs.rows,
       };
+    });
+  }
+
+  async updateOrganizationSettings(
+    context: UpdateOrganizationSettingsContext,
+  ): Promise<CatalogContextRecord['organization']> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const current = await client.query<CatalogContextRecord['organization']>(
+        `SELECT id, slug, name, timezone, waitlist_offer_duration_hours
+         FROM organizations
+         WHERE id = $1
+         FOR UPDATE`,
+        [context.organizationId],
+      );
+      const organization = current.rows[0];
+      if (!organization) throw new CatalogNotFoundError('Organization not found');
+
+      const updated = await client.query<CatalogContextRecord['organization']>(
+        `UPDATE organizations
+         SET waitlist_offer_duration_hours = $2,
+             updated_at = transaction_timestamp()
+         WHERE id = $1
+         RETURNING id, slug, name, timezone, waitlist_offer_duration_hours`,
+        [context.organizationId, context.waitlistOfferDurationHours],
+      );
+      await client.query(
+        `INSERT INTO audit_events (
+           organization_id, actor_id, action, target_type, target_id, outcome,
+           request_id, details
+         ) VALUES ($1, $2, 'organization.settings_updated', 'organization', $1, 'success', $3, $4::jsonb)`,
+        [
+          context.organizationId,
+          context.actorId,
+          context.requestId,
+          JSON.stringify({
+            previous_waitlist_offer_duration_hours:
+              organization.waitlist_offer_duration_hours,
+            waitlist_offer_duration_hours: context.waitlistOfferDurationHours,
+          }),
+        ],
+      );
+      return updated.rows[0]!;
     });
   }
 

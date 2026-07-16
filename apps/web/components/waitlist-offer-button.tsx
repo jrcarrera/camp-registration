@@ -1,6 +1,10 @@
 'use client';
 
-import type { FamilyRegistrationResult, ProblemResponse } from '@camp-registration/contracts';
+import type {
+  FamilyRegistrationResult,
+  ProblemResponse,
+  WaitlistOfferDurationHours,
+} from '@camp-registration/contracts';
 import { AlertCircle, Ban, CheckCircle2, MailPlus, RefreshCw, SkipForward } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -19,11 +23,11 @@ const cleanState: OfferState = {
 
 async function createOffer(
   sessionId: string,
-  expiresInHours: number,
+  expiresInHours: WaitlistOfferDurationHours | null,
 ): Promise<FamilyRegistrationResult | ProblemResponse> {
   try {
     const response = await fetch(`/api/v1/sessions/${sessionId}/waitlist/offers`, {
-      body: JSON.stringify({ expires_in_hours: expiresInHours }),
+      body: JSON.stringify(expiresInHours === null ? {} : { expires_in_hours: expiresInHours }),
       headers: { 'Content-Type': 'application/json' },
       method: 'POST',
     });
@@ -55,15 +59,17 @@ async function manageOffer(
 }
 
 export function WaitlistOfferButton({
+  defaultExpiresInHours,
   disabled,
   sessionId,
 }: {
+  defaultExpiresInHours: WaitlistOfferDurationHours;
   disabled: boolean;
   sessionId: string;
 }) {
   const router = useRouter();
   const [state, setState] = useState<OfferState>(cleanState);
-  const [expiresInHours, setExpiresInHours] = useState(48);
+  const [expiresInHours, setExpiresInHours] = useState<WaitlistOfferDurationHours | null>(null);
 
   const submit = async () => {
     setState({ ...cleanState, saving: true });
@@ -91,9 +97,16 @@ export function WaitlistOfferButton({
           <select
             aria-label="Waitlist offer claim window"
             disabled={state.saving}
-            value={expiresInHours}
-            onChange={(event) => setExpiresInHours(Number(event.target.value))}
+            value={expiresInHours ?? 'default'}
+            onChange={(event) =>
+              setExpiresInHours(
+                event.target.value === 'default'
+                  ? null
+                  : (Number(event.target.value) as WaitlistOfferDurationHours),
+              )
+            }
           >
+            <option value="default">Organization default ({defaultExpiresInHours} hours)</option>
             <option value={24}>24 hours</option>
             <option value={48}>48 hours</option>
             <option value={72}>72 hours</option>

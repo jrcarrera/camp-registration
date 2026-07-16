@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   CatalogConflictError,
+  CatalogNotFoundError,
   CatalogReferenceError,
   CatalogStore,
   type SessionDetailRecord,
@@ -49,6 +50,63 @@ describe('catalog store', () => {
 
     const direct = await runtimeDatabase.pool.query('SELECT id FROM sessions');
     expect(direct.rows).toEqual([]);
+  });
+
+  it('updates tenant-owned waitlist offer policy with audit metadata', async () => {
+    const store = new CatalogStore(runtimeDatabase);
+
+    const updated = await store.updateOrganizationSettings({
+      actorId: 'integration-admin',
+      organizationId,
+      requestId: 'organization-settings-integration-test',
+      waitlistOfferDurationHours: 72,
+    });
+
+    expect(updated.waitlist_offer_duration_hours).toBe(72);
+    await expect(store.getContext(organizationId)).resolves.toMatchObject({
+      organization: { waitlist_offer_duration_hours: 72 },
+    });
+    await expect(
+      store.updateOrganizationSettings({
+        actorId: 'other-tenant-admin',
+        organizationId: otherOrganizationId,
+        requestId: 'other-tenant-settings-test',
+        waitlistOfferDurationHours: 24,
+      }),
+    ).rejects.toBeInstanceOf(CatalogNotFoundError);
+
+    const admin = new Pool({ connectionString: migrationUrl });
+    const audit = await admin.query<{
+      action: string;
+      details: {
+        previous_waitlist_offer_duration_hours: number;
+        waitlist_offer_duration_hours: number;
+      };
+    }>(
+      `SELECT action, details
+       FROM audit_events
+       WHERE organization_id = $1
+         AND action = 'organization.settings_updated'
+         AND request_id = 'organization-settings-integration-test'`,
+      [organizationId],
+    );
+    await admin.query(
+      `UPDATE organizations
+       SET waitlist_offer_duration_hours = 48
+       WHERE id = $1`,
+      [organizationId],
+    );
+    await admin.end();
+
+    expect(audit.rows).toEqual([
+      {
+        action: 'organization.settings_updated',
+        details: {
+          previous_waitlist_offer_duration_hours: 48,
+          waitlist_offer_duration_hours: 72,
+        },
+      },
+    ]);
   });
 
   it('updates a session atomically and records audit metadata', async () => {

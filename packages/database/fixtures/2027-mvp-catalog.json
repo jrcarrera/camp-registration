@@ -5,7 +5,8 @@
       "id": "a60b272f-b028-4f1a-b666-3ef3cffd9827",
       "slug": "test-camp",
       "name": "Test Camp",
-      "timezone": "America/Chicago"
+      "timezone": "America/Chicago",
+      "waitlist_offer_duration_hours": 48
     }
   ],
   "seasons": [

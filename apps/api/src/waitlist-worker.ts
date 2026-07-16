@@ -53,7 +53,6 @@ const worker = new WaitlistWorker(
   logger,
   {
     batchSize: integerSetting('WAITLIST_WORKER_BATCH_SIZE', 50, 1, 500),
-    defaultOfferHours: integerSetting('WAITLIST_DEFAULT_OFFER_HOURS', 48, 1, 168),
     maximumDeliveryAttempts: integerSetting('NOTIFICATION_MAX_ATTEMPTS', 5, 1, 20),
     portalBaseUrl: process.env.PORTAL_BASE_URL?.trim() || 'http://localhost:3000',
     reminderLeadHours: integerSetting('WAITLIST_REMINDER_LEAD_HOURS', 12, 1, 72),

@@ -9,12 +9,20 @@ export const UtcTimestampSchema = Type.String({
   pattern: '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$',
 });
 
+export const WaitlistOfferDurationHoursSchema = Type.Union([
+  Type.Literal(24),
+  Type.Literal(48),
+  Type.Literal(72),
+  Type.Literal(168),
+]);
+
 export const OrganizationFixtureSchema = Type.Object(
   {
     id: UuidSchema,
     slug: Type.String({ minLength: 1, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }),
     name: Type.String({ minLength: 1 }),
     timezone: Type.String({ minLength: 1 }),
+    waitlist_offer_duration_hours: WaitlistOfferDurationHoursSchema,
   },
   { additionalProperties: false },
 );
@@ -114,6 +122,13 @@ export const WaitlistOfferCreateSchema = Type.Object(
     expires_in_hours: Type.Optional(Type.Integer({ minimum: 1, maximum: 168 })),
   },
   { additionalProperties: false, $id: 'WaitlistOfferCreate' },
+);
+
+export const OrganizationSettingsUpdateSchema = Type.Object(
+  {
+    waitlist_offer_duration_hours: WaitlistOfferDurationHoursSchema,
+  },
+  { additionalProperties: false, $id: 'OrganizationSettingsUpdate' },
 );
 
 export const WaitlistOfferParamsSchema = Type.Object(
@@ -421,11 +436,13 @@ export const ProblemResponseSchema = Type.Object(
 );
 
 export type CatalogContext = Static<typeof CatalogContextSchema>;
+export type OrganizationSettingsUpdate = Static<typeof OrganizationSettingsUpdateSchema>;
 export type RegistrationStatus = Static<typeof RegistrationStatusSchema>;
 export type RegistrationSource = Static<typeof RegistrationSourceSchema>;
 export type AttendanceAction = Static<typeof AttendanceActionSchema>;
 export type AttendanceStatus = Static<typeof AttendanceStatusSchema>;
 export type WaitlistOffer = Static<typeof WaitlistOfferSchema>;
+export type WaitlistOfferDurationHours = Static<typeof WaitlistOfferDurationHoursSchema>;
 export type WaitlistOfferCreate = Static<typeof WaitlistOfferCreateSchema>;
 export type WaitlistOfferParams = Static<typeof WaitlistOfferParamsSchema>;
 export type WaitlistOfferStaffActionCreate = Static<typeof WaitlistOfferStaffActionCreateSchema>;

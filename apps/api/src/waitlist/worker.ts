@@ -18,7 +18,6 @@ export interface WaitlistWorkerLogger {
 
 export interface WaitlistWorkerOptions {
   batchSize: number;
-  defaultOfferHours: number;
   maximumDeliveryAttempts: number;
   portalBaseUrl: string;
   reminderLeadHours: number;
@@ -100,7 +99,6 @@ export class WaitlistWorker {
       try {
         const waitlist = await this.familyStore.processWaitlistAutomation(
           context,
-          this.options.defaultOfferHours,
           this.options.reminderLeadHours,
         );
         total.waitlist.expired_offers += waitlist.expired_offers;
