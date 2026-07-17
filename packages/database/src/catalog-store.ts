@@ -585,8 +585,7 @@ export class CatalogStore {
           context.actorId,
           context.requestId,
           JSON.stringify({
-            previous_waitlist_offer_duration_hours:
-              organization.waitlist_offer_duration_hours,
+            previous_waitlist_offer_duration_hours: organization.waitlist_offer_duration_hours,
             waitlist_offer_duration_hours: context.waitlistOfferDurationHours,
           }),
         ],

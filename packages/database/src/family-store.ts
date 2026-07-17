@@ -1400,8 +1400,7 @@ export class FamilyStore {
           session_id: 'Select an active session.',
         });
       }
-      const effectiveExpiresInHours =
-        expiresInHours ?? sessionRow.waitlist_offer_duration_hours;
+      const effectiveExpiresInHours = expiresInHours ?? sessionRow.waitlist_offer_duration_hours;
 
       const capacity = await client.query<{ active_holds: number; confirmed: number }>(
         `SELECT

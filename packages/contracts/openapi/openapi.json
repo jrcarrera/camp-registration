@@ -36,7 +36,8 @@
                         "id",
                         "slug",
                         "name",
-                        "timezone"
+                        "timezone",
+                        "waitlist_offer_duration_hours"
                       ],
                       "properties": {
                         "id": {
@@ -55,6 +56,34 @@
                         "timezone": {
                           "minLength": 1,
                           "type": "string"
+                        },
+                        "waitlist_offer_duration_hours": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                              "enum": [
+                                24
+                              ]
+                            },
+                            {
+                              "type": "number",
+                              "enum": [
+                                48
+                              ]
+                            },
+                            {
+                              "type": "number",
+                              "enum": [
+                                72
+                              ]
+                            },
+                            {
+                              "type": "number",
+                              "enum": [
+                                168
+                              ]
+                            }
+                          ]
                         }
                       }
                     },
@@ -203,6 +232,281 @@
                           }
                         }
                       }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organization/settings": {
+      "patch": {
+        "tags": [
+          "organization",
+          "settings"
+        ],
+        "description": "Update tenant-owned organization operating defaults.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "waitlist_offer_duration_hours"
+                ],
+                "properties": {
+                  "waitlist_offer_duration_hours": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "enum": [
+                          24
+                        ]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [
+                          48
+                        ]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [
+                          72
+                        ]
+                      },
+                      {
+                        "type": "number",
+                        "enum": [
+                          168
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "slug",
+                    "name",
+                    "timezone",
+                    "waitlist_offer_duration_hours"
+                  ],
+                  "properties": {
+                    "id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "slug": {
+                      "minLength": 1,
+                      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                      "type": "string"
+                    },
+                    "name": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "timezone": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "waitlist_offer_duration_hours": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "enum": [
+                            24
+                          ]
+                        },
+                        {
+                          "type": "number",
+                          "enum": [
+                            48
+                          ]
+                        },
+                        {
+                          "type": "number",
+                          "enum": [
+                            72
+                          ]
+                        },
+                        {
+                          "type": "number",
+                          "enum": [
+                            168
+                          ]
+                        }
+                      ]
                     }
                   }
                 }

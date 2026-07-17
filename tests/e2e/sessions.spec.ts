@@ -65,8 +65,13 @@ test('renders tenant-owned waitlist offer policy settings', async ({ page }) => 
   await page.goto('/settings');
 
   await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
-  await expect(page.getByRole('heading', { level: 2, name: 'Waitlist offer policy' })).toBeVisible();
-  const claimWindow = page.getByLabel('Default claim window', { exact: true });
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Waitlist offer policy' }),
+  ).toBeVisible();
+  const claimWindow = page.getByRole('combobox', {
+    exact: true,
+    name: 'Default claim window',
+  });
   expect(['24', '48', '72', '168']).toContain(await claimWindow.inputValue());
   await expect(page.getByRole('button', { exact: true, name: 'Save policy' })).toBeDisabled();
 
