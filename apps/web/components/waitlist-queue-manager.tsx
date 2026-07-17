@@ -10,7 +10,9 @@ import {
   ChevronsUp,
   RotateCcw,
   Save,
+  Search,
   UsersRound,
+  X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -23,6 +25,7 @@ export interface WaitlistQueueCamper {
 }
 
 type MoveAction = 'bottom' | 'down' | 'together' | 'top' | 'up';
+type OfferFilter = 'active' | 'all' | 'without-active';
 
 async function saveQueueOrder(
   sessionId: string,
@@ -59,6 +62,8 @@ export function WaitlistQueueManager({
   const [baseline, setBaseline] = useState(initialOrder);
   const [order, setOrder] = useState(initialOrder);
   const [reason, setReason] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [offerFilter, setOfferFilter] = useState<OfferFilter>('all');
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -67,7 +72,31 @@ export function WaitlistQueueManager({
     () => new Map(campers.map((camper) => [camper.registrationId, camper])),
     [campers],
   );
+  const queuePositionById = useMemo(
+    () => new Map(order.map((registrationId, index) => [registrationId, index + 1])),
+    [order],
+  );
+  const normalizedSearch = searchTerm.trim().toLocaleLowerCase('en-US');
+  const visibleOrder = useMemo(
+    () =>
+      order.filter((registrationId) => {
+        const camper = camperById.get(registrationId);
+        if (!camper) return false;
+        const matchesSearch =
+          normalizedSearch.length === 0 ||
+          `${camper.name} ${camper.familyName}`
+            .toLocaleLowerCase('en-US')
+            .includes(normalizedSearch);
+        const matchesOffer =
+          offerFilter === 'all' ||
+          (offerFilter === 'active' && camper.hasActiveOffer) ||
+          (offerFilter === 'without-active' && !camper.hasActiveOffer);
+        return matchesSearch && matchesOffer;
+      }),
+    [camperById, normalizedSearch, offerFilter, order],
+  );
   const dirty = baseline.join(':') !== order.join(':');
+  const hasFilters = normalizedSearch.length > 0 || offerFilter !== 'all';
 
   useEffect(() => {
     const nextOrder = inputSignature.split(':').filter(Boolean);
@@ -83,6 +112,22 @@ export function WaitlistQueueManager({
       else next.add(registrationId);
       return next;
     });
+  };
+
+  const changeSearchTerm = (value: string) => {
+    setSearchTerm(value);
+    setSelected(new Set());
+  };
+
+  const changeOfferFilter = (value: OfferFilter) => {
+    setOfferFilter(value);
+    setSelected(new Set());
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setOfferFilter('all');
+    setSelected(new Set());
   };
 
   const move = (action: MoveAction) => {
@@ -188,8 +233,49 @@ export function WaitlistQueueManager({
         </button>
       </div>
 
+      <div className="waitlistQueueFilters" aria-label="Queue filters">
+        <label className="waitlistQueueSearch">
+          <span>Search waitlist</span>
+          <span className="waitlistQueueSearchInput">
+            <Search size={16} aria-hidden="true" />
+            <input
+              disabled={saving}
+              maxLength={100}
+              onChange={(event) => changeSearchTerm(event.target.value)}
+              placeholder="Camper or family name"
+              type="search"
+              value={searchTerm}
+            />
+          </span>
+        </label>
+        <label>
+          <span>Offer status</span>
+          <select
+            disabled={saving}
+            onChange={(event) => changeOfferFilter(event.target.value as OfferFilter)}
+            value={offerFilter}
+          >
+            <option value="all">All campers</option>
+            <option value="active">Active offers</option>
+            <option value="without-active">Without active offer</option>
+          </select>
+        </label>
+        <button
+          className="buttonSecondary waitlistQueueClearFilters"
+          disabled={!hasFilters || saving}
+          onClick={clearFilters}
+          type="button"
+        >
+          <X size={15} aria-hidden="true" />
+          Clear filters
+        </button>
+        <p aria-live="polite">
+          Showing <strong>{visibleOrder.length}</strong> of {order.length}
+        </p>
+      </div>
+
       <ol className="waitlistQueueList">
-        {order.map((registrationId, index) => {
+        {visibleOrder.map((registrationId) => {
           const camper = camperById.get(registrationId);
           if (!camper) return null;
           return (
@@ -201,7 +287,9 @@ export function WaitlistQueueManager({
                   disabled={saving}
                   onChange={() => toggle(registrationId)}
                 />
-                <span className="waitlistQueuePosition">#{index + 1}</span>
+                <span className="waitlistQueuePosition">
+                  #{queuePositionById.get(registrationId)}
+                </span>
                 <span className="waitlistQueueName">
                   <strong>{camper.name}</strong>
                   <small>{camper.familyName}</small>
@@ -213,8 +301,18 @@ export function WaitlistQueueManager({
         })}
       </ol>
 
+      {visibleOrder.length === 0 ? (
+        <div className="waitlistQueueEmpty">
+          <Search size={22} aria-hidden="true" />
+          <strong>No campers match these filters</strong>
+          <span>Clear or adjust the search to return to the full queue.</span>
+        </div>
+      ) : null}
+
       <p className="waitlistQueueNote">
-        Active offers keep their current seat hold. Reordering changes priority for future offers.
+        Filtering only changes which campers are shown. Queue numbers and movement actions use the
+        full queue. Active offers keep their current seat hold; reordering changes future offer
+        priority.
       </p>
       <div className="waitlistQueueSaveBar">
         <label>

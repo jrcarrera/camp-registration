@@ -28,7 +28,8 @@ Implemented in this slice:
   linked adult `identity_subject`
 - Parent-style checkout, registration cancellation, and time-boxed waitlist
   offers with self-service acceptance or decline
-- Admin-only audited waitlist reordering with multi-camper block movement
+- Admin-only audited waitlist reordering with multi-camper block movement plus
+  full-order-safe camper/family search and active-offer filtering
 - Staff-visible notification coverage and terminal delivery issues with
   admin-only audited replay
 - Tenant-owned waitlist claim-window policy with administrator settings and

@@ -2638,6 +2638,81 @@ tbody tr + tr td {
   opacity: 0.48;
 }
 
+.waitlistQueueFilters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 220px) auto auto;
+  align-items: end;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e1d5af;
+  border-radius: 7px;
+  background: #fffdf7;
+}
+
+.waitlistQueueFilters label {
+  display: grid;
+  gap: 5px;
+  color: #4b554f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.waitlistQueueFilters input,
+.waitlistQueueFilters select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #aebbb5;
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
+  color: #1f2d27;
+  font: inherit;
+  font-size: 13px;
+}
+
+.waitlistQueueFilters input:focus,
+.waitlistQueueFilters select:focus {
+  border-color: #146b4d;
+  box-shadow: 0 0 0 3px rgba(20, 107, 77, 0.12);
+}
+
+.waitlistQueueSearchInput {
+  position: relative;
+  display: block;
+}
+
+.waitlistQueueSearchInput svg {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  z-index: 1;
+  color: #66706b;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.waitlistQueueSearchInput input {
+  padding-left: 34px;
+}
+
+.waitlistQueueClearFilters {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.waitlistQueueFilters > p {
+  align-self: center;
+  margin: 18px 0 0;
+  color: #66706b;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.waitlistQueueFilters > p strong {
+  color: #26332d;
+}
+
 .waitlistQueueList {
   display: grid;
   gap: 7px;
@@ -2658,6 +2733,33 @@ tbody tr + tr td {
   border-color: #3b8268;
   box-shadow: 0 0 0 1px #3b8268;
   background: #eff8f3;
+}
+
+.waitlistQueueEmpty {
+  min-height: 130px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  padding: 20px;
+  border: 1px dashed #c8cfc9;
+  border-radius: 7px;
+  background: #fff;
+  color: #66706b;
+  text-align: center;
+}
+
+.waitlistQueueEmpty svg {
+  color: #2a6f97;
+}
+
+.waitlistQueueEmpty strong {
+  color: #26332d;
+  font-size: 14px;
+}
+
+.waitlistQueueEmpty span {
+  font-size: 12px;
 }
 
 .waitlistQueueList label {
@@ -3061,7 +3163,16 @@ tbody tr + tr td {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .waitlistQueueFilters {
+    grid-template-columns: 1fr;
+  }
+
+  .waitlistQueueFilters > p {
+    margin: 0;
+  }
+
   .waitlistQueueToolbar button,
+  .waitlistQueueClearFilters,
   .waitlistQueueSaveBar label,
   .waitlistQueueSaveBar .inlineActions,
   .waitlistQueueSaveBar .inlineActions button {

@@ -710,6 +710,10 @@ Why the session row lock matters:
   originally loaded order and desired order, requires a reason, locks the
   session, rejects stale edits, rewrites all queue positions atomically, and
   records `waitlist.reordered` with the old and new registration ID lists.
+- The bounded queue editor can search camper and family names and filter active
+  offers without renumbering the visible results. Movement actions still apply
+  to the complete authoritative order, and changing filters clears selection so
+  hidden campers cannot be moved accidentally.
 - Grouping is adjacency only. It does not reserve capacity or make offers and
   acceptance atomic across multiple campers. Active offers retain their current
   holds; the edited order controls future offer priority.

@@ -457,6 +457,30 @@ test('lets staff manage an offer before the parent accepts the next seat', async
 
   await page.goto(`/sessions/${session.id}`);
   const queueManager = page.locator('.waitlistQueueManager');
+  const queueItems = queueManager.locator('.waitlistQueueList li');
+  const queueSearch = queueManager.getByLabel('Search waitlist');
+  const offerFilter = queueManager.getByLabel('Offer status');
+  await expect(queueItems).toHaveCount(3);
+
+  await queueSearch.fill(priorityName);
+  await expect(queueItems).toHaveCount(1);
+  await expect(queueItems).toContainText('#3');
+  await queueItems.getByRole('checkbox', { name: new RegExp(priorityName) }).check();
+  await queueManager.getByRole('button', { name: 'Top', exact: true }).click();
+  await expect(queueItems).toContainText('#1');
+  await queueManager.getByRole('button', { name: 'Clear filters' }).click();
+  await expect(queueItems).toHaveCount(3);
+  await expect(queueItems.nth(0)).toContainText(priorityName);
+  await queueManager.getByRole('button', { name: 'Reset' }).click();
+  await expect(queueItems.nth(0)).toContainText(waitlistedName);
+  await expect(queueItems.nth(1)).toContainText(groupedName);
+  await expect(queueItems.nth(2)).toContainText(priorityName);
+
+  await offerFilter.selectOption('active');
+  await expect(queueItems).toHaveCount(0);
+  await expect(queueManager.getByText('No campers match these filters')).toBeVisible();
+  await offerFilter.selectOption('all');
+
   await queueManager.getByRole('checkbox', { name: new RegExp(waitlistedName) }).check();
   await queueManager.getByRole('checkbox', { name: new RegExp(priorityName) }).check();
   await queueManager.getByRole('button', { name: 'Group together' }).click();
@@ -480,6 +504,11 @@ test('lets staff manage an offer before the parent accepts the next seat', async
     'Offer reserved until',
   );
   await expect(waitlistedRow).toContainText('Expires');
+  await offerFilter.selectOption('active');
+  await expect(queueItems).toHaveCount(1);
+  await expect(queueItems).toContainText(groupedName);
+  await expect(queueItems).toContainText('#1');
+  await offerFilter.selectOption('all');
 
   const cancelButton = waitlistedRow.getByRole('button', { exact: true, name: 'Cancel' });
   await cancelButton.click();
