@@ -2471,6 +2471,104 @@ tbody tr + tr td {
   font-size: 12px;
 }
 
+.waitlistConfirmationDialog {
+  width: min(480px, calc(100vw - 32px));
+  max-width: none;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1f2d27;
+  box-shadow: 0 24px 70px rgba(24, 42, 34, 0.3);
+}
+
+.waitlistConfirmationDialog::backdrop {
+  background: rgba(21, 35, 29, 0.58);
+  backdrop-filter: blur(2px);
+}
+
+.waitlistConfirmationForm {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.waitlistConfirmationHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.waitlistConfirmationIcon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff0ed;
+  color: #963527;
+}
+
+.waitlistConfirmationHeader h2 {
+  margin: 0;
+  color: #26332d;
+  font-size: 19px;
+  line-height: 1.3;
+}
+
+.waitlistConfirmationHeader p {
+  margin: 6px 0 0;
+  color: #59665f;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.waitlistConfirmationReason {
+  gap: 6px;
+}
+
+.waitlistConfirmationReason textarea[aria-invalid='true'] {
+  border-color: #c8553d;
+}
+
+.waitlistConfirmationError {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: -7px 0 0;
+  color: #963527;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.waitlistConfirmationError svg {
+  flex: 0 0 auto;
+}
+
+.waitlistConfirmationActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.waitlistConfirmationActions button {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.waitlistDangerButton {
+  border-color: #963527;
+  background: #963527;
+}
+
+.waitlistDangerButton:hover:not(:disabled) {
+  background: #78291f;
+}
+
 .waitlistQueueManager {
   display: grid;
   gap: 16px;
@@ -2814,6 +2912,20 @@ tbody tr + tr td {
   }
 
   .settingsSaveButton {
+    width: 100%;
+  }
+
+  .waitlistConfirmationForm {
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .waitlistConfirmationActions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .waitlistConfirmationActions button {
     width: 100%;
   }
 

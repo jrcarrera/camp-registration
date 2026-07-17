@@ -7,13 +7,15 @@ import type {
 } from '@camp-registration/contracts';
 import { AlertCircle, Ban, CheckCircle2, MailPlus, RefreshCw, SkipForward } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 interface OfferState {
   message: string | null;
   saving: boolean;
   tone: 'error' | 'success';
 }
+
+type ReasonedOfferAction = 'cancel' | 'skip';
 
 const cleanState: OfferState = {
   message: null,
@@ -149,45 +151,105 @@ export function WaitlistOfferControls({
 }) {
   const router = useRouter();
   const [state, setState] = useState<OfferState>(cleanState);
+  const [pendingAction, setPendingAction] = useState<ReasonedOfferAction | null>(null);
+  const [reason, setReason] = useState('');
+  const [reasonError, setReasonError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
+  const returnFocusRef = useRef<HTMLButtonElement | null>(null);
+  const dialogTitleId = useId();
+  const dialogDescriptionId = useId();
+  const reasonErrorId = useId();
 
-  const submit = async (action: 'cancel' | 'resend' | 'skip') => {
-    let reason: string | null = null;
-    if (action !== 'resend') {
-      const answer = window.prompt(
-        action === 'skip'
-          ? 'Why should this camper move to the end of the waitlist?'
-          : 'Why is this offer being cancelled?',
-      );
-      if (answer === null) return;
-      reason = answer.trim();
-      if (reason.length < 3) {
-        setState({
-          message: 'Enter a short reason for this action.',
-          saving: false,
-          tone: 'error',
-        });
-        return;
-      }
+  useEffect(() => {
+    if (pendingAction && dialogRef.current && !dialogRef.current.open) {
+      dialogRef.current.showModal();
+      reasonRef.current?.focus();
     }
+  }, [pendingAction]);
 
+  const closeDialog = () => {
+    if (!state.saving) dialogRef.current?.close();
+  };
+
+  const resetDialog = () => {
+    const returnFocus = returnFocusRef.current;
+    setPendingAction(null);
+    setReason('');
+    setReasonError(null);
+    returnFocusRef.current = null;
+    requestAnimationFrame(() => returnFocus?.focus());
+  };
+
+  const openDialog = (action: ReasonedOfferAction, trigger: HTMLButtonElement) => {
+    returnFocusRef.current = trigger;
+    setReason('');
+    setReasonError(null);
+    setPendingAction(action);
+  };
+
+  const resend = async () => {
     setState({ ...cleanState, saving: true });
-    const result = await manageOffer(sessionId, offerId, action, reason);
+    const result = await manageOffer(sessionId, offerId, 'resend', null);
     if ('code' in result) {
       setState({ message: result.message, saving: false, tone: 'error' });
       return;
     }
     setState({
-      message:
-        action === 'resend'
-          ? 'Offer notification queued again.'
-          : action === 'skip'
-            ? 'Offer cancelled and camper moved to the end of the queue.'
-            : 'Offer cancelled; camper kept in the same queue position.',
+      message: 'Offer notification queued again.',
       saving: false,
       tone: 'success',
     });
     router.refresh();
   };
+
+  const confirmReasonedAction = async () => {
+    if (!pendingAction) return;
+    const trimmedReason = reason.trim();
+    if (trimmedReason.length < 3) {
+      setReasonError('Enter at least 3 characters explaining this action.');
+      reasonRef.current?.focus();
+      return;
+    }
+
+    setReasonError(null);
+    setState({ ...cleanState, saving: true });
+    const result = await manageOffer(sessionId, offerId, pendingAction, trimmedReason);
+    if ('code' in result) {
+      setReasonError(result.message);
+      setState(cleanState);
+      reasonRef.current?.focus();
+      return;
+    }
+
+    setState({
+      message:
+        pendingAction === 'skip'
+          ? 'Offer cancelled and camper moved to the end of the queue.'
+          : 'Offer cancelled; camper kept in the same queue position.',
+      saving: false,
+      tone: 'success',
+    });
+    dialogRef.current?.close();
+    router.refresh();
+  };
+
+  const dialogCopy =
+    pendingAction === 'skip'
+      ? {
+          confirmLabel: 'Move to end',
+          description:
+            'The active offer will end and the camper will move to the end of the waitlist.',
+          heading: 'Move camper to the end?',
+          reasonLabel: 'Reason for skipping this offer',
+        }
+      : {
+          confirmLabel: 'Cancel offer',
+          description:
+            'The active offer will end. The camper keeps the same queue position and may receive another offer during the next automation cycle.',
+          heading: 'Cancel waitlist offer?',
+          reasonLabel: 'Reason for cancelling this offer',
+        };
 
   return (
     <div className="waitlistOfferControls">
@@ -196,7 +258,7 @@ export function WaitlistOfferControls({
           className="buttonSecondary"
           type="button"
           disabled={state.saving}
-          onClick={() => void submit('resend')}
+          onClick={() => void resend()}
         >
           <RefreshCw size={15} aria-hidden="true" />
           Resend
@@ -205,7 +267,7 @@ export function WaitlistOfferControls({
           className="buttonSecondary dangerInlineButton"
           type="button"
           disabled={state.saving}
-          onClick={() => void submit('cancel')}
+          onClick={(event) => openDialog('cancel', event.currentTarget)}
         >
           <Ban size={15} aria-hidden="true" />
           Cancel
@@ -214,7 +276,7 @@ export function WaitlistOfferControls({
           className="buttonSecondary"
           type="button"
           disabled={state.saving}
-          onClick={() => void submit('skip')}
+          onClick={(event) => openDialog('skip', event.currentTarget)}
         >
           <SkipForward size={15} aria-hidden="true" />
           Skip
@@ -225,6 +287,74 @@ export function WaitlistOfferControls({
           {state.message}
         </small>
       )}
+      <dialog
+        aria-describedby={dialogDescriptionId}
+        aria-labelledby={dialogTitleId}
+        className="waitlistConfirmationDialog"
+        onCancel={(event) => {
+          if (state.saving) event.preventDefault();
+        }}
+        onClose={resetDialog}
+        ref={dialogRef}
+      >
+        <form
+          className="waitlistConfirmationForm"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void confirmReasonedAction();
+          }}
+        >
+          <div className="waitlistConfirmationHeader">
+            <span className="waitlistConfirmationIcon" aria-hidden="true">
+              {pendingAction === 'skip' ? <SkipForward size={19} /> : <Ban size={19} />}
+            </span>
+            <div>
+              <h2 id={dialogTitleId}>{dialogCopy.heading}</h2>
+              <p id={dialogDescriptionId}>{dialogCopy.description}</p>
+            </div>
+          </div>
+          <label className="formField waitlistConfirmationReason">
+            <span>{dialogCopy.reasonLabel}</span>
+            <textarea
+              aria-describedby={reasonError ? reasonErrorId : undefined}
+              aria-invalid={Boolean(reasonError)}
+              disabled={state.saving}
+              onChange={(event) => {
+                setReason(event.target.value);
+                if (reasonError) setReasonError(null);
+              }}
+              placeholder="Add an operator note for the audit trail"
+              ref={reasonRef}
+              value={reason}
+            />
+          </label>
+          {reasonError ? (
+            <p className="waitlistConfirmationError" id={reasonErrorId} role="alert">
+              <AlertCircle size={17} aria-hidden="true" />
+              {reasonError}
+            </p>
+          ) : null}
+          <div className="waitlistConfirmationActions">
+            <button
+              className="buttonSecondary"
+              disabled={state.saving}
+              onClick={closeDialog}
+              type="button"
+            >
+              Keep offer
+            </button>
+            <button
+              className={
+                pendingAction === 'cancel' ? 'buttonPrimary waitlistDangerButton' : 'buttonPrimary'
+              }
+              disabled={state.saving}
+              type="submit"
+            >
+              {state.saving ? 'Saving…' : dialogCopy.confirmLabel}
+            </button>
+          </div>
+        </form>
+      </dialog>
     </div>
   );
 }

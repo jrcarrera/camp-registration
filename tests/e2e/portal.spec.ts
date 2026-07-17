@@ -396,7 +396,10 @@ test('lets parents cancel a registration from the camp plan', async ({ page, req
   await expect(planItem).toBeHidden();
 });
 
-test('lets staff offer an open seat and the parent accept it', async ({ page, request }) => {
+test('lets staff manage an offer before the parent accepts the next seat', async ({
+  page,
+  request,
+}) => {
   const suffix = uniqueSuffix();
   const session = await createCapacityOneSession(request, suffix);
   const waitlistedName = `Offer Camper${suffix}`;
@@ -477,16 +480,59 @@ test('lets staff offer an open seat and the parent accept it', async ({ page, re
     'Offer reserved until',
   );
   await expect(waitlistedRow).toContainText('Expires');
-  await waitlistedRow.getByRole('button', { name: 'Resend' }).click();
-  await expect(waitlistedRow.getByRole('status')).toContainText('Offer notification queued again.');
+
+  const cancelButton = waitlistedRow.getByRole('button', { exact: true, name: 'Cancel' });
+  await cancelButton.click();
+  const cancelDialog = page.getByRole('dialog', { name: 'Cancel waitlist offer?' });
+  await expect(cancelDialog).toBeVisible();
+  await expect(cancelDialog).toContainText(
+    'may receive another offer during the next automation cycle',
+  );
+  await expect(cancelDialog.getByLabel('Reason for cancelling this offer')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(cancelDialog).toBeHidden();
+  await expect(cancelButton).toBeFocused();
+
+  await cancelButton.click();
+  await cancelDialog.getByRole('button', { exact: true, name: 'Cancel offer' }).click();
+  await expect(cancelDialog.getByRole('alert')).toContainText('Enter at least 3 characters');
+  await cancelDialog
+    .getByLabel('Reason for cancelling this offer')
+    .fill('Family requested a fresh offer window.');
+  await cancelDialog.getByRole('button', { exact: true, name: 'Cancel offer' }).click();
+  await expect(cancelDialog).toBeHidden();
+  await expect(waitlistedRow).toContainText('Cancelled');
+  await expect(waitlistedRow).toContainText('Queue #1');
+
+  await page.getByRole('button', { name: 'Offer next', exact: true }).click();
+  await expect(waitlistedRow).toContainText('Expires');
+  await waitlistedRow.getByRole('button', { exact: true, name: 'Skip' }).click();
+  const skipDialog = page.getByRole('dialog', { name: 'Move camper to the end?' });
+  await expect(skipDialog).toBeVisible();
+  await expect(skipDialog).toContainText('will move to the end of the waitlist');
+  await skipDialog
+    .getByLabel('Reason for skipping this offer')
+    .fill('Operator approved advancing the next camper.');
+  await skipDialog.getByRole('button', { exact: true, name: 'Move to end' }).click();
+  await expect(skipDialog).toBeHidden();
+  await expect(waitlistedRow).toContainText('Cancelled');
+  await expect(waitlistedRow).toContainText('Queue #3');
+
+  const nextWaitlistedRow = page.locator('tr').filter({ hasText: waitlistedName });
+  await page.getByRole('button', { name: 'Offer next', exact: true }).click();
+  await expect(nextWaitlistedRow).toContainText('Expires');
+  await nextWaitlistedRow.getByRole('button', { name: 'Resend' }).click();
+  await expect(nextWaitlistedRow.getByRole('status')).toContainText(
+    'Offer notification queued again.',
+  );
 
   await page.goto('/portal');
-  const planItem = page.getByLabel(`${session.name} for ${groupedName}`);
+  const planItem = page.getByLabel(`${session.name} for ${waitlistedName}`);
   await expect(planItem).toContainText('A camp seat is ready for you');
   await planItem.getByRole('button', { name: 'Accept seat' }).click();
 
   await expect(page.getByRole('status')).toContainText(
-    `${session.name} is confirmed for ${groupedName}.`,
+    `${session.name} is confirmed for ${waitlistedName}.`,
   );
   await expect(planItem).toContainText('Confirmed');
 });

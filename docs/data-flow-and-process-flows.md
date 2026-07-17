@@ -700,7 +700,9 @@ Why the session row lock matters:
   serialize on the session row so that capacity cannot be double-allocated.
 - Staff can resend an active offer, cancel it while preserving queue position,
   or skip it to move the registration to the end of the queue. Cancel and skip
-  require an audited reason.
+  require an audited reason. The staff UI collects that reason in an accessible
+  confirmation dialog that explains the queue effect, validates inline, blocks
+  duplicate submission, and restores focus when dismissed.
 - The staff session roster displays the authoritative queue number calculated
   from `waitlist_position_at, id`, so the visible order matches offer creation.
 - Camp and organization administrators can select one or more registrations and
