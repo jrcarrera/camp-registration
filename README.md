@@ -8,7 +8,9 @@ The project has a local-first MVP foundation with implemented catalog, family,
 camper, admin registration, parent portal dashboard, parent checkout,
 cancellation, and time-boxed waitlist offer workflows with parent self-service
 acceptance or decline, scheduled queue advancement, and transactional email
-delivery. Authentication is still
+delivery. Staff can also build reusable forms and waivers, publish immutable
+versions to sessions, monitor completion, and collect version-bound parent
+drafts, acknowledgements, and electronic signatures. Authentication is still
 local-development oriented; the domain layer already enforces linked-adult
 family ownership for parent actions.
 
@@ -16,7 +18,7 @@ family ownership for parent actions.
 
 - Family and camper profiles
 - Camp programs and sessions
-- Registration forms and electronic waivers
+- Versioned registration forms and electronic waivers
 - Payments, discounts, and waitlists
 - Parent portal enhancements and administrative dashboard
 - Rosters, health records, attendance, and communications
@@ -72,6 +74,7 @@ coverage will be added with the registration workflow.
 - [Waitlist worker discovery and health decision](docs/adr/0013-waitlist-worker-tenant-discovery-and-health.md)
 - [Waitlist notification issue and replay decision](docs/adr/0014-waitlist-notification-issue-replay.md)
 - [Organization waitlist offer duration decision](docs/adr/0015-organization-waitlist-offer-duration-policy.md)
+- [Versioned forms and consent decision](docs/adr/0016-versioned-forms-and-consent.md)
 - [Foundation stack decision](docs/adr/0001-foundation-stack.md)
 - [Terraform deployment boundary](infra/terraform/README.md)
 - [Contributor guidance](CONTRIBUTING.md)

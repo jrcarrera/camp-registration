@@ -191,6 +191,72 @@ test('lets parents add emergency and pickup contacts from readiness', async ({ p
   await expect(page.getByText(`${firstName} ${lastName}`)).toBeVisible();
 });
 
+test('lets staff publish a waiver and a parent save and submit it', async ({ page, request }) => {
+  const suffix = uniqueSuffix();
+  const session = await createPortalTestSession(request, suffix, 'FORMS');
+  const checkout = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
+    data: {
+      new_camper: {
+        birth_date: '2018-02-01',
+        first_name: 'Forms',
+        gender: 'Female',
+        last_name: `Camper${suffix}`,
+        school_grade: '3',
+      },
+      session_id: session.id,
+    },
+    headers: parentHeaders,
+  });
+  expect(checkout.ok(), await checkout.text()).toBeTruthy();
+
+  const formName = `E2E participation waiver ${suffix}`;
+  const createdResponse = await request.post('/api/v1/forms', {
+    data: {
+      description: 'Review and accept this test participation policy.',
+      fields: [
+        {
+          id: 'policy_ack',
+          label: 'I accept the participation policy',
+          options: [],
+          required: true,
+          type: 'ACKNOWLEDGEMENT',
+        },
+        {
+          id: 'signature',
+          label: 'Parent or guardian signature',
+          options: [],
+          required: true,
+          type: 'SIGNATURE',
+        },
+      ],
+      name: formName,
+    },
+  });
+  expect(createdResponse.ok(), await createdResponse.text()).toBeTruthy();
+  const created = (await createdResponse.json()) as { id: string; version: number };
+  const publishResponse = await request.post(`/api/v1/forms/${created.id}/publish`, {
+    data: { due_at: null, session_ids: [session.id], version: created.version },
+  });
+  expect(publishResponse.ok(), await publishResponse.text()).toBeTruthy();
+
+  await page.goto('/portal/forms');
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Forms & waivers' })).toBeVisible();
+  const form = page
+    .locator('article')
+    .filter({ has: page.getByRole('heading', { name: formName }) });
+  await expect(form).toBeVisible();
+  await form.getByLabel('I accept the participation policy').check();
+  await form.getByLabel('Parent or guardian signature').fill('Avery Adams');
+  await form.getByRole('button', { name: 'Save draft' }).click();
+  await expect(form.getByRole('status')).toContainText('Draft saved.');
+
+  await form.getByRole('button', { name: 'Submit form' }).click();
+  await expect(form.getByRole('status')).toContainText('Form submitted.');
+  await expect(form.getByText('Complete', { exact: true })).toBeVisible();
+  await expect(form.getByLabel('Parent or guardian signature')).toBeDisabled();
+});
+
 test('lets staff record an offline payment for a parent registration', async ({
   page,
   request,

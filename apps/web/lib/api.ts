@@ -2,6 +2,8 @@ import type {
   CatalogContext,
   FamilyDetail,
   FamilyListResponse,
+  FormTemplatesResponse,
+  ParentFormObligationsResponse,
   ProblemResponse,
   SessionDetail,
   SessionListResponse,
@@ -59,6 +61,16 @@ export async function getSessions(): Promise<SessionListResponse> {
 
 export async function getWaitlistOperations(): Promise<WaitlistOperationsStatus> {
   return getJson('/v1/operations/waitlist');
+}
+
+export async function getForms(): Promise<FormTemplatesResponse> {
+  return getJson('/v1/forms');
+}
+
+export async function getParentForms(
+  headers = getParentApiHeaders(),
+): Promise<ParentFormObligationsResponse> {
+  return getJson('/v1/portal/forms', headers);
 }
 
 export async function getParentSessions(

@@ -5,6 +5,7 @@ import {
   CalendarRange,
   ClipboardList,
   ClipboardPlus,
+  FileSignature,
   HeartPulse,
   House,
   Library,
@@ -30,6 +31,7 @@ const adminNavigation: NavigationItem[] = [
   { href: '/families', icon: Users, label: 'Families' },
   { href: '/seasons', icon: CalendarRange, label: 'Seasons' },
   { href: '/programs', icon: Library, label: 'Programs' },
+  { href: '/forms', icon: FileSignature, label: 'Forms' },
   { href: '/#health', icon: HeartPulse, label: 'Health' },
 ];
 
@@ -37,6 +39,7 @@ const portalNavigation: NavigationItem[] = [
   { exact: true, href: '/portal', icon: House, label: 'My Family' },
   { href: '/portal/register', icon: ClipboardPlus, label: 'Register' },
   { href: '/portal/readiness', icon: HeartPulse, label: 'Readiness' },
+  { href: '/portal/forms', icon: FileSignature, label: 'Forms & waivers' },
 ];
 
 export function ShellSidebar() {

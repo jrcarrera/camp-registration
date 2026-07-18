@@ -2138,6 +2138,279 @@ tbody tr + tr td {
   border-color: #c8553d;
 }
 
+.fieldHint {
+  color: #6a7771;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.formsWorkspace,
+.formTemplateStack,
+.parentFormsWorkspace,
+.parentFormStack {
+  display: grid;
+  gap: 20px;
+}
+
+.formCreateSection,
+.formTemplateCard,
+.parentFormCard {
+  padding: 24px;
+  border: 1px solid #d8dedb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.sectionHeadingWithIcon,
+.formTemplateHeader,
+.parentFormHeader,
+.formBuilderFieldHeader,
+.formVersionRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.sectionHeadingWithIcon {
+  justify-content: flex-start;
+  margin-bottom: 22px;
+  color: #146b4d;
+}
+
+.sectionHeadingWithIcon h2,
+.formTemplateHeader h2,
+.parentFormHeader h2,
+.formVersionHistory h3 {
+  margin: 0;
+}
+
+.sectionHeadingWithIcon p,
+.formPublishPanel p,
+.parentFormHeader p {
+  margin: 5px 0 0;
+  color: #65716c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.formDraftEditor,
+.formBuilderFields,
+.formPublishPanel,
+.formVersionHistory,
+.parentFormFields {
+  display: grid;
+  gap: 16px;
+}
+
+.formBuilderFields {
+  margin-top: 16px;
+}
+
+.formBuilderField {
+  padding: 16px;
+  border: 1px solid #d8dedb;
+  border-radius: 6px;
+  background: #f8faf9;
+}
+
+.formBuilderFieldHeader {
+  align-items: center;
+  margin-bottom: 14px;
+  color: #324139;
+  font-size: 13px;
+}
+
+.formTemplateCard,
+.parentFormCard {
+  box-shadow: 0 2px 10px rgba(31, 44, 39, 0.04);
+}
+
+.formTemplateDetails {
+  margin-top: 18px;
+  border-top: 1px solid #e1e6e3;
+  border-bottom: 1px solid #e1e6e3;
+}
+
+.formTemplateDetails summary {
+  padding: 14px 0;
+  color: #146b4d;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.formTemplateDetails .formDraftEditor {
+  padding-bottom: 20px;
+}
+
+.formPublishPanel {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 6px;
+  background: #f2f7f4;
+}
+
+.formSessionChoices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 280px;
+  padding: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.formSessionChoices label {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d4ddd8;
+  border-radius: 5px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.formSessionChoices input,
+.parentAcknowledgement input {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  margin: 1px 0 0;
+  accent-color: #146b4d;
+}
+
+.formSessionChoices strong,
+.formSessionChoices small {
+  display: block;
+}
+
+.formSessionChoices strong {
+  color: #26332d;
+  font-size: 12px;
+}
+
+.formSessionChoices small {
+  margin-top: 2px;
+  color: #6a7771;
+  font-size: 11px;
+}
+
+.formDueField {
+  max-width: 300px;
+}
+
+.formVersionHistory {
+  margin-top: 20px;
+}
+
+.formVersionHistory h3 {
+  color: #324139;
+  font-size: 14px;
+}
+
+.formVersionRow {
+  padding: 12px 0;
+  border-top: 1px solid #e3e8e5;
+}
+
+.formVersionRow strong,
+.formVersionRow small {
+  display: block;
+}
+
+.formVersionRow small,
+.parentFormStatus small {
+  margin-top: 3px;
+  color: #6a7771;
+  font-size: 11px;
+}
+
+.formAssignmentList {
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+  color: #4f5d57;
+  font-size: 12px;
+}
+
+.parentFormHeader {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e1e6e3;
+}
+
+.parentFormStatus {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+  text-align: right;
+}
+
+.parentFormFields {
+  max-width: 720px;
+  margin-top: 20px;
+}
+
+.parentAcknowledgement {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px;
+  border: 1px solid #d8dedb;
+  border-radius: 5px;
+  color: #33423b;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.signatureDisclosure {
+  margin: 0;
+  padding: 12px;
+  border-left: 3px solid #2a6f97;
+  background: #f3f7f9;
+  color: #53615a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.parentFormActions {
+  margin-top: 18px;
+}
+
+.parentFormComplete {
+  border-color: #b8d7c8;
+  background: #fbfefc;
+}
+
+@media (max-width: 760px) {
+  .formCreateSection,
+  .formTemplateCard,
+  .parentFormCard {
+    padding: 18px;
+  }
+
+  .formSessionChoices,
+  .formBuilderField .fieldGridThree {
+    grid-template-columns: 1fr;
+  }
+
+  .formTemplateHeader,
+  .parentFormHeader,
+  .formVersionRow {
+    flex-direction: column;
+  }
+
+  .parentFormStatus,
+  .formAssignmentList {
+    justify-items: start;
+    text-align: left;
+  }
+}
+
 .inputWithPrefix {
   position: relative;
 }

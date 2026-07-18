@@ -13,6 +13,7 @@ import {
 import {
   CatalogStore,
   FamilyStore,
+  FormsStore,
   WaitlistOperationsStore,
   type DatabaseClient,
 } from '@camp-registration/database';
@@ -26,6 +27,8 @@ import { registerCatalogRoutes } from './catalog/routes.js';
 import { CatalogService, type CatalogServiceApi } from './catalog/service.js';
 import { registerFamilyRoutes } from './families/routes.js';
 import { FamilyService, type FamilyServiceApi } from './families/service.js';
+import { registerFormsRoutes } from './forms/routes.js';
+import { FormsService, type FormsServiceApi } from './forms/service.js';
 import { registerOperationsRoutes } from './operations/routes.js';
 import { OperationsService, type OperationsServiceApi } from './operations/service.js';
 
@@ -33,6 +36,7 @@ export interface BuildAppOptions {
   catalogService?: CatalogServiceApi;
   database?: DatabaseClient;
   familyService?: FamilyServiceApi;
+  formsService?: FormsServiceApi;
   identity?: RequestIdentity;
   logger?: boolean | FastifyBaseLogger;
   operationsService?: OperationsServiceApi;
@@ -96,6 +100,19 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         }
       : undefined);
   registerFamilyRoutes(app, familyService);
+
+  const formsStore = options.database ? new FormsStore(options.database) : undefined;
+  const formsService =
+    options.formsService ??
+    (formsStore
+      ? (request: FastifyRequest) => {
+          const context = resolveRequestContext(request);
+          return context
+            ? new FormsService(formsStore, context.identity, context.organizationId)
+            : undefined;
+        }
+      : undefined);
+  registerFormsRoutes(app, formsService);
 
   const operationsStore = options.database
     ? new WaitlistOperationsStore(options.database)

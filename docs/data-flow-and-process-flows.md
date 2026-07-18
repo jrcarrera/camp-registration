@@ -890,8 +890,9 @@ Seed data:
 | Waitlist insertion when full              | Implemented                                              |
 | Time-boxed waitlist offers                | Implemented with parent, staff, and admin queue controls |
 | Capacity holds                            | Implemented for unexpired pending waitlist offers        |
+| Versioned forms and electronic waivers    | Implemented with session assignments and parent signing  |
 | Payments and Stripe webhooks              | Not implemented                                          |
-| Health forms and medical data             | Not implemented                                          |
+| Restricted health forms and medical data  | Not implemented                                          |
 | Transactional waitlist email              | Implemented with SMTP, issue visibility, and replay      |
 | File uploads/object storage               | Not implemented                                          |
 | Real authentication provider              | Not implemented                                          |
