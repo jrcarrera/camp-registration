@@ -11,6 +11,7 @@ export type OrderLineOutcome = 'HELD' | 'CONFIRMED' | 'WAITLISTED' | 'EXPIRED' |
 
 export interface OrderLineInput {
   add_on_ids?: string[];
+  bunk_buddy_names?: string[];
   camper_id: string;
   session_id: string;
 }
@@ -29,6 +30,7 @@ export interface OrderQuoteLineRecord {
   assistance_cents: number;
   automatic_discount_cents: number;
   base_price_cents: number;
+  bunk_buddy_names: string[];
   camper_id: string;
   camper_name: string;
   coupon_discount_cents: number;
@@ -82,6 +84,7 @@ export interface HouseholdOrderLineRecord {
   adjustments: OrderAdjustmentRecord[];
   assistance_cents: number;
   automatic_discount_cents: number;
+  bunk_buddy_names: string[];
   camper_id: string;
   camper_name: string;
   coupon_discount_cents: number;
@@ -364,8 +367,8 @@ export class OrderStore {
              id, organization_id, order_id, family_id, camper_id, session_id, outcome,
              camper_name, session_name, base_price_cents, add_on_total_cents,
              gross_price_cents, automatic_discount_cents, coupon_discount_cents,
-             assistance_cents, net_price_cents, deposit_due_cents
-           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+             assistance_cents, net_price_cents, deposit_due_cents, bunk_buddy_names
+           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
           [
             lineId,
             context.organizationId,
@@ -384,6 +387,7 @@ export class OrderStore {
             line.assistance_cents,
             line.net_price_cents,
             line.deposit_due_cents,
+            line.bunk_buddy_names,
           ],
         );
         for (let index = 0; index < line.add_on_ids.length; index += 1) {
@@ -411,8 +415,9 @@ export class OrderStore {
           await client.query(
             `INSERT INTO registrations (
                id, organization_id, session_id, family_id, camper_id, status, source,
-               currency, price_cents, deposit_cents, order_id, order_line_id, waitlist_group_id
-             ) VALUES ($1,$2,$3,$4,$5,'WAITLISTED','PARENT','USD',$6,$7,$8,$9,$10)`,
+               currency, price_cents, deposit_cents, order_id, order_line_id, waitlist_group_id,
+               bunk_buddy_names
+             ) VALUES ($1,$2,$3,$4,$5,'WAITLISTED','PARENT','USD',$6,$7,$8,$9,$10,$11)`,
             [
               registrationId,
               context.organizationId,
@@ -424,6 +429,7 @@ export class OrderStore {
               orderId,
               lineId,
               waitlistGroupId,
+              line.bunk_buddy_names,
             ],
           );
           await client.query(
@@ -683,6 +689,9 @@ export class OrderStore {
         assistance_cents: 0,
         automatic_discount_cents: 0,
         base_price_cents: base,
+        bunk_buddy_names: [
+          ...new Set((inputLine.bunk_buddy_names ?? []).map((name) => name.trim()).filter(Boolean)),
+        ].slice(0, 3),
         camper_id: inputLine.camper_id,
         camper_name: camper ? `${camper.first_name} ${camper.last_name}` : 'Unknown camper',
         coupon_discount_cents: 0,
@@ -941,10 +950,11 @@ export class OrderStore {
       coupon_discount_cents: number;
       deposit_due_cents: number;
       gross_price_cents: number;
+      bunk_buddy_names: string[];
       id: string;
       session_id: string;
     }>(
-      `SELECT id, camper_id, session_id, gross_price_cents, deposit_due_cents,
+      `SELECT id, camper_id, session_id, gross_price_cents, deposit_due_cents, bunk_buddy_names,
               automatic_discount_cents, coupon_discount_cents, assistance_cents
        FROM household_order_lines
        WHERE organization_id=$1 AND order_id=$2 AND outcome='HELD'
@@ -956,8 +966,8 @@ export class OrderStore {
       await client.query(
         `INSERT INTO registrations (
            id, organization_id, session_id, family_id, camper_id, status, source,
-           currency, price_cents, deposit_cents, order_id, order_line_id
-         ) VALUES ($1,$2,$3,$4,$5,'CONFIRMED','PARENT','USD',$6,$7,$8,$9)`,
+           currency, price_cents, deposit_cents, order_id, order_line_id, bunk_buddy_names
+         ) VALUES ($1,$2,$3,$4,$5,'CONFIRMED','PARENT','USD',$6,$7,$8,$9,$10)`,
         [
           registrationId,
           context.organizationId,
@@ -968,6 +978,7 @@ export class OrderStore {
           line.deposit_due_cents,
           orderId,
           line.id,
+          line.bunk_buddy_names,
         ],
       );
       await client.query(
@@ -1141,6 +1152,7 @@ export class OrderStore {
       automatic_discount_cents: number;
       camper_id: string;
       camper_name: string;
+      bunk_buddy_names: string[];
       coupon_discount_cents: number;
       deposit_due_cents: number;
       gross_price_cents: number;
@@ -1153,7 +1165,7 @@ export class OrderStore {
       session_name: string;
     }>(
       `SELECT l.id, l.camper_id, l.session_id, l.registration_id, l.outcome,
-              l.camper_name, l.session_name, l.add_on_total_cents, l.gross_price_cents,
+              l.camper_name, l.session_name, l.bunk_buddy_names, l.add_on_total_cents, l.gross_price_cents,
               l.automatic_discount_cents, l.coupon_discount_cents, l.assistance_cents,
               l.net_price_cents, l.deposit_due_cents, h.expires_at AS hold_expires_at,
               COALESCE((SELECT array_agg(a.name ORDER BY a.name, a.id)

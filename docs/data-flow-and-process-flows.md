@@ -983,7 +983,40 @@ Seed data:
 | Real authentication provider              | Not implemented                                          |
 | Parent object ownership checks            | Implemented for family reads, checkout, and cancellation |
 | Registration cancellation                 | Implemented                                              |
-| Multi-camper atomic checkout              | Not implemented                                          |
+| Multi-camper atomic checkout              | Implemented with one household order and payment         |
+| Session housing and bed assignment        | Implemented with age and bunk-buddy placement            |
+
+## Session Housing and Bunk-Buddy Flow
+
+```mermaid
+flowchart LR
+    Parent["Parent cart"] -->|"up to 3 buddy names per line"| Order["Order line snapshot"]
+    Order --> Registration["Confirmed registration"]
+    Admin["Housing administrator"] --> Inventory["Buildings and beds"]
+    Inventory --> Dedicated["Open or closed for a session"]
+    Registration --> Planner["Session housing planner"]
+    Dedicated --> Planner
+    Planner -->|"manual, balanced, or consolidated"| Assignment["Registration to physical bed"]
+    Assignment --> Conflict["Overlapping-session bed check"]
+    Planner --> Warning["Unmatched buddy warnings"]
+```
+
+Buildings and beds belong to the organization and can be reused across
+non-overlapping sessions. A session-building record controls whether that
+building is available for the selected session without changing global
+inventory. Only confirmed registrations may receive a bed.
+
+Balanced assignment spreads buddy groups across open buildings by utilization.
+Consolidated assignment uses the fewest suitable buildings and closes unused
+ones. Both start with younger campers, preserve existing manual assignments,
+keep recognized buddy groups together when capacity permits, and use stable
+identifier tie-breaks. Manual placement and both automatic strategies recheck
+the physical bed against overlapping session dates inside the write transaction.
+
+The parent supplies names rather than registration identifiers so the system
+does not disclose unrelated families. Buddy names are immutable snapshots on
+the order line and registration. Housing staff see unresolved names as warnings;
+the application never promises placement.
 
 ## How To Trace A Bug
 

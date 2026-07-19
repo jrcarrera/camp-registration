@@ -3,6 +3,7 @@ export * from './families.js';
 export * from './forms.js';
 export * from './generated.js';
 export * from './health.js';
+export * from './housing.js';
 export * from './operations.js';
 export * from './orders.js';
 export * from './payments.js';

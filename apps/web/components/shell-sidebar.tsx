@@ -10,6 +10,7 @@ import {
   HeartPulse,
   HandCoins,
   House,
+  BedDouble,
   Library,
   Settings,
   ShieldCheck,
@@ -32,6 +33,7 @@ interface NavigationItem {
 const adminNavigation: NavigationItem[] = [
   { href: '/', icon: ClipboardList, label: 'Overview' },
   { href: '/sessions', icon: CalendarDays, label: 'Sessions' },
+  { href: '/housing', icon: BedDouble, label: 'Housing' },
   { href: '/families', icon: Users, label: 'Families' },
   { href: '/seasons', icon: CalendarRange, label: 'Seasons' },
   { href: '/programs', icon: Library, label: 'Programs' },

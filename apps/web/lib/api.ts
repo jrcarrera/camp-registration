@@ -7,10 +7,12 @@ import type {
   ParentFormObligationsResponse,
   PaymentAttemptListResponse,
   HouseholdOrderListResponse,
+  HousingInventory,
   PricingConfiguration,
   ProblemResponse,
   SessionDetail,
   SessionListResponse,
+  SessionHousing,
   WaitlistOperationsStatus,
 } from '@camp-registration/contracts';
 
@@ -77,6 +79,14 @@ export async function getOrders(): Promise<HouseholdOrderListResponse> {
 
 export async function getPricing(): Promise<PricingConfiguration> {
   return getJson('/v1/pricing');
+}
+
+export async function getHousing(): Promise<HousingInventory> {
+  return getJson('/v1/housing');
+}
+
+export async function getSessionHousing(sessionId: string): Promise<SessionHousing> {
+  return getJson(`/v1/sessions/${encodeURIComponent(sessionId)}/housing`);
 }
 
 export async function getFinancialAssistance(): Promise<FinancialAssistanceListResponse> {

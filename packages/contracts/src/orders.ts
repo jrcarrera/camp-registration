@@ -30,6 +30,9 @@ export const OrderInstallmentStatusSchema = Type.Union([
 export const OrderCartLineCreateSchema = Type.Object(
   {
     add_on_ids: Type.Optional(Type.Array(UuidSchema, { maxItems: 20, uniqueItems: true })),
+    bunk_buddy_names: Type.Optional(
+      Type.Array(Type.String({ minLength: 1, maxLength: 100 }), { maxItems: 3, uniqueItems: true }),
+    ),
     camper_id: UuidSchema,
     session_id: UuidSchema,
   },
@@ -61,6 +64,7 @@ export const OrderQuoteLineSchema = Type.Object(
     automatic_discount_cents: Type.Integer({ minimum: 0 }),
     camper_id: UuidSchema,
     camper_name: Type.String({ minLength: 1 }),
+    bunk_buddy_names: Type.Array(Type.String()),
     coupon_discount_cents: Type.Integer({ minimum: 0 }),
     deposit_due_cents: Type.Integer({ minimum: 0 }),
     errors: Type.Array(Type.String({ minLength: 1 })),
@@ -121,6 +125,7 @@ export const HouseholdOrderLineSchema = Type.Object(
     automatic_discount_cents: Type.Integer({ minimum: 0 }),
     camper_id: UuidSchema,
     camper_name: Type.String({ minLength: 1 }),
+    bunk_buddy_names: Type.Array(Type.String()),
     coupon_discount_cents: Type.Integer({ minimum: 0 }),
     deposit_due_cents: Type.Integer({ minimum: 0 }),
     gross_price_cents: Type.Integer({ minimum: 0 }),

@@ -14,6 +14,7 @@ import {
   CatalogStore,
   FamilyStore,
   FormsStore,
+  HousingStore,
   OrderStore,
   PaymentStore,
   PricingStore,
@@ -33,6 +34,8 @@ import { FamilyService, type FamilyServiceApi } from './families/service.js';
 import { registerFormsRoutes } from './forms/routes.js';
 import { FormsService, type FormsServiceApi } from './forms/service.js';
 import { registerOperationsRoutes } from './operations/routes.js';
+import { registerHousingRoutes } from './housing/routes.js';
+import { HousingService, type HousingServiceApi } from './housing/service.js';
 import { OperationsService, type OperationsServiceApi } from './operations/service.js';
 import { registerOrderRoutes } from './orders/routes.js';
 import { OrderService, type OrderServiceApi } from './orders/service.js';
@@ -51,6 +54,7 @@ export interface BuildAppOptions {
   database?: DatabaseClient;
   familyService?: FamilyServiceApi;
   formsService?: FormsServiceApi;
+  housingService?: HousingServiceApi;
   identity?: RequestIdentity;
   logger?: boolean | FastifyBaseLogger;
   operationsService?: OperationsServiceApi;
@@ -131,6 +135,19 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         }
       : undefined);
   registerFormsRoutes(app, formsService);
+
+  const housingStore = options.database ? new HousingStore(options.database) : undefined;
+  const housingService =
+    options.housingService ??
+    (housingStore
+      ? (request: FastifyRequest) => {
+          const context = resolveRequestContext(request);
+          return context
+            ? new HousingService(housingStore, context.identity, context.organizationId)
+            : undefined;
+        }
+      : undefined);
+  registerHousingRoutes(app, housingService);
 
   const operationsStore = options.database
     ? new WaitlistOperationsStore(options.database)

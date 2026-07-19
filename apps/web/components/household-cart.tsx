@@ -25,6 +25,7 @@ import { useMemo, useState } from 'react';
 
 interface CartLine {
   addOnIds: string[];
+  bunkBuddyNames: string;
   camperId: string;
   key: string;
   sessionId: string;
@@ -64,6 +65,7 @@ function requiredAddOns(pricing: PricingConfiguration, sessionId: string): strin
 function newLine(pricing: PricingConfiguration, camperId: string, sessionId: string): CartLine {
   return {
     addOnIds: requiredAddOns(pricing, sessionId),
+    bunkBuddyNames: '',
     camperId,
     key: crypto.randomUUID(),
     sessionId,
@@ -144,6 +146,11 @@ export function HouseholdCart({
     coupon_code: couponCode.trim() || null,
     lines: lines.map((line) => ({
       add_on_ids: line.addOnIds,
+      bunk_buddy_names: line.bunkBuddyNames
+        .split(',')
+        .map((name) => name.trim())
+        .filter(Boolean)
+        .slice(0, 3),
       camper_id: line.camperId,
       session_id: line.sessionId,
     })),
@@ -323,6 +330,24 @@ export function HouseholdCart({
                       <Trash2 size={17} />
                     </button>
                   </div>
+                  <label className="bunkBuddyField">
+                    <span>
+                      Bunk buddies <small>Optional · up to 3 names</small>
+                    </span>
+                    <input
+                      aria-label={`Bunk buddies for registration ${index + 1}`}
+                      maxLength={302}
+                      onChange={(event) =>
+                        updateLine(line.key, { bunkBuddyNames: event.target.value })
+                      }
+                      placeholder="Sam Rivera, Jo Lee"
+                      value={line.bunkBuddyNames}
+                    />
+                    <small>
+                      We will try to place named friends in the same building; placement is not
+                      guaranteed.
+                    </small>
+                  </label>
                   {addOns.length > 0 && (
                     <div className="cartAddOns" aria-label="Session add-ons">
                       {addOns.map((addOn) => (
@@ -483,6 +508,9 @@ export function HouseholdCart({
                   <div>
                     <strong>{line.camper_name}</strong>
                     <span>{line.session_name}</span>
+                    {line.bunk_buddy_names.length > 0 && (
+                      <small>Bunk buddies: {line.bunk_buddy_names.join(', ')}</small>
+                    )}
                   </div>
                   <span className={`statusBadge orderOutcome${line.outcome.toLowerCase()}`}>
                     {line.outcome === 'AVAILABLE'
@@ -585,6 +613,9 @@ export function HouseholdCart({
                       <small>
                         {outcomeLabel(line.outcome)} · {money(line.net_price_cents)}
                       </small>
+                      {line.bunk_buddy_names.length > 0 && (
+                        <small>Bunk buddies requested: {line.bunk_buddy_names.join(', ')}</small>
+                      )}
                     </span>
                   ))}
                 </div>

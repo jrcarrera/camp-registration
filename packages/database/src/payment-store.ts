@@ -1011,8 +1011,9 @@ export class PaymentStore {
         await client.query(
           `INSERT INTO registrations (
              id, organization_id, session_id, family_id, camper_id, status, source,
-             currency, price_cents, deposit_cents, order_id, order_line_id
-           ) VALUES ($1,$2,$3,$4,$5,'CONFIRMED','PARENT','USD',$6,$7,$8,$9)
+             currency, price_cents, deposit_cents, order_id, order_line_id, bunk_buddy_names
+           ) SELECT $1,$2,$3,$4,$5,'CONFIRMED','PARENT','USD',$6,$7,$8,$9,l.bunk_buddy_names
+             FROM household_order_lines l WHERE l.organization_id=$2 AND l.id=$9
            ON CONFLICT (organization_id, session_id, camper_id)
              WHERE status IN ('CONFIRMED','WAITLISTED') DO NOTHING`,
           [
