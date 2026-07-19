@@ -396,25 +396,39 @@ export function registerFamilyRoutes(app: FastifyInstance, service: FamilyServic
     {
       schema: {
         body: ParentCheckoutCreateSchema,
-        description: 'Create a parent registration in one transaction.',
+        deprecated: true,
+        description: 'Deprecated parent checkout. Use household order quote and submission APIs.',
         params: FamilyParamsSchema,
-        response: { 201: FamilyRegistrationResultSchema, ...errorResponses },
+        response: {
+          201: FamilyRegistrationResultSchema,
+          410: ProblemResponseSchema,
+          ...errorResponses,
+        },
         tags: ['families', 'registrations'],
       },
     },
     async (request, reply) => {
-      const familyService = resolveFamilyService(service, request);
-      if (!familyService) return unavailable(reply);
-      try {
-        const result = await familyService.createParentCheckout(
-          request.params.familyId,
-          request.body,
-          request.id,
-        );
-        return reply.code(201).send(result);
-      } catch (error) {
-        return sendProblem(reply, error);
+      if (process.env.ALLOW_LEGACY_PARENT_CHECKOUT === 'true') {
+        const familyService = resolveFamilyService(service, request);
+        if (!familyService) return unavailable(reply);
+        try {
+          return reply
+            .code(201)
+            .send(
+              await familyService.createParentCheckout(
+                request.params.familyId,
+                request.body,
+                request.id,
+              ),
+            );
+        } catch (error) {
+          return sendProblem(reply, error);
+        }
       }
+      return reply.code(410).send({
+        code: 'parent_checkout_migrated',
+        message: 'Parent checkout has moved to the household cart.',
+      });
     },
   );
 

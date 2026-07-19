@@ -14,7 +14,9 @@ import {
   CatalogStore,
   FamilyStore,
   FormsStore,
+  OrderStore,
   PaymentStore,
+  PricingStore,
   WaitlistOperationsStore,
   type DatabaseClient,
 } from '@camp-registration/database';
@@ -32,6 +34,8 @@ import { registerFormsRoutes } from './forms/routes.js';
 import { FormsService, type FormsServiceApi } from './forms/service.js';
 import { registerOperationsRoutes } from './operations/routes.js';
 import { OperationsService, type OperationsServiceApi } from './operations/service.js';
+import { registerOrderRoutes } from './orders/routes.js';
+import { OrderService, type OrderServiceApi } from './orders/service.js';
 import { registerPaymentRoutes } from './payments/routes.js';
 import { type PaymentProvider } from './payments/provider.js';
 import {
@@ -39,6 +43,8 @@ import {
   PaymentWebhookService,
   type PaymentServiceApi,
 } from './payments/service.js';
+import { registerPricingRoutes } from './pricing/routes.js';
+import { PricingService, type PricingServiceApi } from './pricing/service.js';
 
 export interface BuildAppOptions {
   catalogService?: CatalogServiceApi;
@@ -48,9 +54,11 @@ export interface BuildAppOptions {
   identity?: RequestIdentity;
   logger?: boolean | FastifyBaseLogger;
   operationsService?: OperationsServiceApi;
+  orderService?: OrderServiceApi;
   organizationId?: string;
   paymentProvider?: PaymentProvider;
   paymentService?: PaymentServiceApi;
+  pricingService?: PricingServiceApi;
   requestContext?: (request: FastifyRequest) => RequestServiceContext | undefined;
 }
 
@@ -138,6 +146,32 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         }
       : undefined);
   registerOperationsRoutes(app, operationsService);
+
+  const orderStore = options.database ? new OrderStore(options.database) : undefined;
+  const orderService =
+    options.orderService ??
+    (orderStore
+      ? (request: FastifyRequest) => {
+          const context = resolveRequestContext(request);
+          return context
+            ? new OrderService(orderStore, context.identity, context.organizationId)
+            : undefined;
+        }
+      : undefined);
+  registerOrderRoutes(app, orderService);
+
+  const pricingStore = options.database ? new PricingStore(options.database) : undefined;
+  const pricingService =
+    options.pricingService ??
+    (pricingStore && orderStore
+      ? (request: FastifyRequest) => {
+          const context = resolveRequestContext(request);
+          return context
+            ? new PricingService(pricingStore, orderStore, context.identity, context.organizationId)
+            : undefined;
+        }
+      : undefined);
+  registerPricingRoutes(app, pricingService);
 
   const paymentStore = options.database ? new PaymentStore(options.database) : undefined;
   const paymentService =

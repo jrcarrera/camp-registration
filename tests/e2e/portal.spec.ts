@@ -82,6 +82,29 @@ async function createCapacityOneSession(
   return session;
 }
 
+async function createPortalTestCamper(
+  request: APIRequestContext,
+  suffix: string,
+  label: string,
+): Promise<string> {
+  const lastName = `${label}${suffix}`;
+  const response = await request.post(`/api/v1/families/${adamsFamilyId}/campers`, {
+    data: {
+      birth_date: '2018-02-01',
+      first_name: 'Order',
+      gender: 'Female',
+      last_name: lastName,
+      school_grade: '3',
+    },
+    headers: parentHeaders,
+  });
+  expect(response.ok(), await response.text()).toBeTruthy();
+  const family = (await response.json()) as {
+    campers: Array<{ id: string; last_name: string }>;
+  };
+  return family.campers.find((camper) => camper.last_name === lastName)!.id;
+}
+
 test.describe.configure({ mode: 'serial' });
 
 test.beforeEach(async ({ request }) => {
@@ -99,16 +122,253 @@ test('renders the linked parent family dashboard', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Register for camp' })).toBeVisible();
 });
 
-test('renders parent checkout without a family selector', async ({ page }) => {
+test('renders the parent household cart without a family selector', async ({ page }) => {
   await page.goto('/portal/register');
 
   await expect(page.getByRole('heading', { level: 1, name: 'Register for camp' })).toBeVisible();
-  await expect(page.getByLabel('Household')).toContainText('Adams Family');
+  await expect(page.getByRole('heading', { level: 2, name: 'Campers and sessions' })).toBeVisible();
   await expect(page.getByLabel('Family account')).toHaveCount(0);
-  await expect(page.getByLabel('Session')).toBeVisible();
-  await expect(
-    page.getByLabel('Registration checkout').getByRole('link', { name: 'My Family' }),
-  ).toBeVisible();
+  await expect(page.getByLabel('Session for registration 1')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Order review' })).toBeVisible();
+});
+
+test('checks out two household cart lines with one hosted payment', async ({ page, request }) => {
+  const suffix = uniqueSuffix();
+  const first = await createPortalTestSession(request, suffix, 'CART-A');
+  const second = await createPortalTestSession(request, `${suffix}-b`, 'CART-B');
+
+  await page.goto('/portal/register');
+  await page.getByLabel('Camper for registration 1').selectOption({ label: 'Amara Adams' });
+  await page.getByLabel('Session for registration 1').selectOption(first.id);
+  await page.getByRole('button', { name: 'Add another camper or session' }).click();
+  await page.getByLabel('Camper for registration 2').selectOption({ label: 'Amara Adams' });
+  await page.getByLabel('Session for registration 2').selectOption(second.id);
+  await page.getByRole('button', { name: 'Review order' }).click();
+
+  const review = page.getByRole('complementary', { name: 'Order review' });
+  await expect(review.getByText(first.name)).toBeVisible();
+  await expect(review.getByText(second.name)).toBeVisible();
+  await review.getByRole('button', { name: /Continue to payment/ }).click();
+
+  await expect(page.getByText('Local development checkout')).toBeVisible();
+  await page.getByRole('button', { name: /Complete test payment/ }).click();
+  await expect(page).toHaveURL(/\/portal\?payment=success/);
+  await expect(page.getByRole('status')).toContainText('Payment received');
+});
+
+test('returns mixed outcomes and all-or-none grouped waitlisting', async ({
+  isMobile,
+  request,
+}) => {
+  test.skip(Boolean(isMobile), 'The API transaction is viewport-independent.');
+  const suffix = uniqueSuffix();
+  const full = await createCapacityOneSession(request, suffix);
+  const available = await createPortalTestSession(request, suffix, 'MIXED');
+  const groupedAvailable = await createPortalTestSession(request, `${suffix}-g`, 'GROUPED');
+  const mixedCamperId = await createPortalTestCamper(request, suffix, 'Mixed');
+  const groupedCamperId = await createPortalTestCamper(request, suffix, 'Grouped');
+  const holder = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
+    data: {
+      new_camper: {
+        birth_date: '2018-02-01',
+        first_name: 'Capacity',
+        gender: 'Female',
+        last_name: `Holder${suffix}`,
+        school_grade: '3',
+      },
+      session_id: full.id,
+    },
+    headers: parentHeaders,
+  });
+  expect(holder.ok(), await holder.text()).toBeTruthy();
+  const mixed = await request.post(`/api/v1/families/${adamsFamilyId}/orders`, {
+    data: {
+      idempotency_key: crypto.randomUUID(),
+      lines: [
+        { camper_id: mixedCamperId, session_id: available.id },
+        { camper_id: mixedCamperId, session_id: full.id },
+      ],
+      waitlist_mode: 'INDIVIDUAL',
+    },
+    headers: parentHeaders,
+  });
+  expect(mixed.ok(), await mixed.text()).toBeTruthy();
+  const mixedOrder = (await mixed.json()) as { lines: Array<{ outcome: string }> };
+  expect(mixedOrder.lines.map((line) => line.outcome).sort()).toEqual(['HELD', 'WAITLISTED']);
+
+  const grouped = await request.post(`/api/v1/families/${adamsFamilyId}/orders`, {
+    data: {
+      idempotency_key: crypto.randomUUID(),
+      lines: [
+        { camper_id: groupedCamperId, session_id: groupedAvailable.id },
+        { camper_id: groupedCamperId, session_id: full.id },
+      ],
+      waitlist_mode: 'KEEP_TOGETHER',
+    },
+    headers: parentHeaders,
+  });
+  expect(grouped.ok(), await grouped.text()).toBeTruthy();
+  const groupedOrder = (await grouped.json()) as {
+    lines: Array<{ outcome: string }>;
+    waitlist_mode: string;
+  };
+  expect(groupedOrder.waitlist_mode).toBe('KEEP_TOGETHER');
+  expect(groupedOrder.lines.every((line) => line.outcome === 'WAITLISTED')).toBeTruthy();
+});
+
+test('applies add-ons, discounts, coupons, assistance, and pays an installment', async ({
+  isMobile,
+  request,
+}) => {
+  test.skip(Boolean(isMobile), 'The API transaction is viewport-independent.');
+  const suffix = uniqueSuffix();
+  const first = await createPortalTestSession(request, suffix, 'PRICE-A');
+  const second = await createPortalTestSession(request, `${suffix}-b`, 'PRICE-B');
+  const camperId = await createPortalTestCamper(request, suffix, 'Pricing');
+  const addOnResponse = await request.post(`/api/v1/sessions/${first.id}/add-ons`, {
+    data: {
+      active: true,
+      description: 'Required E2E lunch option.',
+      name: `Lunch ${suffix}`,
+      price_cents: 1000,
+      required: true,
+    },
+  });
+  expect(addOnResponse.ok(), await addOnResponse.text()).toBeTruthy();
+  const addOn = (await addOnResponse.json()) as { id: string };
+  const discount = await request.post('/api/v1/pricing/discount-rules', {
+    data: {
+      active: true,
+      minimum_qualifying_lines: 2,
+      name: `Multi-session ${suffix}`,
+      priority: 10,
+      rule_type: 'MULTI_SESSION',
+      season_id: portalTestSeasonId,
+      value: 1000,
+      value_type: 'PERCENT',
+    },
+  });
+  expect(discount.ok(), await discount.text()).toBeTruthy();
+  const coupon = await request.post('/api/v1/pricing/coupons', {
+    data: {
+      active: true,
+      code: `E2E${suffix}`.toUpperCase(),
+      ends_at: null,
+      maximum_redemptions: 10,
+      season_id: portalTestSeasonId,
+      starts_at: null,
+      value: 500,
+      value_type: 'PERCENT',
+    },
+  });
+  expect(coupon.ok(), await coupon.text()).toBeTruthy();
+  const planResponse = await request.post('/api/v1/pricing/payment-plans', {
+    data: {
+      active: true,
+      installments: [
+        { due_on: '2027-03-01', percentage_basis_points: 5000, sequence: 1 },
+        { due_on: '2027-04-01', percentage_basis_points: 5000, sequence: 2 },
+      ],
+      name: `Spring split ${suffix}`,
+      season_id: portalTestSeasonId,
+    },
+  });
+  expect(planResponse.ok(), await planResponse.text()).toBeTruthy();
+  const plan = (await planResponse.json()) as { id: string };
+  const assistanceResponse = await request.post(
+    `/api/v1/families/${adamsFamilyId}/financial-assistance`,
+    {
+      data: {
+        camper_id: camperId,
+        requested_cents: 2000,
+        season_id: portalTestSeasonId,
+        statement: 'E2E private assistance statement for this household.',
+        submit: true,
+      },
+      headers: parentHeaders,
+    },
+  );
+  expect(assistanceResponse.ok(), await assistanceResponse.text()).toBeTruthy();
+  const assistance = (await assistanceResponse.json()) as { id: string; version: number };
+  const review = await request.post(`/api/v1/financial-assistance/${assistance.id}/review`, {
+    data: {
+      approved_cents: 2000,
+      internal_note: 'E2E approval.',
+      status: 'APPROVED',
+      version: assistance.version,
+    },
+  });
+  expect(review.ok(), await review.text()).toBeTruthy();
+
+  const selection = {
+    coupon_code: `e2e${suffix}`,
+    lines: [
+      { add_on_ids: [addOn.id], camper_id: camperId, session_id: first.id },
+      { camper_id: camperId, session_id: second.id },
+    ],
+    payment_plan_template_id: plan.id,
+    waitlist_mode: 'INDIVIDUAL',
+  };
+  const quoteResponse = await request.post(`/api/v1/families/${adamsFamilyId}/order-quotes`, {
+    data: selection,
+    headers: parentHeaders,
+  });
+  expect(quoteResponse.ok(), await quoteResponse.text()).toBeTruthy();
+  const quote = (await quoteResponse.json()) as {
+    totals: {
+      assistance_cents: number;
+      automatic_discount_cents: number;
+      coupon_discount_cents: number;
+    };
+  };
+  expect(quote.totals.automatic_discount_cents).toBeGreaterThan(0);
+  expect(quote.totals.coupon_discount_cents).toBeGreaterThan(0);
+  expect(quote.totals.assistance_cents).toBe(2000);
+
+  const orderResponse = await request.post(`/api/v1/families/${adamsFamilyId}/orders`, {
+    data: { ...selection, idempotency_key: crypto.randomUUID() },
+    headers: parentHeaders,
+  });
+  expect(orderResponse.ok(), await orderResponse.text()).toBeTruthy();
+  const order = (await orderResponse.json()) as { id: string };
+  const depositResponse = await request.post(
+    `/api/v1/families/${adamsFamilyId}/orders/${order.id}/online-payment`,
+    { data: { idempotency_key: crypto.randomUUID() }, headers: parentHeaders },
+  );
+  expect(depositResponse.ok(), await depositResponse.text()).toBeTruthy();
+  const deposit = (await depositResponse.json()) as { attempt_id: string };
+  const completeDeposit = await request.post(
+    `/api/v1/payments/local/${deposit.attempt_id}/complete`,
+    {
+      headers: parentHeaders,
+    },
+  );
+  expect(completeDeposit.ok(), await completeDeposit.text()).toBeTruthy();
+
+  const confirmedResponse = await request.get(
+    `/api/v1/families/${adamsFamilyId}/orders/${order.id}`,
+    { headers: parentHeaders },
+  );
+  const confirmed = (await confirmedResponse.json()) as {
+    installments: Array<{ id: string; status: string }>;
+  };
+  expect(confirmed.installments).toHaveLength(2);
+  const installmentResponse = await request.post(
+    `/api/v1/families/${adamsFamilyId}/installments/${confirmed.installments[0]!.id}/online-payment`,
+    { data: { idempotency_key: crypto.randomUUID() }, headers: parentHeaders },
+  );
+  expect(installmentResponse.ok(), await installmentResponse.text()).toBeTruthy();
+  const installment = (await installmentResponse.json()) as { attempt_id: string };
+  const completeInstallment = await request.post(
+    `/api/v1/payments/local/${installment.attempt_id}/complete`,
+    { headers: parentHeaders },
+  );
+  expect(completeInstallment.ok(), await completeInstallment.text()).toBeTruthy();
+  const paidResponse = await request.get(`/api/v1/families/${adamsFamilyId}/orders/${order.id}`, {
+    headers: parentHeaders,
+  });
+  const paid = (await paidResponse.json()) as { installments: Array<{ status: string }> };
+  expect(paid.installments[0]!.status).toBe('PAID');
 });
 
 test('lets parents complete camp readiness details', async ({ page, request }) => {

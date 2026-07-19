@@ -11,16 +11,15 @@ that exists today, not from the full product roadmap.
 - `apps/api` is the Fastify REST API.
 - `packages/contracts` defines shared request and response schemas.
 - `packages/database` owns PostgreSQL migrations, seed data, and store classes.
-- PostgreSQL is the only active persistent store in the implemented flows.
-- MinIO and Mailpit exist in local Docker Compose. File storage is not wired in;
-  the waitlist worker sends transactional email through SMTP and uses Mailpit
-  locally.
+- PostgreSQL is the active domain store. Mailpit receives transactional email
+  locally; MinIO is present for future file storage.
 - Local development auth is a fixed identity configured by environment variables.
   A real identity provider and auth middleware are not wired in yet.
-- The working domains today are catalog, sessions, families, campers, contacts,
-  adults, registrations, waitlist offers, offline payments, and attendance.
-- Health records, file uploads, online payment collection, refunds, and payment
-  webhooks are not implemented yet.
+- The working domains include catalog, families, registrations, grouped
+  waitlists, forms, attendance, household orders, hosted payments, pricing,
+  financial assistance, and parent-paid installments.
+- File uploads, refunds, taxes, donations, inventory, ACH, and saved payment
+  methods are not implemented.
 
 ## Source Map
 
@@ -30,13 +29,14 @@ that exists today, not from the full product roadmap.
 | Web proxy for form writes      | `apps/web/app/api/[...path]/route.ts`                                                                                                                                                                                    |
 | Dashboard                      | `apps/web/app/page.tsx`                                                                                                                                                                                                  |
 | Families UI                    | `apps/web/app/families/**`, `apps/web/components/family-*.tsx`                                                                                                                                                           |
-| Parent portal UI               | `apps/web/app/portal/**`, `apps/web/components/registration-checkout-client.tsx`                                                                                                                                         |
+| Parent portal UI               | `apps/web/app/portal/**`, `apps/web/components/household-cart.tsx`, `apps/web/components/parent-assistance-workspace.tsx`                                                                                                |
+| Finance operations UI          | `apps/web/app/orders/**`, `apps/web/app/pricing/**`, `apps/web/app/financial-assistance/**`                                                                                                                              |
 | Programs, seasons, sessions UI | `apps/web/app/programs/**`, `apps/web/app/seasons/**`, `apps/web/app/sessions/**`, `apps/web/components/program-create-form.tsx`, `apps/web/components/season-create-form.tsx`, `apps/web/components/session-editor.tsx` |
 | API composition                | `apps/api/src/app.ts`, `apps/api/src/server.ts`                                                                                                                                                                          |
 | Catalog API                    | `apps/api/src/catalog/routes.ts`, `apps/api/src/catalog/service.ts`                                                                                                                                                      |
 | Family API                     | `apps/api/src/families/routes.ts`, `apps/api/src/families/service.ts`                                                                                                                                                    |
-| Shared schemas                 | `packages/contracts/src/catalog.ts`, `packages/contracts/src/families.ts`                                                                                                                                                |
-| Database stores                | `packages/database/src/catalog-store.ts`, `packages/database/src/family-store.ts`                                                                                                                                        |
+| Shared schemas                 | `packages/contracts/src/catalog.ts`, `families.ts`, `orders.ts`, `payments.ts`, `pricing.ts`                                                                                                                             |
+| Database stores                | `packages/database/src/*-store.ts`                                                                                                                                                                                       |
 | Database schema                | `packages/database/migrations/*.sql`                                                                                                                                                                                     |
 | Seed data                      | `packages/database/fixtures/*.json`, `packages/database/src/seed.ts`                                                                                                                                                     |
 
@@ -150,6 +150,54 @@ Read examples:
 Current implementation note: `/portal/register` fetches detail for every
 session. That is fine for local seed data, but a larger production catalog will
 need a more targeted registration-availability endpoint.
+
+## Household Order and Payment Flow
+
+```mermaid
+sequenceDiagram
+    participant Parent as Parent cart
+    participant API as Orders API
+    participant Store as OrderStore
+    participant DB as PostgreSQL
+    participant Provider as Hosted payment provider
+    participant Worker as Billing worker
+
+    Parent->>API: POST order-quotes
+    API->>Store: Validate and calculate without writes
+    Store-->>Parent: Line outcomes and totals
+    Parent->>API: POST orders with idempotency key
+    API->>Store: Authoritative submission
+    Store->>DB: Lock sessions in stable order
+    Store->>DB: Snapshot lines, adjustments, holds, waitlists
+    Parent->>API: POST order online-payment
+    API->>DB: Snapshot per-line allocations
+    API->>Provider: Create hosted Checkout
+    Provider-->>Parent: Hosted payment page
+    Provider->>API: Verified success webhook
+    API->>DB: Confirm registrations and ledger allocations atomically
+    API->>DB: Queue one household receipt and confirmation
+    Worker->>Provider: Explicitly expire unpaid Checkout at hold deadline
+    Provider-->>Worker: Session can no longer be paid
+    Worker->>DB: Release holds and award reservations
+```
+
+Waitlisted lines never consume capacity holds. A keep-together waitlist shares a
+group identifier, so later offers and parent responses lock and change every
+member of the group in one transaction.
+
+## Pricing and Assistance Flow
+
+The quote engine begins with immutable session tuition and selected flat-price
+add-ons. It applies the highest-value qualifying automatic discount, then one
+coupon, then available approved assistance. Order submission reserves coupon and
+award value; payment confirmation turns adjustments into registration ledger
+credits. Expired holds release reservations.
+
+Approved payment-plan templates split only the post-deposit balance. Each later
+installment creates a new hosted Checkout. The billing worker advances
+`SCHEDULED`, `DUE`, and `OVERDUE` states and queues one seven-day and one due-date
+notification through the same transactional outbox used by waitlist and receipt
+email.
 
 ## Write Flow
 

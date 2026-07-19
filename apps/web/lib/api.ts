@@ -2,9 +2,12 @@ import type {
   CatalogContext,
   FamilyDetail,
   FamilyListResponse,
+  FinancialAssistanceListResponse,
   FormTemplatesResponse,
   ParentFormObligationsResponse,
   PaymentAttemptListResponse,
+  HouseholdOrderListResponse,
+  PricingConfiguration,
   ProblemResponse,
   SessionDetail,
   SessionListResponse,
@@ -68,6 +71,18 @@ export async function getPaymentAttempts(): Promise<PaymentAttemptListResponse> 
   return getJson('/v1/payments');
 }
 
+export async function getOrders(): Promise<HouseholdOrderListResponse> {
+  return getJson('/v1/orders');
+}
+
+export async function getPricing(): Promise<PricingConfiguration> {
+  return getJson('/v1/pricing');
+}
+
+export async function getFinancialAssistance(): Promise<FinancialAssistanceListResponse> {
+  return getJson('/v1/financial-assistance');
+}
+
 export async function getForms(): Promise<FormTemplatesResponse> {
   return getJson('/v1/forms');
 }
@@ -76,6 +91,26 @@ export async function getParentForms(
   headers = getParentApiHeaders(),
 ): Promise<ParentFormObligationsResponse> {
   return getJson('/v1/portal/forms', headers);
+}
+
+export async function getParentPricing(
+  headers = getParentApiHeaders(),
+): Promise<PricingConfiguration> {
+  return getJson('/v1/pricing', headers);
+}
+
+export async function getParentOrders(
+  familyId: string,
+  headers = getParentApiHeaders(),
+): Promise<HouseholdOrderListResponse> {
+  return getJson(`/v1/families/${encodeURIComponent(familyId)}/orders`, headers);
+}
+
+export async function getParentFinancialAssistance(
+  familyId: string,
+  headers = getParentApiHeaders(),
+): Promise<FinancialAssistanceListResponse> {
+  return getJson(`/v1/families/${encodeURIComponent(familyId)}/financial-assistance`, headers);
 }
 
 export async function getParentSessions(

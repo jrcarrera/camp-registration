@@ -1,5 +1,7 @@
 import {
   FamilyRegistrationParamsSchema,
+  HouseholdOrderParamsSchema,
+  InstallmentParamsSchema,
   OnlinePaymentCheckoutCreateSchema,
   OnlinePaymentCheckoutSchema,
   PaymentAttemptListResponseSchema,
@@ -8,6 +10,8 @@ import {
   PaymentCompletionSchema,
   ProblemResponseSchema,
   type FamilyRegistrationParams,
+  type HouseholdOrderParams,
+  type InstallmentParams,
   type OnlinePaymentCheckout,
   type OnlinePaymentCheckoutCreate,
   type PaymentAttempt,
@@ -110,6 +114,70 @@ export function registerPaymentRoutes(
         const checkout = await paymentService.createCheckout(
           request.params.familyId,
           request.params.registrationId,
+          request.body.idempotency_key,
+          request.id,
+        );
+        return reply.code(201).send(checkout);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Body: OnlinePaymentCheckoutCreate;
+    Params: HouseholdOrderParams;
+    Reply: OnlinePaymentCheckout | ProblemResponse;
+  }>(
+    '/v1/families/:familyId/orders/:orderId/online-payment',
+    {
+      schema: {
+        body: OnlinePaymentCheckoutCreateSchema,
+        description: 'Create one hosted checkout for the confirmed lines in a household order.',
+        params: HouseholdOrderParamsSchema,
+        response: { 201: OnlinePaymentCheckoutSchema, ...errorResponses },
+        tags: ['orders', 'payments'],
+      },
+    },
+    async (request, reply) => {
+      const paymentService = resolvePaymentService(service, request);
+      if (!paymentService) return unavailable(reply);
+      try {
+        const checkout = await paymentService.createOrderCheckout(
+          request.params.familyId,
+          request.params.orderId,
+          request.body.idempotency_key,
+          request.id,
+        );
+        return reply.code(201).send(checkout);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Body: OnlinePaymentCheckoutCreate;
+    Params: InstallmentParams;
+    Reply: OnlinePaymentCheckout | ProblemResponse;
+  }>(
+    '/v1/families/:familyId/installments/:installmentId/online-payment',
+    {
+      schema: {
+        body: OnlinePaymentCheckoutCreateSchema,
+        description: 'Create a hosted checkout for one scheduled household installment.',
+        params: InstallmentParamsSchema,
+        response: { 201: OnlinePaymentCheckoutSchema, ...errorResponses },
+        tags: ['orders', 'payments'],
+      },
+    },
+    async (request, reply) => {
+      const paymentService = resolvePaymentService(service, request);
+      if (!paymentService) return unavailable(reply);
+      try {
+        const checkout = await paymentService.createInstallmentCheckout(
+          request.params.familyId,
+          request.params.installmentId,
           request.body.idempotency_key,
           request.id,
         );

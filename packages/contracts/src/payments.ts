@@ -10,6 +10,11 @@ export const PaymentAttemptStatusSchema = Type.Union([
   Type.Literal('FAILED'),
   Type.Literal('CANCELLED'),
 ]);
+export const PaymentPurposeSchema = Type.Union([
+  Type.Literal('DEPOSIT'),
+  Type.Literal('INSTALLMENT'),
+  Type.Literal('BALANCE'),
+]);
 
 export const OnlinePaymentCheckoutCreateSchema = Type.Object(
   { idempotency_key: UuidSchema },
@@ -37,10 +42,13 @@ export const PaymentAttemptSchema = Type.Object(
     family_id: UuidSchema,
     family_name: Type.String({ minLength: 1 }),
     id: UuidSchema,
+    installment_id: Type.Union([UuidSchema, Type.Null()]),
+    order_id: Type.Union([UuidSchema, Type.Null()]),
     provider: PaymentProviderSchema,
     provider_reference: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+    purpose: PaymentPurposeSchema,
     receipt_url: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
-    registration_id: UuidSchema,
+    registration_id: Type.Union([UuidSchema, Type.Null()]),
     session_name: Type.String({ minLength: 1 }),
     status: PaymentAttemptStatusSchema,
   },

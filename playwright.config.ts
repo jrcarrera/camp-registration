@@ -7,6 +7,9 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? 'github' : 'list',
+  // E2E projects share one tenant database; serialize them so stateful finance and
+  // registration scenarios cannot compete for the same household or settings.
+  workers: 1,
   use: {
     baseURL: 'http://127.0.0.1:3000',
     trace: 'on-first-retry',

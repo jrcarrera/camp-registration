@@ -5,24 +5,24 @@ An open-source platform for camp registration and camp operations.
 ## Status
 
 The project has a local-first MVP foundation with implemented catalog, family,
-camper, admin registration, parent portal dashboard, parent checkout,
-cancellation, and time-boxed waitlist offer workflows with parent self-service
-acceptance or decline, scheduled queue advancement, and transactional email
-delivery. Staff can also build reusable forms and waivers, publish immutable
-versions to sessions, monitor completion, and collect version-bound parent
-drafts, acknowledgements, and electronic signatures. Parents can pay the
-server-calculated remaining deposit through a provider-hosted checkout, while
-staff can reconcile attempts against immutable online-card ledger entries.
-Authentication is still
-local-development oriented; the domain layer already enforces linked-adult
-family ownership for parent actions.
+camper, admin registration, household multi-camper orders, parent and staff
+order history, cancellation, and atomic individual or grouped waitlist
+workflows. Household checkout supports add-ons, automatic discounts, coupons,
+approved financial assistance, and parent-selected installment plans through
+provider-hosted payments. Staff can configure pricing, review assistance,
+inspect stuck holds, and reconcile immutable per-registration ledger
+allocations. Reusable forms and waivers, version-bound drafts,
+acknowledgements, electronic signatures, attendance check-in, scheduled queue
+advancement, and transactional email delivery are also implemented.
+Authentication remains local-development oriented; the domain layer enforces
+linked-adult family ownership and tenant isolation for parent actions.
 
 ## Planned Scope
 
 - Family and camper profiles
 - Camp programs and sessions
 - Versioned registration forms and electronic waivers
-- Payment expansion, discounts, and waitlists
+- Operational exports and downstream reporting
 - Parent portal enhancements and administrative dashboard
 - Rosters, health records, attendance, and communications
 
@@ -46,6 +46,9 @@ The local services are:
 - Mailpit email inbox: <http://localhost:8025>
 - Waitlist worker: background service for expiration, advancement, reminders,
   outbox delivery, automatic tenant discovery, and persistent health reporting
+- Billing worker: background service that expires hosted checkout sessions
+  before releasing capacity holds, updates installment states, and queues
+  installment reminders
 - MinIO console: <http://localhost:9001>
 - PostgreSQL: `localhost:5432`
 
@@ -84,6 +87,8 @@ coverage will be added with the registration workflow.
 - [Organization waitlist offer duration decision](docs/adr/0015-organization-waitlist-offer-duration-policy.md)
 - [Versioned forms and consent decision](docs/adr/0016-versioned-forms-and-consent.md)
 - [Provider-backed deposit reconciliation decision](docs/adr/0017-provider-backed-deposit-reconciliation.md)
+- [Household orders and capacity holds decision](docs/adr/0018-household-order-capacity-holds.md)
+- [Pricing, assistance, and installment decision](docs/adr/0019-pricing-assistance-and-installments.md)
 - [Foundation stack decision](docs/adr/0001-foundation-stack.md)
 - [Terraform deployment boundary](infra/terraform/README.md)
 - [Contributor guidance](CONTRIBUTING.md)

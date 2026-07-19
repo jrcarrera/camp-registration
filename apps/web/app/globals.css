@@ -2654,6 +2654,518 @@ tbody tr + tr td {
   background: #edf2ef;
 }
 
+/* Household orders, pricing, and financial assistance */
+.householdCheckout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.85fr);
+  align-items: start;
+  gap: 22px;
+}
+
+.cartBuilder,
+.orderReview,
+.orderHistory,
+.financeWorkspace,
+.orderConfirmation {
+  padding: 22px;
+  border: 1px solid #d5dcd8;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.orderReview {
+  position: sticky;
+  top: 22px;
+}
+
+.orderHistory {
+  grid-column: 1 / -1;
+}
+
+.cartCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #edf6f1;
+  color: #146b4d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cartLineStack,
+.orderCardStack,
+.reviewLineStack,
+.orderConfirmationLines {
+  display: grid;
+  gap: 12px;
+}
+
+.cartLine {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid #d7dedb;
+  border-radius: 6px;
+  background: #fbfcfb;
+}
+
+.cartLine legend,
+.outcomeChoice legend {
+  padding: 0 7px;
+  color: #53615a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.cartLineFields {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(220px, 1.2fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.cartLineFields label,
+.cartOptions label,
+.financeForm label {
+  display: grid;
+  gap: 6px;
+  color: #47554f;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.cartLineFields select,
+.cartOptions input,
+.cartOptions select,
+.financeForm input,
+.financeForm select,
+.financeForm textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #bdc7c2;
+  border-radius: 5px;
+  background: #fff;
+  color: #23312b;
+}
+
+.cartAddOns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.cartAddOns label {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid #dde3e0;
+  border-radius: 5px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.cartAddOns input {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  accent-color: #146b4d;
+}
+
+.cartAddOns strong,
+.cartAddOns small {
+  display: block;
+}
+
+.cartAddOns small {
+  margin-top: 3px;
+  color: #65726c;
+}
+
+.addCartLine {
+  margin-top: 14px;
+}
+
+.outcomeChoice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 22px 0 0;
+  padding: 13px;
+  border: 1px solid #d7dedb;
+  border-radius: 6px;
+}
+
+.outcomeChoice label {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid #d7dedb;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.outcomeChoice label.selected {
+  border-color: #4c9578;
+  background: #f2faf6;
+}
+
+.outcomeChoice input {
+  margin-top: 3px;
+  accent-color: #146b4d;
+}
+
+.outcomeChoice strong,
+.outcomeChoice small {
+  display: block;
+}
+
+.outcomeChoice small {
+  margin-top: 4px;
+  color: #64716b;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.cartOptions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.cartActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.cartActions small,
+.holdDisclosure {
+  color: #66736d;
+  font-size: 11px;
+}
+
+.reviewPlaceholder {
+  min-height: 230px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  color: #7a8680;
+  text-align: center;
+}
+
+.reviewPlaceholder p {
+  max-width: 240px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.reviewLine {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 9px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid #e1e6e3;
+}
+
+.reviewLine > div strong,
+.reviewLine > div span {
+  display: block;
+}
+
+.reviewLine > div span {
+  margin-top: 3px;
+  color: #66736d;
+  font-size: 12px;
+}
+
+.reviewLine > strong {
+  font-size: 13px;
+}
+
+.reviewLine .formErrorText {
+  grid-column: 1 / -1;
+}
+
+.orderTotals {
+  display: grid;
+  gap: 8px;
+  margin: 17px 0;
+}
+
+.orderTotals div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.orderTotals dt,
+.orderTotals dd {
+  margin: 0;
+}
+
+.orderTotals dt {
+  color: #5d6a64;
+}
+
+.orderTotalFinal,
+.orderDueToday {
+  padding-top: 9px;
+  border-top: 1px solid #ccd4d0;
+  font-weight: 800;
+}
+
+.orderDueToday {
+  color: #146b4d;
+  font-size: 17px;
+}
+
+.orderReview > .buttonPrimary {
+  width: 100%;
+}
+
+.holdDisclosure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 11px 0 0;
+}
+
+.orderCard {
+  padding: 16px;
+  border: 1px solid #d8dfdb;
+  border-radius: 6px;
+}
+
+.orderCard > header,
+.orderHistoryTotal,
+.installmentSchedule > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.orderCard header strong,
+.orderCard header small {
+  display: block;
+}
+
+.orderCard header small {
+  margin-top: 3px;
+  color: #66736d;
+}
+
+.orderHistoryLines {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0;
+}
+
+.orderHistoryLines > span {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.orderHistoryLines small {
+  color: #66736d;
+}
+
+.orderHistoryTotal {
+  padding-top: 11px;
+  border-top: 1px solid #e1e6e3;
+}
+
+.installmentSchedule {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px;
+  background: #f4f7f5;
+}
+
+.installmentSchedule .buttonSecondary {
+  min-height: 32px;
+  padding-block: 5px;
+}
+
+.orderConfirmation {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  border-color: #a9cfbd;
+  background: #f4fbf7;
+}
+
+.orderConfirmation > svg {
+  color: #146b4d;
+}
+
+.orderConfirmation h2 {
+  margin: 4px 0 8px;
+}
+
+.orderConfirmationLines {
+  margin: 16px 0;
+}
+
+.orderOutcomeavailable,
+.orderStatuscompleted,
+.orderStatuspartial {
+  background: #e7f4ed;
+  color: #176143;
+}
+
+.orderOutcomewaitlist,
+.orderStatuspayment_pending {
+  background: #fff4d7;
+  color: #72550c;
+}
+
+.orderOutcomeinvalid,
+.orderStatusexpired,
+.orderStatuscancelled {
+  background: #fdeae6;
+  color: #913a2b;
+}
+
+.financeWorkspace {
+  display: grid;
+  gap: 22px;
+}
+
+.financeForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.financeForm .fullWidth,
+.financeForm .notice,
+.financeForm .inlineActions {
+  grid-column: 1 / -1;
+}
+
+.financeCards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.financeCard {
+  padding: 14px;
+  border: 1px solid #d8dfdb;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.financeCard h3 {
+  margin: 0 0 7px;
+}
+
+.financeCard p,
+.financeCard small {
+  color: #66736d;
+  line-height: 1.45;
+}
+
+.orderAdminLayout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.4fr);
+  gap: 18px;
+}
+
+.orderAdminList {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.orderAdminList button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid #d8dfdb;
+  border-radius: 5px;
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.orderAdminList button.selected {
+  border-color: #4c9578;
+  background: #f2faf6;
+}
+
+.orderAdminList strong,
+.orderAdminList small {
+  display: block;
+}
+
+.orderAdminList small {
+  margin-top: 3px;
+  color: #66736d;
+}
+
+.orderAdminDetail {
+  padding: 18px;
+  border: 1px solid #d8dfdb;
+  border-radius: 6px;
+}
+
+.orderAdminDetail > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.orderAdminDetail h3 {
+  margin: 3px 0 0;
+  font-size: 22px;
+}
+
+.orderAdminDetail > header > strong {
+  color: #146b4d;
+  font-size: 22px;
+}
+
+.assistanceQueue {
+  display: grid;
+  gap: 14px;
+}
+
+.assistanceQueue .financeCard > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.assistanceStatement {
+  padding: 13px;
+  border-left: 3px solid #2a6f97;
+  background: #f3f7f9;
+  color: #394840 !important;
+  white-space: pre-wrap;
+}
+
 .familyDetail {
   padding-bottom: 70px;
 }
@@ -3382,6 +3894,26 @@ tbody tr + tr td {
   .toggleGrid {
     grid-template-columns: 1fr;
   }
+
+  .householdCheckout {
+    grid-template-columns: 1fr;
+  }
+
+  .orderReview {
+    position: static;
+  }
+
+  .orderHistory {
+    grid-column: auto;
+  }
+
+  .financeCards {
+    grid-template-columns: 1fr;
+  }
+
+  .orderAdminLayout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 620px) {
@@ -3395,6 +3927,47 @@ tbody tr + tr td {
 
   .settingsSaveButton {
     width: 100%;
+  }
+
+  .cartBuilder,
+  .orderReview,
+  .orderHistory,
+  .financeWorkspace,
+  .orderConfirmation {
+    padding: 16px;
+  }
+
+  .cartLineFields,
+  .cartAddOns,
+  .outcomeChoice,
+  .cartOptions,
+  .financeForm {
+    grid-template-columns: 1fr;
+  }
+
+  .cartLineFields .iconButton {
+    width: 100%;
+  }
+
+  .cartActions,
+  .orderConfirmation,
+  .orderCard > header,
+  .installmentSchedule > div {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cartActions .buttonSecondary,
+  .installmentSchedule .buttonSecondary {
+    width: 100%;
+  }
+
+  .orderHistoryLines > span {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .orderHistoryLines small {
+    grid-column: 2;
   }
 
   .waitlistConfirmationForm {

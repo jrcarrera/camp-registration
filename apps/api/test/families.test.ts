@@ -370,7 +370,7 @@ describe('family routes', () => {
     );
   });
 
-  it('claims adult identity and runs parent checkout through the family API', async () => {
+  it('claims adult identity and denies the migrated parent checkout endpoint', async () => {
     const service = fakeService();
     const app = await buildApp({ familyService: service });
     applications.push(app);
@@ -388,17 +388,14 @@ describe('family routes', () => {
     });
 
     expect(claimResponse.statusCode).toBe(200);
-    expect(checkoutResponse.statusCode).toBe(201);
+    expect(checkoutResponse.statusCode).toBe(410);
+    expect(checkoutResponse.json()).toMatchObject({ code: 'parent_checkout_migrated' });
     expect(service.claimAdultIdentity).toHaveBeenCalledWith(
       familyId,
       adultId,
       'adult-claim-route-test',
     );
-    expect(service.createParentCheckout).toHaveBeenCalledWith(
-      familyId,
-      checkoutCreate,
-      'checkout-route-test',
-    );
+    expect(service.createParentCheckout).not.toHaveBeenCalled();
   });
 
   it('cancels registrations and manages waitlist offers through the family API', async () => {

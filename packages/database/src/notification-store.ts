@@ -10,7 +10,12 @@ export type WaitlistNotificationType =
   | 'WAITLIST_EXPIRED'
   | 'WAITLIST_CANCELLED';
 
-export type NotificationType = WaitlistNotificationType | 'PAYMENT_RECEIPT';
+export type NotificationType =
+  | WaitlistNotificationType
+  | 'PAYMENT_RECEIPT'
+  | 'ORDER_CONFIRMATION'
+  | 'INSTALLMENT_DUE_SOON'
+  | 'INSTALLMENT_DUE';
 
 export interface WaitlistNotificationTemplateData {
   camper_name: string;
@@ -30,6 +35,47 @@ export interface PaymentReceiptNotificationTemplateData {
   provider_reference: string | null;
   receipt_url: string | null;
   session_name: string;
+  order_summary?: OrderNotificationSummary;
+}
+
+export interface OrderNotificationLine {
+  assistance_cents: number;
+  automatic_discount_cents: number;
+  camper_name: string;
+  coupon_discount_cents: number;
+  gross_price_cents: number;
+  net_price_cents: number;
+  outcome: 'HELD' | 'CONFIRMED' | 'WAITLISTED' | 'EXPIRED' | 'CANCELLED';
+  session_name: string;
+}
+
+export interface OrderNotificationInstallment {
+  amount_cents: number;
+  due_on: string;
+  status: 'SCHEDULED' | 'DUE' | 'OVERDUE' | 'PAID';
+}
+
+export interface OrderNotificationSummary {
+  assistance_cents: number;
+  automatic_discount_cents: number;
+  coupon_discount_cents: number;
+  gross_total_cents: number;
+  installments: OrderNotificationInstallment[];
+  lines: OrderNotificationLine[];
+  net_total_cents: number;
+  paid_cents: number;
+  remaining_balance_cents: number;
+}
+
+export interface BillingNotificationTemplateData {
+  amount_cents: number;
+  currency: 'USD';
+  due_on?: string;
+  family_name: string;
+  installment_id?: string;
+  line_count?: number;
+  order_summary?: OrderNotificationSummary;
+  portal_path: string;
 }
 
 export interface NotificationOutboxRecord {
@@ -38,11 +84,17 @@ export interface NotificationOutboxRecord {
   idempotency_key: string;
   notification_type: NotificationType;
   recipient_email: string;
-  template_data: WaitlistNotificationTemplateData | PaymentReceiptNotificationTemplateData;
+  template_data:
+    | WaitlistNotificationTemplateData
+    | PaymentReceiptNotificationTemplateData
+    | BillingNotificationTemplateData;
 }
 
 interface NotificationOutboxRow extends Omit<NotificationOutboxRecord, 'template_data'> {
-  template_data: WaitlistNotificationTemplateData;
+  template_data:
+    | WaitlistNotificationTemplateData
+    | PaymentReceiptNotificationTemplateData
+    | BillingNotificationTemplateData;
 }
 
 export class NotificationStore {

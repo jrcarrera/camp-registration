@@ -73,7 +73,7 @@ test('renders tenant-owned waitlist offer policy settings', async ({ page }) => 
     name: 'Default claim window',
   });
   expect(['24', '48', '72', '168']).toContain(await claimWindow.inputValue());
-  await expect(page.getByRole('button', { exact: true, name: 'Save policy' })).toBeDisabled();
+  await expect(page.getByRole('button', { exact: true, name: 'Save settings' })).toBeDisabled();
 
   const layout = await page.evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,

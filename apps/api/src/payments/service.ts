@@ -26,6 +26,18 @@ export interface PaymentServiceApi {
     idempotencyKey: string,
     requestId: string,
   ): Promise<OnlinePaymentCheckout>;
+  createInstallmentCheckout(
+    familyId: string,
+    installmentId: string,
+    idempotencyKey: string,
+    requestId: string,
+  ): Promise<OnlinePaymentCheckout>;
+  createOrderCheckout(
+    familyId: string,
+    orderId: string,
+    idempotencyKey: string,
+    requestId: string,
+  ): Promise<OnlinePaymentCheckout>;
   getAttempt(attemptId: string): Promise<PaymentAttempt>;
   listAttempts(): Promise<PaymentAttempt[]>;
 }
@@ -133,6 +145,88 @@ export class PaymentService implements PaymentServiceApi {
         organizationId: attempt.organization_id,
         providerAccountId: attempt.provider_account_id,
         registrationId: attempt.registration_id,
+        orderId: attempt.order_id,
+        purpose: attempt.purpose,
+        sessionName: attempt.session_name,
+      });
+      const attached = await this.store.attachCheckout(this.organizationId, attempt.id, hosted);
+      return {
+        amount_cents: attached.amount_cents,
+        attempt_id: attached.id,
+        checkout_url: attached.checkout_url!,
+        currency: attached.currency,
+        status: attached.status,
+      };
+    } catch (error) {
+      await this.store.markCheckoutFailed(this.organizationId, attempt.id);
+      throw error;
+    }
+  }
+
+  async createOrderCheckout(
+    familyId: string,
+    orderId: string,
+    idempotencyKey: string,
+    requestId: string,
+  ): Promise<OnlinePaymentCheckout> {
+    await this.authorizeFamilyPayment(familyId);
+    const attempt = await this.store.prepareOrderCheckout(
+      { actorId: this.identity.subject, organizationId: this.organizationId, requestId },
+      { attemptId: randomUUID(), familyId, idempotencyKey, orderId, provider: this.provider.name },
+    );
+    return this.hostedCheckout(attempt);
+  }
+
+  async createInstallmentCheckout(
+    familyId: string,
+    installmentId: string,
+    idempotencyKey: string,
+    requestId: string,
+  ): Promise<OnlinePaymentCheckout> {
+    await this.authorizeFamilyPayment(familyId);
+    const attempt = await this.store.prepareInstallmentCheckout(
+      { actorId: this.identity.subject, organizationId: this.organizationId, requestId },
+      {
+        attemptId: randomUUID(),
+        familyId,
+        idempotencyKey,
+        installmentId,
+        provider: this.provider.name,
+      },
+    );
+    return this.hostedCheckout(attempt);
+  }
+
+  private async hostedCheckout(
+    attempt: Awaited<ReturnType<PaymentStore['prepareOrderCheckout']>>,
+  ): Promise<OnlinePaymentCheckout> {
+    if (attempt.checkout_url) {
+      return {
+        amount_cents: attempt.amount_cents,
+        attempt_id: attempt.id,
+        checkout_url: attempt.checkout_url,
+        currency: attempt.currency,
+        status: attempt.status,
+      };
+    }
+    if (attempt.status !== 'PENDING') {
+      throw new PaymentValidationError(
+        'This checkout attempt cannot be resumed; start a new payment attempt',
+      );
+    }
+    try {
+      const hosted = await this.provider.createHostedCheckout({
+        amountCents: attempt.amount_cents,
+        attemptId: attempt.id,
+        camperName: attempt.camper_name,
+        currency: attempt.currency,
+        customerEmail: attempt.recipient_email,
+        familyId: attempt.family_id,
+        organizationId: attempt.organization_id,
+        providerAccountId: attempt.provider_account_id,
+        registrationId: attempt.registration_id,
+        orderId: attempt.order_id,
+        purpose: attempt.purpose,
         sessionName: attempt.session_name,
       });
       const attached = await this.store.attachCheckout(this.organizationId, attempt.id, hosted);

@@ -8,12 +8,15 @@ import {
   FileSignature,
   CircleDollarSign,
   HeartPulse,
+  HandCoins,
   House,
   Library,
   Settings,
   ShieldCheck,
   TentTree,
   Users,
+  Tags,
+  ShoppingCart,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -33,6 +36,9 @@ const adminNavigation: NavigationItem[] = [
   { href: '/seasons', icon: CalendarRange, label: 'Seasons' },
   { href: '/programs', icon: Library, label: 'Programs' },
   { href: '/forms', icon: FileSignature, label: 'Forms' },
+  { href: '/orders', icon: ShoppingCart, label: 'Orders' },
+  { href: '/pricing', icon: Tags, label: 'Pricing' },
+  { href: '/financial-assistance', icon: HandCoins, label: 'Assistance' },
   { href: '/payments', icon: CircleDollarSign, label: 'Payments' },
   { href: '/#health', icon: HeartPulse, label: 'Health' },
 ];
@@ -42,6 +48,7 @@ const portalNavigation: NavigationItem[] = [
   { href: '/portal/register', icon: ClipboardPlus, label: 'Register' },
   { href: '/portal/readiness', icon: HeartPulse, label: 'Readiness' },
   { href: '/portal/forms', icon: FileSignature, label: 'Forms & waivers' },
+  { href: '/portal/assistance', icon: HandCoins, label: 'Assistance' },
 ];
 
 export function ShellSidebar() {

@@ -39,7 +39,9 @@ export class StripePaymentProvider implements PaymentProvider {
     const metadata = {
       organization_id: input.organizationId,
       payment_attempt_id: input.attemptId,
-      registration_id: input.registrationId,
+      ...(input.registrationId ? { registration_id: input.registrationId } : {}),
+      ...(input.orderId ? { order_id: input.orderId } : {}),
+      payment_purpose: input.purpose,
     };
     const session = await this.stripe.checkout.sessions.create(
       {
@@ -50,8 +52,11 @@ export class StripePaymentProvider implements PaymentProvider {
             price_data: {
               currency: input.currency.toLowerCase(),
               product_data: {
-                name: `Deposit - ${input.sessionName}`,
-                description: `${input.camperName} camp registration deposit`,
+                name:
+                  input.purpose === 'INSTALLMENT'
+                    ? `Installment - ${input.sessionName}`
+                    : `Deposit - ${input.sessionName}`,
+                description: `${input.camperName} camp registration payment`,
               },
               unit_amount: input.amountCents,
             },
@@ -61,6 +66,7 @@ export class StripePaymentProvider implements PaymentProvider {
         metadata,
         mode: 'payment',
         payment_intent_data: { metadata },
+        expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
         success_url: `${this.publicBaseUrl.replace(/\/$/, '')}/portal?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       },
       {
@@ -70,6 +76,15 @@ export class StripePaymentProvider implements PaymentProvider {
     );
     if (!session.url) throw new Error('Stripe did not return a Checkout URL');
     return { checkoutUrl: session.url, providerCheckoutSessionId: session.id };
+  }
+
+  async expireHostedCheckout(
+    providerAccountId: string,
+    providerCheckoutSessionId: string,
+  ): Promise<void> {
+    await this.stripe.checkout.sessions.expire(providerCheckoutSessionId, undefined, {
+      stripeAccount: providerAccountId,
+    });
   }
 
   verifyWebhook(rawBody: Buffer, signature: string): ProviderPaymentEvent | null {

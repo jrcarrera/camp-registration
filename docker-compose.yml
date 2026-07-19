@@ -105,6 +105,27 @@ services:
       retries: 3
       start_period: 45s
 
+  billing-worker:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ['node', 'apps/api/dist/billing-worker.js']
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      BILLING_WORKER_INTERVAL_MS: 30000
+      DATABASE_URL: postgresql://camp_app:camp-app-local@postgres:5432/camp_registration
+      PAYMENT_PROVIDER: local
+      PUBLIC_APP_BASE_URL: http://localhost:3000
+    healthcheck:
+      test: ['CMD-SHELL', 'ps | grep -q "[b]illing-worker.js"']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
   web:
     build:
       context: .

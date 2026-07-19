@@ -2,12 +2,13 @@ import type { FamilyDetail } from '@camp-registration/contracts';
 import { AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
-import { RegistrationCheckoutClient } from '../../../components/registration-checkout-client';
+import { HouseholdCart } from '../../../components/household-cart';
 import {
   getParentApiHeaders,
-  getParentCatalog,
   getParentFamilies,
   getParentFamily,
+  getParentOrders,
+  getParentPricing,
   getParentSession,
   getParentSessions,
 } from '../../../lib/api';
@@ -33,16 +34,12 @@ export default async function ParentRegistrationPage({
 }) {
   const initialCamperId = (await searchParams)?.camperId;
   const parentHeaders = getParentApiHeaders();
-  const [catalogResult, familiesResult, sessionsResult] = await Promise.allSettled([
-    getParentCatalog(parentHeaders),
+  const [familiesResult, sessionsResult, pricingResult] = await Promise.allSettled([
     getParentFamilies(parentHeaders),
     getParentSessions(parentHeaders),
+    getParentPricing(parentHeaders),
   ]);
 
-  const seasonYearsById =
-    catalogResult.status === 'fulfilled'
-      ? Object.fromEntries(catalogResult.value.seasons.map((season) => [season.id, season.year]))
-      : {};
   const familySummaries =
     familiesResult.status === 'fulfilled' ? familiesResult.value.families : [];
   const familyDetailResults = await Promise.allSettled(
@@ -60,12 +57,16 @@ export default async function ParentRegistrationPage({
   const sessions = sessionDetailResults
     .filter((result) => result.status === 'fulfilled')
     .map((result) => result.value);
+  const ordersResult = family
+    ? await Promise.allSettled([getParentOrders(family.id, parentHeaders)])
+    : [];
   const loadError =
-    catalogResult.status === 'rejected' ||
     familiesResult.status === 'rejected' ||
     sessionsResult.status === 'rejected' ||
+    pricingResult.status === 'rejected' ||
     familyDetailResults.some((result) => result.status === 'rejected') ||
-    sessionDetailResults.some((result) => result.status === 'rejected');
+    sessionDetailResults.some((result) => result.status === 'rejected') ||
+    ordersResult.some((result) => result.status === 'rejected');
 
   return (
     <>
@@ -73,7 +74,9 @@ export default async function ParentRegistrationPage({
         <div>
           <p className="contextLabel">Parent portal</p>
           <h1>Register for camp</h1>
-          <p className="pageDescription">Choose one of your campers and an eligible session.</p>
+          <p className="pageDescription">
+            Build one household order for multiple campers, sessions, and payment choices.
+          </p>
         </div>
       </header>
 
@@ -96,17 +99,16 @@ export default async function ParentRegistrationPage({
         </section>
       )}
 
-      {family && (
-        <section className="contentSection registrationCheckout" aria-label="Registration checkout">
-          <RegistrationCheckoutClient
-            families={[family]}
-            hideFamilySelector
+      {family && pricingResult.status === 'fulfilled' && (
+        <section aria-label="Household registration checkout">
+          <HouseholdCart
+            family={family}
             initialCamperId={initialCamperId}
-            initialFamily={family}
+            initialOrders={
+              ordersResult[0]?.status === 'fulfilled' ? ordersResult[0].value.orders : []
+            }
+            pricing={pricingResult.value}
             requestHeaders={parentHeaders}
-            returnHref="/portal"
-            returnLabel="My Family"
-            seasonYearsById={seasonYearsById}
             sessions={sessions}
           />
         </section>

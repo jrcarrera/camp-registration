@@ -9,7 +9,9 @@ export interface HostedCheckoutInput {
   familyId: string;
   organizationId: string;
   providerAccountId: string;
-  registrationId: string;
+  registrationId: string | null;
+  orderId: string | null;
+  purpose: 'DEPOSIT' | 'INSTALLMENT' | 'BALANCE';
   sessionName: string;
 }
 
@@ -21,6 +23,10 @@ export interface HostedCheckoutResult {
 export interface PaymentProvider {
   readonly name: PaymentProviderName;
   createHostedCheckout(input: HostedCheckoutInput): Promise<HostedCheckoutResult>;
+  expireHostedCheckout?(
+    providerAccountId: string,
+    providerCheckoutSessionId: string,
+  ): Promise<void>;
   verifyWebhook?(rawBody: Buffer, signature: string): ProviderPaymentEvent | null;
 }
 
@@ -38,4 +44,6 @@ export class LocalPaymentProvider implements PaymentProvider {
       providerCheckoutSessionId: `local_cs_${input.attemptId.replaceAll('-', '')}`,
     };
   }
+
+  async expireHostedCheckout(): Promise<void> {}
 }

@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 
 import type {
   NotificationOutboxRecord,
+  BillingNotificationTemplateData,
+  OrderNotificationSummary,
   PaymentReceiptNotificationTemplateData,
   WaitlistNotificationTemplateData,
   WaitlistNotificationType,
@@ -79,6 +81,39 @@ function deterministicMessageId(idempotencyKey: string): string {
   return `<${digest}@notifications.camp-registration.local>`;
 }
 
+function money(cents: number): string {
+  return new Intl.NumberFormat('en-US', { currency: 'USD', style: 'currency' }).format(cents / 100);
+}
+
+function orderSummaryText(summary: OrderNotificationSummary): string {
+  const lines = summary.lines.map((line) => {
+    const adjustments =
+      line.automatic_discount_cents + line.coupon_discount_cents + line.assistance_cents;
+    return `- ${line.camper_name} — ${line.session_name} (${line.outcome.toLowerCase()}): gross ${money(line.gross_price_cents)}, adjustments -${money(adjustments)}, net ${money(line.net_price_cents)}`;
+  });
+  const installments = summary.installments.length
+    ? [
+        '\nInstallment schedule:',
+        ...summary.installments.map(
+          (installment) =>
+            `- ${installment.due_on}: ${money(installment.amount_cents)} (${installment.status.toLowerCase()})`,
+        ),
+      ]
+    : [];
+  return [
+    '\nOrder details:',
+    ...lines,
+    `\nGross total: ${money(summary.gross_total_cents)}`,
+    `Automatic discount: -${money(summary.automatic_discount_cents)}`,
+    `Coupon discount: -${money(summary.coupon_discount_cents)}`,
+    `Financial assistance: -${money(summary.assistance_cents)}`,
+    `Net total: ${money(summary.net_total_cents)}`,
+    `Amount paid: ${money(summary.paid_cents)}`,
+    `Remaining balance: ${money(summary.remaining_balance_cents)}`,
+    ...installments,
+  ].join('\n');
+}
+
 export function buildWaitlistEmail(
   record: NotificationOutboxRecord,
   portalBaseUrl: string,
@@ -94,10 +129,43 @@ export function buildWaitlistEmail(
       : data.provider_reference
         ? `\nPayment reference: ${data.provider_reference}`
         : '';
+    const summary = data.order_summary ? orderSummaryText(data.order_summary) : '';
     return {
       messageId: deterministicMessageId(record.idempotency_key),
       subject: `Payment received: ${data.session_name}`,
-      text: `${data.family_name},\n\nWe received ${amount} for ${data.camper_name}'s registration in ${data.session_name}.${receiptLine}\n\nReview your camp plan: ${new URL(data.portal_path, portalBaseUrl).toString()}\n\nCamp Registration`,
+      text: `${data.family_name},\n\nWe received ${amount} for ${data.camper_name}'s registration in ${data.session_name}.${receiptLine}${summary}\n\nReview your camp plan: ${new URL(data.portal_path, portalBaseUrl).toString()}\n\nCamp Registration`,
+      to: record.recipient_email,
+    };
+  }
+
+  if (
+    record.notification_type === 'ORDER_CONFIRMATION' ||
+    record.notification_type === 'INSTALLMENT_DUE_SOON' ||
+    record.notification_type === 'INSTALLMENT_DUE'
+  ) {
+    const data = record.template_data as BillingNotificationTemplateData;
+    const amount = new Intl.NumberFormat('en-US', {
+      currency: data.currency,
+      style: 'currency',
+    }).format(data.amount_cents / 100);
+    const portalUrl = new URL(data.portal_path, portalBaseUrl).toString();
+    if (record.notification_type === 'ORDER_CONFIRMATION') {
+      const summary = data.order_summary ? orderSummaryText(data.order_summary) : '';
+      return {
+        messageId: deterministicMessageId(record.idempotency_key),
+        subject: 'Household camp order confirmed',
+        text: `${data.family_name},\n\nYour household order with ${data.line_count ?? 1} registration line(s) is confirmed. Amount paid today: ${amount}.${summary}\n\nReview the order and remaining balance: ${portalUrl}\n\nCamp Registration`,
+        to: record.recipient_email,
+      };
+    }
+    const dueText = data.due_on ? claimDeadline(`${data.due_on}T12:00:00Z`, 'UTC') : 'soon';
+    return {
+      messageId: deterministicMessageId(record.idempotency_key),
+      subject:
+        record.notification_type === 'INSTALLMENT_DUE'
+          ? 'Camp payment installment due'
+          : 'Upcoming camp payment installment',
+      text: `${data.family_name},\n\nA camp payment installment of ${amount} is ${record.notification_type === 'INSTALLMENT_DUE' ? 'due today' : `due ${dueText}`}. Pay securely from the parent portal: ${portalUrl}\n\nCamp Registration`,
       to: record.recipient_email,
     };
   }

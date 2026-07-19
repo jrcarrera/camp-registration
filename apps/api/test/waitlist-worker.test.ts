@@ -182,4 +182,51 @@ describe('waitlist email templates', () => {
     expect(first.text).toContain('http://localhost:3000/portal');
     expect(first.messageId).toBe(second.messageId);
   });
+
+  it('includes line adjustments, balance, and installments in household confirmations', () => {
+    const orderNotification: NotificationOutboxRecord = {
+      attempt_count: 1,
+      id: 'c03f4f34-0f42-4f4e-960d-9ada1219146d',
+      idempotency_key: 'order-confirmation:test-order',
+      notification_type: 'ORDER_CONFIRMATION',
+      recipient_email: 'parent@example.test',
+      template_data: {
+        amount_cents: 10_000,
+        currency: 'USD',
+        family_name: 'Adams Family',
+        line_count: 1,
+        order_summary: {
+          assistance_cents: 2_000,
+          automatic_discount_cents: 4_000,
+          coupon_discount_cents: 1_000,
+          gross_total_cents: 60_000,
+          installments: [{ amount_cents: 21_500, due_on: '2027-03-01', status: 'SCHEDULED' }],
+          lines: [
+            {
+              assistance_cents: 2_000,
+              automatic_discount_cents: 4_000,
+              camper_name: 'Amara Adams',
+              coupon_discount_cents: 1_000,
+              gross_price_cents: 60_000,
+              net_price_cents: 53_000,
+              outcome: 'CONFIRMED',
+              session_name: 'Day Camp Week 1',
+            },
+          ],
+          net_total_cents: 53_000,
+          paid_cents: 10_000,
+          remaining_balance_cents: 43_000,
+        },
+        portal_path: '/portal',
+      },
+    };
+
+    const email = buildWaitlistEmail(orderNotification, 'http://localhost:3000');
+
+    expect(email.text).toContain('Amara Adams — Day Camp Week 1 (confirmed)');
+    expect(email.text).toContain('Automatic discount: -$40.00');
+    expect(email.text).toContain('Amount paid: $100.00');
+    expect(email.text).toContain('Remaining balance: $430.00');
+    expect(email.text).toContain('2027-03-01: $215.00 (scheduled)');
+  });
 });
