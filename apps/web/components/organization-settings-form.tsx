@@ -16,6 +16,12 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
     organization.waitlist_offer_duration_hours,
   );
   const [saving, setSaving] = useState(false);
+  const [stripeAccountId, setStripeAccountId] = useState(
+    organization.stripe_connected_account_id ?? '',
+  );
+  const [savedStripeAccountId, setSavedStripeAccountId] = useState(
+    organization.stripe_connected_account_id ?? '',
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +31,10 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
     setError(null);
     try {
       const response = await fetch('/api/v1/organization/settings', {
-        body: JSON.stringify({ waitlist_offer_duration_hours: durationHours }),
+        body: JSON.stringify({
+          stripe_connected_account_id: stripeAccountId.trim() || null,
+          waitlist_offer_duration_hours: durationHours,
+        }),
         headers: { 'content-type': 'application/json' },
         method: 'PATCH',
       });
@@ -36,7 +45,9 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
       const updated = (await response.json()) as OrganizationFixture;
       setDurationHours(updated.waitlist_offer_duration_hours);
       setSavedDurationHours(updated.waitlist_offer_duration_hours);
-      setMessage('Waitlist offer policy saved.');
+      setStripeAccountId(updated.stripe_connected_account_id ?? '');
+      setSavedStripeAccountId(updated.stripe_connected_account_id ?? '');
+      setMessage('Organization settings saved.');
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : 'Organization settings could not be saved.',
@@ -79,6 +90,37 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
             </strong>
             .
           </p>
+        </div>
+      </section>
+      <section className="editorSection" aria-labelledby="payment-provider-heading">
+        <div className="editorSectionHeading">
+          <h2 id="payment-provider-heading">Payment provider</h2>
+          <p>
+            Connect this tenant to its camp-owned Stripe account. The platform creates direct,
+            Stripe-hosted Checkout payments and never handles card details.
+          </p>
+        </div>
+        <div className="organizationSettingsFields">
+          <label className="formField">
+            <span>Stripe connected account ID</span>
+            <input
+              disabled={saving}
+              onChange={(event) => setStripeAccountId(event.target.value)}
+              placeholder="acct_..."
+              value={stripeAccountId}
+            />
+          </label>
+          <p className="settingsPolicySummary">
+            Leave blank until Stripe onboarding is complete. Local development uses the test adapter
+            and does not require this value.
+          </p>
+        </div>
+      </section>
+      <section
+        className="editorSection settingsSaveSection"
+        aria-label="Save organization settings"
+      >
+        <div className="organizationSettingsFields">
           {message ? (
             <div className="notice noticeSuccess" role="status">
               <CheckCircle2 aria-hidden="true" size={18} />
@@ -93,12 +135,15 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
           ) : null}
           <button
             className="buttonPrimary settingsSaveButton"
-            disabled={saving || durationHours === savedDurationHours}
+            disabled={
+              saving ||
+              (durationHours === savedDurationHours && stripeAccountId === savedStripeAccountId)
+            }
             onClick={() => void save()}
             type="button"
           >
             <Save aria-hidden="true" size={16} />
-            {saving ? 'Saving…' : 'Save policy'}
+            {saving ? 'Saving…' : 'Save settings'}
           </button>
         </div>
       </section>

@@ -22,3 +22,4 @@ clarifications and links to superseding decisions.
 | [0014](0014-waitlist-notification-issue-replay.md)             | Accepted | Notification issue replay            |
 | [0015](0015-organization-waitlist-offer-duration-policy.md)    | Accepted | Organization offer duration policy   |
 | [0016](0016-versioned-forms-and-consent.md)                    | Accepted | Versioned forms and consent records  |
+| [0017](0017-provider-backed-deposit-reconciliation.md)         | Accepted | Provider deposit reconciliation      |

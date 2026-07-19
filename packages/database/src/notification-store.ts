@@ -10,6 +10,8 @@ export type WaitlistNotificationType =
   | 'WAITLIST_EXPIRED'
   | 'WAITLIST_CANCELLED';
 
+export type NotificationType = WaitlistNotificationType | 'PAYMENT_RECEIPT';
+
 export interface WaitlistNotificationTemplateData {
   camper_name: string;
   expires_at: string;
@@ -19,13 +21,24 @@ export interface WaitlistNotificationTemplateData {
   session_name: string;
 }
 
+export interface PaymentReceiptNotificationTemplateData {
+  amount_cents: number;
+  camper_name: string;
+  currency: 'USD';
+  family_name: string;
+  portal_path: string;
+  provider_reference: string | null;
+  receipt_url: string | null;
+  session_name: string;
+}
+
 export interface NotificationOutboxRecord {
   attempt_count: number;
   id: string;
   idempotency_key: string;
-  notification_type: WaitlistNotificationType;
+  notification_type: NotificationType;
   recipient_email: string;
-  template_data: WaitlistNotificationTemplateData;
+  template_data: WaitlistNotificationTemplateData | PaymentReceiptNotificationTemplateData;
 }
 
 interface NotificationOutboxRow extends Omit<NotificationOutboxRecord, 'template_data'> {

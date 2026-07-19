@@ -103,6 +103,7 @@ describe('catalog store', () => {
         action: 'organization.settings_updated',
         details: {
           previous_waitlist_offer_duration_hours: 48,
+          stripe_connected_account_changed: false,
           waitlist_offer_duration_hours: 72,
         },
       },

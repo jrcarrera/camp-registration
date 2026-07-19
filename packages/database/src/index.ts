@@ -4,5 +4,6 @@ export * from './family-store.js';
 export * from './forms-store.js';
 export * from './migrate.js';
 export * from './notification-store.js';
+export * from './payment-store.js';
 export * from './seed.js';
 export * from './waitlist-operations-store.js';

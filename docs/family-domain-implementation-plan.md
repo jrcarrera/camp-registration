@@ -61,5 +61,5 @@ Implemented in this slice:
   identity-management workflows
 - Family merge, split, transfer, archive, and restore workflows
 - Health forms, medications, allergies, and medical documents
-- Online payments, sibling atomic checkout groups, SMS, and bounce processing
+- Full-balance payments, refunds, sibling atomic checkout groups, SMS, and bounce processing
 - Restricted pickup rules and custody-sensitive workflows

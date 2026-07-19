@@ -1,6 +1,11 @@
 import { createHash } from 'node:crypto';
 
-import type { NotificationOutboxRecord } from '@camp-registration/database';
+import type {
+  NotificationOutboxRecord,
+  PaymentReceiptNotificationTemplateData,
+  WaitlistNotificationTemplateData,
+  WaitlistNotificationType,
+} from '@camp-registration/database';
 import nodemailer, { type Transporter } from 'nodemailer';
 
 export interface EmailMessage {
@@ -78,16 +83,32 @@ export function buildWaitlistEmail(
   record: NotificationOutboxRecord,
   portalBaseUrl: string,
 ): EmailMessage {
-  const data = record.template_data;
+  if (record.notification_type === 'PAYMENT_RECEIPT') {
+    const data = record.template_data as PaymentReceiptNotificationTemplateData;
+    const amount = new Intl.NumberFormat('en-US', {
+      currency: data.currency,
+      style: 'currency',
+    }).format(data.amount_cents / 100);
+    const receiptLine = data.receipt_url
+      ? `\nProvider receipt: ${data.receipt_url}`
+      : data.provider_reference
+        ? `\nPayment reference: ${data.provider_reference}`
+        : '';
+    return {
+      messageId: deterministicMessageId(record.idempotency_key),
+      subject: `Payment received: ${data.session_name}`,
+      text: `${data.family_name},\n\nWe received ${amount} for ${data.camper_name}'s registration in ${data.session_name}.${receiptLine}\n\nReview your camp plan: ${new URL(data.portal_path, portalBaseUrl).toString()}\n\nCamp Registration`,
+      to: record.recipient_email,
+    };
+  }
+
+  const data = record.template_data as WaitlistNotificationTemplateData;
   const portalUrl = new URL(data.portal_path, portalBaseUrl).toString();
   const deadline = claimDeadline(data.expires_at, data.organization_timezone);
   const greeting = `${data.family_name},`;
   const signature = `\n\nReview your camp plan: ${portalUrl}\n\nCamp Registration`;
 
-  const content: Record<
-    NotificationOutboxRecord['notification_type'],
-    { subject: string; text: string }
-  > = {
+  const content: Record<WaitlistNotificationType, { subject: string; text: string }> = {
     WAITLIST_ACCEPTED: {
       subject: `Confirmed: ${data.session_name}`,
       text: `${greeting}\n\n${data.camper_name} is confirmed for ${data.session_name}.${signature}`,

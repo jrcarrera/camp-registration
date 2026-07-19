@@ -14,6 +14,7 @@ import {
   CatalogStore,
   FamilyStore,
   FormsStore,
+  PaymentStore,
   WaitlistOperationsStore,
   type DatabaseClient,
 } from '@camp-registration/database';
@@ -31,6 +32,13 @@ import { registerFormsRoutes } from './forms/routes.js';
 import { FormsService, type FormsServiceApi } from './forms/service.js';
 import { registerOperationsRoutes } from './operations/routes.js';
 import { OperationsService, type OperationsServiceApi } from './operations/service.js';
+import { registerPaymentRoutes } from './payments/routes.js';
+import { type PaymentProvider } from './payments/provider.js';
+import {
+  PaymentService,
+  PaymentWebhookService,
+  type PaymentServiceApi,
+} from './payments/service.js';
 
 export interface BuildAppOptions {
   catalogService?: CatalogServiceApi;
@@ -41,6 +49,8 @@ export interface BuildAppOptions {
   logger?: boolean | FastifyBaseLogger;
   operationsService?: OperationsServiceApi;
   organizationId?: string;
+  paymentProvider?: PaymentProvider;
+  paymentService?: PaymentServiceApi;
   requestContext?: (request: FastifyRequest) => RequestServiceContext | undefined;
 }
 
@@ -128,6 +138,28 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         }
       : undefined);
   registerOperationsRoutes(app, operationsService);
+
+  const paymentStore = options.database ? new PaymentStore(options.database) : undefined;
+  const paymentService =
+    options.paymentService ??
+    (paymentStore && options.paymentProvider
+      ? (request: FastifyRequest) => {
+          const context = resolveRequestContext(request);
+          return context
+            ? new PaymentService(
+                paymentStore,
+                options.paymentProvider!,
+                context.identity,
+                context.organizationId,
+              )
+            : undefined;
+        }
+      : undefined);
+  const paymentWebhookService =
+    paymentStore && options.paymentProvider?.verifyWebhook
+      ? new PaymentWebhookService(paymentStore, options.paymentProvider)
+      : undefined;
+  registerPaymentRoutes(app, paymentService, paymentWebhookService);
 
   app.get<{ Reply: HealthResponse }>(
     '/health',

@@ -1453,6 +1453,113 @@ tbody tr + tr td {
   font-weight: 800;
 }
 
+.portalPlanActions {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.localCheckoutCard {
+  margin-inline: auto;
+  max-width: 680px;
+}
+
+.localCheckoutSecurity {
+  align-items: center;
+  color: #5f6f68;
+  display: flex;
+  font-size: 0.82rem;
+  font-weight: 700;
+  gap: 0.45rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 1.25rem;
+  text-transform: uppercase;
+}
+
+.localCheckoutSummary {
+  align-items: center;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: auto 1fr auto;
+  margin-bottom: 1.25rem;
+}
+
+.localCheckoutSummary h2,
+.localCheckoutSummary p {
+  margin: 0;
+}
+
+.localCheckoutSummary > strong {
+  font-size: 1.6rem;
+}
+
+.localCheckoutIcon {
+  align-items: center;
+  background: #e8f3ee;
+  border-radius: 0.8rem;
+  color: #146b4d;
+  display: inline-flex;
+  height: 48px;
+  justify-content: center;
+  width: 48px;
+}
+
+.localCheckoutButton {
+  justify-content: center;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.tableSecondary {
+  color: #5f6f68;
+  font-size: 0.82rem;
+}
+
+.paymentTimestamp {
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+}
+
+.paymentTimestamp small {
+  color: #5f6f68;
+}
+
+.paymentReferenceCell {
+  max-width: 190px;
+  overflow-wrap: anywhere;
+}
+
+.paymentReferenceCell a {
+  align-items: center;
+  color: #146b4d;
+  display: inline-flex;
+  font-weight: 700;
+  gap: 0.3rem;
+}
+
+@media (max-width: 900px) {
+  .paymentsTable {
+    min-width: 820px;
+  }
+}
+
+.paymentStatussucceeded {
+  background: #e4f4ec;
+  color: #146b4d;
+}
+
+.paymentStatusfailed,
+.paymentStatuscancelled {
+  background: #fce8e6;
+  color: #9c2f27;
+}
+
+.settingsSaveSection {
+  padding-top: 0;
+}
+
 .waitlistOfferPanel {
   display: flex;
   align-items: center;

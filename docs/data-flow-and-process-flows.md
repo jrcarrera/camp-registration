@@ -842,6 +842,41 @@ Audit event details intentionally contain metadata such as changed field names,
 registration status, source, session id, camper id, or program code. They do not
 store full request bodies, health data, secrets, or payment data.
 
+## Provider-Backed Deposit Payment
+
+```mermaid
+sequenceDiagram
+    participant Parent
+    participant Web
+    participant API
+    participant DB
+    participant Provider as Hosted provider
+    participant Worker
+
+    Parent->>Web: Pay remaining deposit
+    Web->>API: Checkout request plus idempotency key
+    API->>DB: Authorize adult and calculate deposit from ledger
+    DB-->>API: Pending payment attempt
+    API->>Provider: Create hosted checkout with server amount
+    Provider-->>Parent: Hosted checkout URL
+    Provider->>API: Signed completion webhook
+    API->>DB: Deduplicate event and lock attempt
+    DB->>DB: Insert one ONLINE_CARD ledger row
+    DB->>DB: Mark attempt succeeded and queue receipt
+    Worker->>Parent: Payment receipt email
+```
+
+The browser never supplies the charge amount and never sends card details to
+the application. Stripe events are verified against the raw request body before
+normalization. Reconciliation validates organization, provider account,
+checkout session, amount, and currency. A successful attempt ignores later
+failure or expiry events; a later success may recover an earlier non-success
+state.
+
+The local provider follows the same attempt and reconciliation path, but uses a
+local hosted-style confirmation page and is enabled only by explicit local
+configuration.
+
 ## Local Development Data Flow
 
 ```mermaid
@@ -852,7 +887,7 @@ flowchart LR
     seed["seed catalog"]
     api["api service"]
     web["web service"]
-    mailpit["Mailpit unused today"]
+    mailpit["Mailpit receipt and waitlist email"]
     minio["MinIO unused today"]
 
     compose --> postgres
@@ -869,6 +904,7 @@ Local runtime identity:
 - `LOCAL_AUTH_ENABLED=true`
 - `LOCAL_ORGANIZATION_ID=a60b272f-b028-4f1a-b666-3ef3cffd9827`
 - `LOCAL_ACTOR_ID=local-camp-admin`
+- `PAYMENT_PROVIDER=local`
 - The API builds a local `RequestIdentity` with `organization_admin`.
 
 Seed data:
@@ -891,7 +927,8 @@ Seed data:
 | Time-boxed waitlist offers                | Implemented with parent, staff, and admin queue controls |
 | Capacity holds                            | Implemented for unexpired pending waitlist offers        |
 | Versioned forms and electronic waivers    | Implemented with session assignments and parent signing  |
-| Payments and Stripe webhooks              | Not implemented                                          |
+| Provider-hosted deposit payments          | Implemented with Stripe and local adapters               |
+| Signed webhook reconciliation             | Implemented with idempotent, ordered ledger application  |
 | Restricted health forms and medical data  | Not implemented                                          |
 | Transactional waitlist email              | Implemented with SMTP, issue visibility, and replay      |
 | File uploads/object storage               | Not implemented                                          |

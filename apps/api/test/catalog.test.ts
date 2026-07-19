@@ -69,6 +69,7 @@ const context: CatalogContext = {
     id: organizationId,
     name: 'Test Camp',
     slug: 'test-camp',
+    stripe_connected_account_id: null,
     timezone: 'America/Chicago',
     waitlist_offer_duration_hours: 48,
   },

@@ -67,6 +67,8 @@ services:
       LOCAL_AUTH_ENABLED: 'true'
       LOCAL_ORGANIZATION_ID: a60b272f-b028-4f1a-b666-3ef3cffd9827
       NODE_ENV: development
+      PAYMENT_PROVIDER: local
+      PUBLIC_APP_BASE_URL: http://localhost:3000
     healthcheck:
       test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:3001/ready']
       interval: 5s

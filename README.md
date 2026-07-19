@@ -10,7 +10,10 @@ cancellation, and time-boxed waitlist offer workflows with parent self-service
 acceptance or decline, scheduled queue advancement, and transactional email
 delivery. Staff can also build reusable forms and waivers, publish immutable
 versions to sessions, monitor completion, and collect version-bound parent
-drafts, acknowledgements, and electronic signatures. Authentication is still
+drafts, acknowledgements, and electronic signatures. Parents can pay the
+server-calculated remaining deposit through a provider-hosted checkout, while
+staff can reconcile attempts against immutable online-card ledger entries.
+Authentication is still
 local-development oriented; the domain layer already enforces linked-adult
 family ownership for parent actions.
 
@@ -19,7 +22,7 @@ family ownership for parent actions.
 - Family and camper profiles
 - Camp programs and sessions
 - Versioned registration forms and electronic waivers
-- Payments, discounts, and waitlists
+- Payment expansion, discounts, and waitlists
 - Parent portal enhancements and administrative dashboard
 - Rosters, health records, attendance, and communications
 
@@ -45,6 +48,11 @@ The local services are:
   outbox delivery, automatic tenant discovery, and persistent health reporting
 - MinIO console: <http://localhost:9001>
 - PostgreSQL: `localhost:5432`
+
+Local development enables a payment-provider test adapter. It exercises the
+same attempt, redirect, reconciliation, ledger, and receipt path without asking
+for card details. Production sets `PAYMENT_PROVIDER=stripe`, platform Stripe
+secrets, and each camp's connected account ID; Checkout remains Stripe-hosted.
 
 For faster host-based application development, start the supporting services
 with `pnpm infra:up`, run `pnpm db:migrate` and
@@ -75,6 +83,7 @@ coverage will be added with the registration workflow.
 - [Waitlist notification issue and replay decision](docs/adr/0014-waitlist-notification-issue-replay.md)
 - [Organization waitlist offer duration decision](docs/adr/0015-organization-waitlist-offer-duration-policy.md)
 - [Versioned forms and consent decision](docs/adr/0016-versioned-forms-and-consent.md)
+- [Provider-backed deposit reconciliation decision](docs/adr/0017-provider-backed-deposit-reconciliation.md)
 - [Foundation stack decision](docs/adr/0001-foundation-stack.md)
 - [Terraform deployment boundary](infra/terraform/README.md)
 - [Contributor guidance](CONTRIBUTING.md)

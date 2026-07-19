@@ -305,6 +305,63 @@ test('lets staff record an offline payment for a parent registration', async ({
   ).toBeVisible();
 });
 
+test('lets a parent pay the remaining deposit through hosted checkout', async ({
+  page,
+  request,
+}) => {
+  const suffix = uniqueSuffix();
+  const session = await createPortalTestSession(request, suffix, 'ONLINE-PAY');
+  const checkout = await request.post(`/api/v1/families/${adamsFamilyId}/checkout`, {
+    data: {
+      new_camper: {
+        birth_date: '2018-02-01',
+        first_name: 'Online',
+        gender: 'Female',
+        last_name: `Payment${suffix}`,
+        school_grade: '3',
+      },
+      session_id: session.id,
+    },
+    headers: parentHeaders,
+  });
+  expect(checkout.ok(), await checkout.text()).toBeTruthy();
+  const result = (await checkout.json()) as {
+    registration: { deposit_cents: number; registration_id: string };
+  };
+
+  await page.goto('/portal');
+  const registration = page
+    .locator('article')
+    .filter({ has: page.getByText(session.name, { exact: true }) });
+  const payButton = registration.getByRole('button', {
+    name: `Pay $${(result.registration.deposit_cents / 100).toFixed(2)} deposit`,
+  });
+  await expect(payButton).toBeVisible();
+  await payButton.click();
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Pay camp deposit' })).toBeVisible();
+  await expect(page.getByText('Local development checkout')).toBeVisible();
+  const completeButton = page.getByRole('button', { name: /Complete test payment/ });
+  await completeButton.click();
+  const completed = await page
+    .waitForURL(/\/portal\?payment=success/, { timeout: 3_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!completed) {
+    await expect(completeButton).toBeEnabled();
+    await completeButton.click();
+  }
+
+  await expect(page).toHaveURL(/\/portal\?payment=success/);
+  await expect(page.getByRole('status')).toContainText('Payment received');
+  await expect(
+    page
+      .locator('article')
+      .filter({ has: page.getByText(session.name, { exact: true }) })
+      .getByRole('button', { name: /Pay .* deposit/ }),
+  ).toHaveCount(0);
+});
+
 test('lets staff check in and check out a camper with authorized pickup', async ({
   page,
   request,

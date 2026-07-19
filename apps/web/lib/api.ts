@@ -4,6 +4,7 @@ import type {
   FamilyListResponse,
   FormTemplatesResponse,
   ParentFormObligationsResponse,
+  PaymentAttemptListResponse,
   ProblemResponse,
   SessionDetail,
   SessionListResponse,
@@ -61,6 +62,10 @@ export async function getSessions(): Promise<SessionListResponse> {
 
 export async function getWaitlistOperations(): Promise<WaitlistOperationsStatus> {
   return getJson('/v1/operations/waitlist');
+}
+
+export async function getPaymentAttempts(): Promise<PaymentAttemptListResponse> {
+  return getJson('/v1/payments');
 }
 
 export async function getForms(): Promise<FormTemplatesResponse> {

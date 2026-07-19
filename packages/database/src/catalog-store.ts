@@ -34,6 +34,7 @@ export interface CatalogContextRecord {
     id: string;
     slug: string;
     name: string;
+    stripe_connected_account_id: string | null;
     timezone: string;
     waitlist_offer_duration_hours: 24 | 48 | 72 | 168;
   };
@@ -206,6 +207,7 @@ export interface CreateCatalogContext {
 }
 
 export interface UpdateOrganizationSettingsContext extends CreateCatalogContext {
+  stripeConnectedAccountId?: string | null;
   waitlistOfferDurationHours: 24 | 48 | 72 | 168;
 }
 
@@ -506,7 +508,7 @@ export class CatalogStore {
   async getContext(organizationId: string): Promise<CatalogContextRecord> {
     return this.withTenant(organizationId, async (client) => {
       const organization = await client.query<CatalogContextRecord['organization']>(
-        `SELECT id, slug, name, timezone, waitlist_offer_duration_hours
+        `SELECT id, slug, name, stripe_connected_account_id, timezone, waitlist_offer_duration_hours
          FROM organizations
          WHERE id = $1`,
         [organizationId],
@@ -558,7 +560,7 @@ export class CatalogStore {
   ): Promise<CatalogContextRecord['organization']> {
     return this.withTenant(context.organizationId, async (client) => {
       const current = await client.query<CatalogContextRecord['organization']>(
-        `SELECT id, slug, name, timezone, waitlist_offer_duration_hours
+        `SELECT id, slug, name, stripe_connected_account_id, timezone, waitlist_offer_duration_hours
          FROM organizations
          WHERE id = $1
          FOR UPDATE`,
@@ -566,14 +568,19 @@ export class CatalogStore {
       );
       const organization = current.rows[0];
       if (!organization) throw new CatalogNotFoundError('Organization not found');
+      const stripeConnectedAccountId =
+        context.stripeConnectedAccountId === undefined
+          ? organization.stripe_connected_account_id
+          : context.stripeConnectedAccountId;
 
       const updated = await client.query<CatalogContextRecord['organization']>(
         `UPDATE organizations
          SET waitlist_offer_duration_hours = $2,
+             stripe_connected_account_id = $3,
              updated_at = transaction_timestamp()
          WHERE id = $1
-         RETURNING id, slug, name, timezone, waitlist_offer_duration_hours`,
-        [context.organizationId, context.waitlistOfferDurationHours],
+         RETURNING id, slug, name, stripe_connected_account_id, timezone, waitlist_offer_duration_hours`,
+        [context.organizationId, context.waitlistOfferDurationHours, stripeConnectedAccountId],
       );
       await client.query(
         `INSERT INTO audit_events (
@@ -586,6 +593,8 @@ export class CatalogStore {
           context.requestId,
           JSON.stringify({
             previous_waitlist_offer_duration_hours: organization.waitlist_offer_duration_hours,
+            stripe_connected_account_changed:
+              organization.stripe_connected_account_id !== stripeConnectedAccountId,
             waitlist_offer_duration_hours: context.waitlistOfferDurationHours,
           }),
         ],

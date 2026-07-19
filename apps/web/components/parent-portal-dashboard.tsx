@@ -7,6 +7,7 @@ import type {
   Contact,
   FamilyDetail,
   FamilyRegistrationResult,
+  OnlinePaymentCheckout,
   ProblemResponse,
 } from '@camp-registration/contracts';
 import {
@@ -191,6 +192,26 @@ async function respondToWaitlistOffer(
   }
 }
 
+async function createDepositCheckout(
+  familyId: string,
+  registrationId: string,
+  requestHeaders: Record<string, string>,
+): Promise<OnlinePaymentCheckout | ProblemResponse> {
+  try {
+    const response = await fetch(
+      `/api/v1/families/${familyId}/registrations/${registrationId}/online-payment`,
+      {
+        body: JSON.stringify({ idempotency_key: crypto.randomUUID() }),
+        headers: { ...requestHeaders, 'content-type': 'application/json' },
+        method: 'POST',
+      },
+    );
+    return (await response.json()) as OnlinePaymentCheckout | ProblemResponse;
+  } catch {
+    return { code: 'request_failed', message: 'The payment checkout could not be started.' };
+  }
+}
+
 function PortalMessage({ state }: { state: PortalState }) {
   if (!state.message) return null;
   return (
@@ -234,11 +255,13 @@ function RegistrationPlan({
   items,
   onCancel,
   onOfferAction,
+  onPayDeposit,
   savingRegistrationId,
 }: {
   items: RegistrationItem[];
   onCancel: (item: RegistrationItem) => void;
   onOfferAction: (item: RegistrationItem, action: 'accept' | 'decline') => void;
+  onPayDeposit: (item: RegistrationItem) => void;
   savingRegistrationId: string | null;
 }) {
   return (
@@ -326,16 +349,31 @@ function RegistrationPlan({
                   )}
                 </div>
                 {registration.waitlist_offer?.status !== 'PENDING' && (
-                  <button
-                    className="buttonSecondary dangerInlineButton"
-                    type="button"
-                    disabled={savingRegistrationId !== null}
-                    onClick={() => onCancel(item)}
-                    title={`Cancel ${registration.session_name}`}
-                  >
-                    <XCircle size={17} aria-hidden="true" />
-                    {saving ? 'Cancelling...' : 'Cancel'}
-                  </button>
+                  <div className="portalPlanActions">
+                    {registration.status === 'CONFIRMED' && registration.deposit_due_cents > 0 && (
+                      <button
+                        className="buttonPrimary"
+                        type="button"
+                        disabled={savingRegistrationId !== null}
+                        onClick={() => onPayDeposit(item)}
+                      >
+                        <CreditCard size={17} aria-hidden="true" />
+                        {saving
+                          ? 'Starting…'
+                          : `Pay ${money(registration.deposit_due_cents)} deposit`}
+                      </button>
+                    )}
+                    <button
+                      className="buttonSecondary dangerInlineButton"
+                      type="button"
+                      disabled={savingRegistrationId !== null}
+                      onClick={() => onCancel(item)}
+                      title={`Cancel ${registration.session_name}`}
+                    >
+                      <XCircle size={17} aria-hidden="true" />
+                      {saving ? 'Saving…' : 'Cancel'}
+                    </button>
+                  </div>
                 )}
               </article>
             );
@@ -615,6 +653,25 @@ export function ParentPortalDashboard({
     });
   };
 
+  const handlePayDeposit = async (item: RegistrationItem) => {
+    const { family, registration } = item;
+    setState({
+      message: null,
+      savingRegistrationId: registration.registration_id,
+      tone: 'success',
+    });
+    const checkout = await createDepositCheckout(
+      family.id,
+      registration.registration_id,
+      requestHeaders,
+    );
+    if ('code' in checkout) {
+      setState(problemMessage(checkout));
+      return;
+    }
+    window.location.assign(checkout.checkout_url);
+  };
+
   return (
     <>
       <div className="portalSummaryGrid" aria-label="Family registration summary">
@@ -662,6 +719,7 @@ export function ParentPortalDashboard({
         items={items}
         onCancel={handleCancel}
         onOfferAction={handleOfferAction}
+        onPayDeposit={handlePayDeposit}
         savingRegistrationId={state.savingRegistrationId}
       />
 

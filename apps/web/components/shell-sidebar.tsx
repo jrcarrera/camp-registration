@@ -6,6 +6,7 @@ import {
   ClipboardList,
   ClipboardPlus,
   FileSignature,
+  CircleDollarSign,
   HeartPulse,
   House,
   Library,
@@ -32,6 +33,7 @@ const adminNavigation: NavigationItem[] = [
   { href: '/seasons', icon: CalendarRange, label: 'Seasons' },
   { href: '/programs', icon: Library, label: 'Programs' },
   { href: '/forms', icon: FileSignature, label: 'Forms' },
+  { href: '/payments', icon: CircleDollarSign, label: 'Payments' },
   { href: '/#health', icon: HeartPulse, label: 'Health' },
 ];
 

@@ -188,6 +188,9 @@ export class CatalogService implements CatalogServiceApi {
       actorId: this.identity.subject,
       organizationId: this.organizationId,
       requestId,
+      ...(Object.prototype.hasOwnProperty.call(settings, 'stripe_connected_account_id')
+        ? { stripeConnectedAccountId: settings.stripe_connected_account_id ?? null }
+        : {}),
       waitlistOfferDurationHours: settings.waitlist_offer_duration_hours,
     });
   }

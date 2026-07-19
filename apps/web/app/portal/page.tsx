@@ -6,7 +6,12 @@ import { getParentApiHeaders, getParentFamilies, getParentFamily } from '../../l
 
 export const dynamic = 'force-dynamic';
 
-export default async function ParentPortalPage() {
+export default async function ParentPortalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ payment?: string }>;
+}) {
+  const { payment } = await searchParams;
   const parentHeaders = getParentApiHeaders();
   let families: FamilyDetail[] = [];
   let errorMessage: string | null = null;
@@ -36,6 +41,18 @@ export default async function ParentPortalPage() {
         <div className="notice noticeError" role="alert">
           <AlertCircle size={18} aria-hidden="true" />
           {errorMessage}
+        </div>
+      )}
+
+      {payment === 'success' && (
+        <div className="notice noticeSuccess" role="status">
+          Payment received. Your camp balance has been updated and a receipt is on its way.
+        </div>
+      )}
+
+      {payment === 'cancelled' && (
+        <div className="notice" role="status">
+          Payment was cancelled. No charge was recorded; you can retry when ready.
         </div>
       )}
 

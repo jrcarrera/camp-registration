@@ -6,6 +6,7 @@
       "slug": "test-camp",
       "name": "Test Camp",
       "timezone": "America/Chicago",
+      "stripe_connected_account_id": null,
       "waitlist_offer_duration_hours": 48
     }
   ],

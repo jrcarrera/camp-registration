@@ -2,6 +2,8 @@ import { platformRoles, type PlatformRole, type RequestIdentity } from '@camp-re
 import { createDatabaseClient } from '@camp-registration/database';
 
 import { buildApp, type BuildAppOptions } from './app.js';
+import { LocalPaymentProvider, type PaymentProvider } from './payments/provider.js';
+import { StripePaymentProvider } from './payments/stripe-provider.js';
 
 const port = Number.parseInt(process.env.API_PORT ?? '3001', 10);
 const host = process.env.API_HOST ?? '0.0.0.0';
@@ -11,6 +13,22 @@ const localAuthEnabled = process.env.LOCAL_AUTH_ENABLED === 'true';
 const organizationId = process.env.LOCAL_ORGANIZATION_ID;
 const actorId = process.env.LOCAL_ACTOR_ID ?? 'local-camp-admin';
 const defaultRoles = rolesFrom(process.env.LOCAL_ROLES ?? 'organization_admin');
+const publicAppBaseUrl = process.env.PUBLIC_APP_BASE_URL ?? 'http://localhost:3000';
+
+function paymentProviderFromEnvironment(): PaymentProvider | undefined {
+  const provider = process.env.PAYMENT_PROVIDER?.trim().toLowerCase();
+  if (!provider || provider === 'disabled') return undefined;
+  if (provider === 'local') return new LocalPaymentProvider(publicAppBaseUrl);
+  if (provider === 'stripe') {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!secretKey || !webhookSecret) {
+      throw new Error('STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET are required for Stripe');
+    }
+    return new StripePaymentProvider(secretKey, webhookSecret, publicAppBaseUrl);
+  }
+  throw new Error(`Unsupported PAYMENT_PROVIDER: ${provider}`);
+}
 
 function headerValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -47,11 +65,13 @@ const localRequestContext: BuildAppOptions['requestContext'] | undefined =
         return { identity, organizationId: activeOrganizationId };
       }
     : undefined;
+const paymentProvider = paymentProviderFromEnvironment();
 
 const appOptions: BuildAppOptions = {
   logger: true,
   ...(database ? { database } : {}),
   ...(localRequestContext ? { requestContext: localRequestContext } : {}),
+  ...(paymentProvider ? { paymentProvider } : {}),
 };
 const app = await buildApp(appOptions);
 
