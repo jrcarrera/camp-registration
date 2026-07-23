@@ -102,19 +102,26 @@ test('offers responsive operational report presets', async ({ page }) => {
   await page.goto('/reports');
 
   await expect(page.getByRole('heading', { level: 1, name: 'Reports and exports' })).toBeVisible();
-  await expect(page.getByRole('combobox', { name: 'Session' })).toBeVisible();
-  const preset = page.getByRole('combobox', { name: 'Report preset' });
-  await expect(preset).toHaveValue('SESSION_ROSTER');
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Build an operational report' }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: /Cross-session roster/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await expect(page.getByRole('link', { name: 'Download CSV' })).toHaveAttribute(
     'href',
-    /preset=SESSION_ROSTER$/,
+    /preset=SESSION_ROSTER/,
   );
 
-  await preset.selectOption('CHECK_IN_SHEET');
-  await expect(page.getByRole('link', { name: 'Download CSV' })).toHaveAttribute(
+  await page.getByRole('button', { name: /Form readiness/ }).click();
+  await page.getByRole('combobox', { name: 'Output' }).selectOption('XLSX');
+  await expect(page.getByRole('link', { name: 'Download XLSX' })).toHaveAttribute(
     'href',
-    /preset=CHECK_IN_SHEET$/,
+    /preset=READINESS/,
   );
+  await page.getByRole('button', { name: 'Preview report' }).click();
+  await expect(page.getByText(/report rows currently match/)).toBeVisible();
 
   const layout = await page.evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,

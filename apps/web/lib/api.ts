@@ -11,6 +11,7 @@ import type {
   HousingInventory,
   PricingConfiguration,
   ProblemResponse,
+  OperationalReportCenter,
   SessionDetail,
   SessionListResponse,
   SessionHousing,
@@ -60,6 +61,10 @@ export async function getCatalog(): Promise<CatalogContext> {
 
 export async function getCommunications(): Promise<CommunicationsCenter> {
   return getJson('/v1/communications');
+}
+
+export async function getReports(): Promise<OperationalReportCenter> {
+  return getJson('/v1/reports');
 }
 
 export async function getParentCatalog(headers = getParentApiHeaders()): Promise<CatalogContext> {

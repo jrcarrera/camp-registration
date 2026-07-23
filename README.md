@@ -14,7 +14,9 @@ inspect stuck holds, and reconcile immutable per-registration ledger
 allocations. Reusable forms and waivers, version-bound drafts,
 acknowledgements, electronic signatures, attendance check-in, scheduled queue
 advancement, transactional email delivery, and audited session roster/check-in
-CSV presets are also implemented.
+CSV presets are also implemented. Operational reporting now adds nine
+cross-session presets, saved date/session/status views, native XLSX exports, and
+print layouts for rosters, pickup sheets, and camper labels.
 The staff lifecycle communications center adds reusable versioned email
 templates, operational audience previews, scheduled campaigns, delivery
 history, and audited failed-delivery replay on the same tenant-safe outbox.
@@ -26,9 +28,9 @@ linked-adult family ownership and tenant isolation for parent actions.
 - Family and camper profiles
 - Camp programs and sessions
 - Versioned registration forms and electronic waivers
-- Expanded operational exports and downstream reporting
+- Downstream analytics, custom report builders, and scheduled report delivery
 - Parent portal enhancements and administrative dashboard
-- Restricted health records and expanded roster/reporting presets
+- Restricted health records and clinical reporting projections
 
 ## Local Development
 

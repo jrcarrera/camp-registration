@@ -1,5 +1,6 @@
 import type { RequestIdentity } from '@camp-registration/auth';
 import type { RegisteredCamper, SessionDetail } from '@camp-registration/contracts';
+import type { OperationalReportRowRecord } from '@camp-registration/database';
 import { describe, expect, it, vi } from 'vitest';
 
 import { buildApp } from '../src/app.js';
@@ -96,6 +97,64 @@ const session: SessionDetail = {
   waitlisted_male_count: 0,
 };
 
+function operationalRow(
+  overrides: Partial<OperationalReportRowRecord> = {},
+): OperationalReportRowRecord {
+  return {
+    adult_emails: 'guardian@example.test',
+    adult_names: 'Morgan Example',
+    adult_phones: '555-0100',
+    attendance_date: null,
+    attendance_note: null,
+    attendance_status: 'NOT_MARKED',
+    authorized_pickups: 'Morgan Example',
+    balance_due_cents: 45000,
+    birth_date: '2016-04-12',
+    camper_name: 'Avery Example',
+    checked_in_at: null,
+    checked_out_at: null,
+    emergency_contacts: 'Taylor Example (555-0101)',
+    family_name: 'Example',
+    form_assigned_count: 2,
+    form_missing_count: 1,
+    form_submitted_count: 1,
+    gender: 'Female',
+    payment_status: 'PARTIAL',
+    pickup_name: null,
+    preferred_name: 'Ave',
+    registered_at: '2026-07-19T15:30:00Z',
+    registration_id: '41af7f8f-f972-4df8-8379-55aa2d444c9e',
+    registration_source: 'PARENT',
+    registration_status: 'CONFIRMED',
+    school_grade: '5',
+    session_code: 'PINE-01',
+    session_ends_on: '2027-06-18',
+    session_id: sessionId,
+    session_name: 'Pine Ridge',
+    session_starts_on: '2027-06-14',
+    support_note_on_file: true,
+    ...overrides,
+  };
+}
+
+function operationalStore() {
+  return {
+    createView: vi.fn(),
+    deleteView: vi.fn(),
+    listRows: vi.fn().mockResolvedValue([
+      operationalRow(),
+      operationalRow({
+        camper_name: 'Jordan Example',
+        registration_id: '511133ed-02e8-45f2-a283-1556418127ca',
+        registration_status: 'WAITLISTED',
+      }),
+    ]),
+    listViews: vi.fn().mockResolvedValue([]),
+    recordExport: vi.fn().mockResolvedValue(undefined),
+    updateView: vi.fn(),
+  };
+}
+
 describe('operational reports API', () => {
   it('downloads an audited roster CSV and neutralizes spreadsheet formulas', async () => {
     const store = { exportSessionReport: vi.fn().mockResolvedValue(session) };
@@ -159,6 +218,153 @@ describe('operational reports API', () => {
       message: 'Operational report access is not permitted',
     });
     expect(store.exportSessionReport).not.toHaveBeenCalled();
+    await app.close();
+  });
+
+  it('previews cross-session presets with operational projections only', async () => {
+    const store = { exportSessionReport: vi.fn() };
+    const expanded = operationalStore();
+    const service = new ReportsService(
+      store as never,
+      identity('camp_staff'),
+      organizationId,
+      expanded as never,
+    );
+    const app = await buildApp({ reportsService: service });
+
+    const response = await app.inject({
+      method: 'POST',
+      payload: {
+        filters: {
+          end_date: null,
+          registration_status: 'ALL',
+          session_ids: [],
+          start_date: null,
+        },
+        preset: 'READINESS',
+      },
+      url: '/v1/reports/preview',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      row_count: 1,
+      rows: [
+        {
+          camper: 'Avery Example',
+          forms_missing: 1,
+          readiness_status: 'Missing forms',
+          support_note: 'Yes',
+        },
+      ],
+      title: 'Form readiness',
+    });
+    expect(response.body).not.toContain('accessibility_needs');
+    expect(response.body).not.toContain('guardian@example.test');
+    expect(response.body).not.toContain('authorized_pickups');
+    await app.close();
+  });
+
+  it('downloads a native XLSX workbook and records an aggregate export audit', async () => {
+    const store = { exportSessionReport: vi.fn() };
+    const expanded = operationalStore();
+    const service = new ReportsService(
+      store as never,
+      identity('camp_admin'),
+      organizationId,
+      expanded as never,
+    );
+    const app = await buildApp({ reportsService: service });
+
+    const response = await app.inject({
+      headers: { 'x-request-id': 'xlsx-export-test' },
+      method: 'GET',
+      url: '/v1/reports/export?preset=BALANCE_DUE&format=XLSX',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toContain(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    expect(response.headers['content-disposition']).toBe(
+      'attachment; filename="balances-due.xlsx"',
+    );
+    expect(response.rawPayload.subarray(0, 2).toString()).toBe('PK');
+    expect(expanded.recordExport).toHaveBeenCalledWith(
+      expect.objectContaining({ actorId: 'report-operator', requestId: 'xlsx-export-test' }),
+      'BALANCE_DUE',
+      'XLSX',
+      expect.objectContaining({ registration_status: 'ALL', session_ids: [] }),
+      1,
+    );
+    await app.close();
+  });
+
+  it('returns every matching row for an explicit print preview', async () => {
+    const store = { exportSessionReport: vi.fn() };
+    const expanded = operationalStore();
+    expanded.listRows.mockResolvedValue(
+      Array.from({ length: 125 }, (_, index) =>
+        operationalRow({ camper_name: `Camper ${index + 1}` }),
+      ),
+    );
+    const service = new ReportsService(
+      store as never,
+      identity('camp_staff'),
+      organizationId,
+      expanded as never,
+    );
+    const app = await buildApp({ reportsService: service });
+
+    const response = await app.inject({
+      method: 'POST',
+      payload: {
+        filters: {
+          end_date: null,
+          registration_status: 'ALL',
+          session_ids: [],
+          start_date: null,
+        },
+        full: true,
+        preset: 'CAMPER_LABELS',
+      },
+      url: '/v1/reports/preview',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ row_count: 125, truncated: false });
+    expect(response.json().rows).toHaveLength(125);
+    await app.close();
+  });
+
+  it('rejects invalid date ranges before querying report rows', async () => {
+    const store = { exportSessionReport: vi.fn() };
+    const expanded = operationalStore();
+    const service = new ReportsService(
+      store as never,
+      identity('camp_staff'),
+      organizationId,
+      expanded as never,
+    );
+    const app = await buildApp({ reportsService: service });
+
+    const response = await app.inject({
+      method: 'POST',
+      payload: {
+        filters: {
+          end_date: '2027-01-01',
+          registration_status: 'ALL',
+          session_ids: [],
+          start_date: '2027-02-01',
+        },
+        preset: 'SESSION_ROSTER',
+      },
+      url: '/v1/reports/preview',
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ code: 'invalid_report' });
+    expect(expanded.listRows).not.toHaveBeenCalled();
     await app.close();
   });
 });

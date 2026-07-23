@@ -13248,6 +13248,617 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Load tenant-scoped saved operational report views. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            saved_views: {
+                                can_edit: boolean;
+                                /** Format: date-time */
+                                created_at: string;
+                                default_format: ("CSV" | "XLSX") | "PRINT";
+                                /** OperationalReportFilters */
+                                filters: {
+                                    end_date: string | null;
+                                    registration_status: "ALL" | "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                    session_ids: string[];
+                                    start_date: string | null;
+                                };
+                                id: string;
+                                name: string;
+                                preset: "SESSION_ROSTER" | "CHECK_IN_SHEET" | "CONTACT_LIST" | "BALANCE_DUE" | "WAITLIST" | "READINESS" | "ATTENDANCE" | "PICKUP_SHEET" | "CAMPER_LABELS";
+                                /** Format: date-time */
+                                updated_at: string;
+                                version: number;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Preview a cross-session operational report without exporting it. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        filters: {
+                            end_date: string | null;
+                            registration_status: "ALL" | "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                            session_ids: string[];
+                            start_date: string | null;
+                        };
+                        full?: boolean;
+                        preset: "SESSION_ROSTER" | "CHECK_IN_SHEET" | "CONTACT_LIST" | "BALANCE_DUE" | "WAITLIST" | "READINESS" | "ATTENDANCE" | "PICKUP_SHEET" | "CAMPER_LABELS";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            columns: {
+                                key: string;
+                                label: string;
+                            }[];
+                            preset: "SESSION_ROSTER" | "CHECK_IN_SHEET" | "CONTACT_LIST" | "BALANCE_DUE" | "WAITLIST" | "READINESS" | "ATTENDANCE" | "PICKUP_SHEET" | "CAMPER_LABELS";
+                            row_count: number;
+                            rows: {
+                                [key: string]: string | number | null;
+                            }[];
+                            title: string;
+                            truncated: boolean;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Download an audited cross-session operational report as CSV or native XLSX. */
+        get: {
+            parameters: {
+                query: {
+                    end_date?: string;
+                    format: "CSV" | "XLSX";
+                    preset: "SESSION_ROSTER" | "CHECK_IN_SHEET" | "CONTACT_LIST" | "BALANCE_DUE" | "WAITLIST" | "READINESS" | "ATTENDANCE" | "PICKUP_SHEET" | "CAMPER_LABELS";
+                    registration_status?: "ALL" | "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                    session_ids?: string;
+                    start_date?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A private operational report file. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                        "text/csv": string;
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/views": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Save a reusable operational report view. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        default_format: ("CSV" | "XLSX") | "PRINT";
+                        filters: {
+                            end_date: string | null;
+                            registration_status: "ALL" | "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                            session_ids: string[];
+                            start_date: string | null;
+                        };
+                        name: string;
+                        preset: "SESSION_ROSTER" | "CHECK_IN_SHEET" | "CONTACT_LIST" | "BALANCE_DUE" | "WAITLIST" | "READINESS" | "ATTENDANCE" | "PICKUP_SHEET" | "CAMPER_LABELS";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            can_edit: boolean;
+                            /** Format: date-time */
+                            created_at: string;
+                            default_format: ("CSV" | "XLSX") | "PRINT";
+                            filters: {
+                                end_date: string | null;
+                                registration_status: "ALL" | "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                session_ids: string[];
+                                start_date: string | null;
+                            };
+                            id: string;
+                            name: string;
+                            preset: "SESSION_ROSTER" | "CHECK_IN_SHEET" | "CONTACT_LIST" | "BALANCE_DUE" | "WAITLIST" | "READINESS" | "ATTENDANCE" | "PICKUP_SHEET" | "CAMPER_LABELS";
+                            /** Format: date-time */
+                            updated_at: string;
+                            version: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/views/{viewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Delete an owned or administratively managed saved report view. */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    viewId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** @description Update an owned or administratively managed saved report view. */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    viewId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        default_format?: ("CSV" | "XLSX") | "PRINT";
+                        filters?: {
+                            end_date: string | null;
+                            registration_status: "ALL" | "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                            session_ids: string[];
+                            start_date: string | null;
+                        };
+                        name?: string;
+                        preset?: "SESSION_ROSTER" | "CHECK_IN_SHEET" | "CONTACT_LIST" | "BALANCE_DUE" | "WAITLIST" | "READINESS" | "ATTENDANCE" | "PICKUP_SHEET" | "CAMPER_LABELS";
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            can_edit: boolean;
+                            /** Format: date-time */
+                            created_at: string;
+                            default_format: ("CSV" | "XLSX") | "PRINT";
+                            filters: {
+                                end_date: string | null;
+                                registration_status: "ALL" | "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+                                session_ids: string[];
+                                start_date: string | null;
+                            };
+                            id: string;
+                            name: string;
+                            preset: "SESSION_ROSTER" | "CHECK_IN_SHEET" | "CONTACT_LIST" | "BALANCE_DUE" | "WAITLIST" | "READINESS" | "ATTENDANCE" | "PICKUP_SHEET" | "CAMPER_LABELS";
+                            /** Format: date-time */
+                            updated_at: string;
+                            version: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/v1/reports/sessions/{sessionId}/export": {
         parameters: {
             query?: never;

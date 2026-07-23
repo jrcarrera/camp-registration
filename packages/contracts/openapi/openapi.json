@@ -44730,6 +44730,2123 @@
         }
       }
     },
+    "/v1/reports": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "description": "Load tenant-scoped saved operational report views.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "saved_views"
+                  ],
+                  "properties": {
+                    "saved_views": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "can_edit",
+                          "created_at",
+                          "default_format",
+                          "filters",
+                          "id",
+                          "name",
+                          "preset",
+                          "updated_at",
+                          "version"
+                        ],
+                        "properties": {
+                          "can_edit": {
+                            "type": "boolean"
+                          },
+                          "created_at": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "default_format": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "CSV"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "XLSX"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PRINT"
+                                ]
+                              }
+                            ]
+                          },
+                          "filters": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "end_date",
+                              "registration_status",
+                              "session_ids",
+                              "start_date"
+                            ],
+                            "properties": {
+                              "end_date": {
+                                "anyOf": [
+                                  {
+                                    "format": "date",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "registration_status": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ALL"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "CONFIRMED"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "WAITLISTED"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "CANCELLED"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "session_ids": {
+                                "maxItems": 100,
+                                "uniqueItems": true,
+                                "type": "array",
+                                "items": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                }
+                              },
+                              "start_date": {
+                                "anyOf": [
+                                  {
+                                    "format": "date",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "title": "OperationalReportFilters"
+                          },
+                          "id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "preset": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "SESSION_ROSTER"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CHECK_IN_SHEET"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CONTACT_LIST"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "BALANCE_DUE"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLIST"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "READINESS"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ATTENDANCE"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PICKUP_SHEET"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CAMPER_LABELS"
+                                ]
+                              }
+                            ]
+                          },
+                          "updated_at": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "version": {
+                            "minimum": 1,
+                            "type": "integer"
+                          }
+                        },
+                        "title": "OperationalReportView"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reports/preview": {
+      "post": {
+        "tags": [
+          "reports"
+        ],
+        "description": "Preview a cross-session operational report without exporting it.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "filters",
+                  "preset"
+                ],
+                "properties": {
+                  "filters": {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "end_date",
+                      "registration_status",
+                      "session_ids",
+                      "start_date"
+                    ],
+                    "properties": {
+                      "end_date": {
+                        "anyOf": [
+                          {
+                            "format": "date",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "registration_status": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "ALL"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "CONFIRMED"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "WAITLISTED"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "CANCELLED"
+                            ]
+                          }
+                        ]
+                      },
+                      "session_ids": {
+                        "maxItems": 100,
+                        "uniqueItems": true,
+                        "type": "array",
+                        "items": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        }
+                      },
+                      "start_date": {
+                        "anyOf": [
+                          {
+                            "format": "date",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "full": {
+                    "type": "boolean"
+                  },
+                  "preset": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SESSION_ROSTER"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CHECK_IN_SHEET"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CONTACT_LIST"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "BALANCE_DUE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "WAITLIST"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "READINESS"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ATTENDANCE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PICKUP_SHEET"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CAMPER_LABELS"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "columns",
+                    "preset",
+                    "row_count",
+                    "rows",
+                    "title",
+                    "truncated"
+                  ],
+                  "properties": {
+                    "columns": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "key",
+                          "label"
+                        ],
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "title": "OperationalReportColumn"
+                      }
+                    },
+                    "preset": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SESSION_ROSTER"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CHECK_IN_SHEET"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CONTACT_LIST"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "BALANCE_DUE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "WAITLIST"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "READINESS"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ATTENDANCE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PICKUP_SHEET"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CAMPER_LABELS"
+                          ]
+                        }
+                      ]
+                    },
+                    "row_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "rows": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "truncated": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reports/export": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "description": "Download an audited cross-session operational report as CSV or native XLSX.",
+        "parameters": [
+          {
+            "schema": {
+              "format": "date",
+              "type": "string"
+            },
+            "in": "query",
+            "name": "end_date",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "CSV"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "XLSX"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "format",
+            "required": true
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "SESSION_ROSTER"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CHECK_IN_SHEET"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CONTACT_LIST"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "BALANCE_DUE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "WAITLIST"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "READINESS"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "ATTENDANCE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "PICKUP_SHEET"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CAMPER_LABELS"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "preset",
+            "required": true
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "ALL"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CONFIRMED"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "WAITLISTED"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CANCELLED"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "registration_status",
+            "required": false
+          },
+          {
+            "schema": {
+              "maxLength": 3699,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "session_ids",
+            "required": false
+          },
+          {
+            "schema": {
+              "format": "date",
+              "type": "string"
+            },
+            "in": "query",
+            "name": "start_date",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A private operational report file.",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string",
+                  "title": "XlsxReport"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "title": "CsvReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reports/views": {
+      "post": {
+        "tags": [
+          "reports"
+        ],
+        "description": "Save a reusable operational report view.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "default_format",
+                  "filters",
+                  "name",
+                  "preset"
+                ],
+                "properties": {
+                  "default_format": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "CSV"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "XLSX"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PRINT"
+                        ]
+                      }
+                    ]
+                  },
+                  "filters": {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "end_date",
+                      "registration_status",
+                      "session_ids",
+                      "start_date"
+                    ],
+                    "properties": {
+                      "end_date": {
+                        "anyOf": [
+                          {
+                            "format": "date",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "registration_status": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "ALL"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "CONFIRMED"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "WAITLISTED"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "CANCELLED"
+                            ]
+                          }
+                        ]
+                      },
+                      "session_ids": {
+                        "maxItems": 100,
+                        "uniqueItems": true,
+                        "type": "array",
+                        "items": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        }
+                      },
+                      "start_date": {
+                        "anyOf": [
+                          {
+                            "format": "date",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "name": {
+                    "maxLength": 120,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "preset": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SESSION_ROSTER"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CHECK_IN_SHEET"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CONTACT_LIST"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "BALANCE_DUE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "WAITLIST"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "READINESS"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ATTENDANCE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PICKUP_SHEET"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CAMPER_LABELS"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "can_edit",
+                    "created_at",
+                    "default_format",
+                    "filters",
+                    "id",
+                    "name",
+                    "preset",
+                    "updated_at",
+                    "version"
+                  ],
+                  "properties": {
+                    "can_edit": {
+                      "type": "boolean"
+                    },
+                    "created_at": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "default_format": {
+                      "anyOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "CSV"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "XLSX"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PRINT"
+                          ]
+                        }
+                      ]
+                    },
+                    "filters": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "end_date",
+                        "registration_status",
+                        "session_ids",
+                        "start_date"
+                      ],
+                      "properties": {
+                        "end_date": {
+                          "anyOf": [
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "registration_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ALL"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "CONFIRMED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "WAITLISTED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "CANCELLED"
+                              ]
+                            }
+                          ]
+                        },
+                        "session_ids": {
+                          "maxItems": 100,
+                          "uniqueItems": true,
+                          "type": "array",
+                          "items": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          }
+                        },
+                        "start_date": {
+                          "anyOf": [
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "preset": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SESSION_ROSTER"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CHECK_IN_SHEET"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CONTACT_LIST"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "BALANCE_DUE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "WAITLIST"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "READINESS"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ATTENDANCE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PICKUP_SHEET"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CAMPER_LABELS"
+                          ]
+                        }
+                      ]
+                    },
+                    "updated_at": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "version": {
+                      "minimum": 1,
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reports/views/{viewId}": {
+      "patch": {
+        "tags": [
+          "reports"
+        ],
+        "description": "Update an owned or administratively managed saved report view.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "version"
+                ],
+                "properties": {
+                  "default_format": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "CSV"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "XLSX"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PRINT"
+                        ]
+                      }
+                    ]
+                  },
+                  "filters": {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "end_date",
+                      "registration_status",
+                      "session_ids",
+                      "start_date"
+                    ],
+                    "properties": {
+                      "end_date": {
+                        "anyOf": [
+                          {
+                            "format": "date",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "registration_status": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "ALL"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "CONFIRMED"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "WAITLISTED"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "CANCELLED"
+                            ]
+                          }
+                        ]
+                      },
+                      "session_ids": {
+                        "maxItems": 100,
+                        "uniqueItems": true,
+                        "type": "array",
+                        "items": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        }
+                      },
+                      "start_date": {
+                        "anyOf": [
+                          {
+                            "format": "date",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "name": {
+                    "maxLength": 120,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "preset": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SESSION_ROSTER"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CHECK_IN_SHEET"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CONTACT_LIST"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "BALANCE_DUE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "WAITLIST"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "READINESS"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ATTENDANCE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PICKUP_SHEET"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CAMPER_LABELS"
+                        ]
+                      }
+                    ]
+                  },
+                  "version": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "viewId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "can_edit",
+                    "created_at",
+                    "default_format",
+                    "filters",
+                    "id",
+                    "name",
+                    "preset",
+                    "updated_at",
+                    "version"
+                  ],
+                  "properties": {
+                    "can_edit": {
+                      "type": "boolean"
+                    },
+                    "created_at": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "default_format": {
+                      "anyOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "CSV"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "XLSX"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PRINT"
+                          ]
+                        }
+                      ]
+                    },
+                    "filters": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "end_date",
+                        "registration_status",
+                        "session_ids",
+                        "start_date"
+                      ],
+                      "properties": {
+                        "end_date": {
+                          "anyOf": [
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "registration_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ALL"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "CONFIRMED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "WAITLISTED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "CANCELLED"
+                              ]
+                            }
+                          ]
+                        },
+                        "session_ids": {
+                          "maxItems": 100,
+                          "uniqueItems": true,
+                          "type": "array",
+                          "items": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          }
+                        },
+                        "start_date": {
+                          "anyOf": [
+                            {
+                              "format": "date",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "preset": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SESSION_ROSTER"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CHECK_IN_SHEET"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CONTACT_LIST"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "BALANCE_DUE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "WAITLIST"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "READINESS"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ATTENDANCE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PICKUP_SHEET"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CAMPER_LABELS"
+                          ]
+                        }
+                      ]
+                    },
+                    "updated_at": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "version": {
+                      "minimum": 1,
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "reports"
+        ],
+        "description": "Delete an owned or administratively managed saved report view.",
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "viewId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/reports/sessions/{sessionId}/export": {
       "get": {
         "tags": [
@@ -44775,8 +46892,7 @@
             "content": {
               "text/csv": {
                 "schema": {
-                  "type": "string",
-                  "title": "CsvReport"
+                  "type": "string"
                 }
               }
             }

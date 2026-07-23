@@ -9,5 +9,6 @@ export * from './notification-store.js';
 export * from './order-store.js';
 export * from './payment-store.js';
 export * from './pricing-store.js';
+export * from './reporting-store.js';
 export * from './seed.js';
 export * from './waitlist-operations-store.js';

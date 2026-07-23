@@ -41,6 +41,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     revalidatePath('/families');
     revalidatePath('/forms');
     revalidatePath('/communications');
+    revalidatePath('/reports');
     revalidatePath('/portal');
     revalidatePath('/portal/forms');
     revalidatePath('/sessions');
@@ -63,6 +64,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
 }
 
 export const GET = proxy;
+export const DELETE = proxy;
 export const PATCH = proxy;
 export const POST = proxy;
 export const PUT = proxy;

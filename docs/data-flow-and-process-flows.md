@@ -886,26 +886,46 @@ Current writes append audit rows for:
 - `contact.updated`
 - `registration.created`
 - `report.session_exported`
+- `report.operational_exported`
+- `report.view_created`
+- `report.view_updated`
+- `report.view_deleted`
 
 Audit event details intentionally contain metadata such as changed field names,
 registration status, source, session id, camper id, or program code. They do not
 store full request bodies, health data, secrets, or payment data.
 
-### Operational Session Reports
+### Operational Reporting Center
 
-Staff can choose a live session and download one of two reusable UTF-8 CSV
-presets:
+```mermaid
+sequenceDiagram
+    participant Staff
+    participant Web
+    participant API
+    participant DB
 
-- **Session roster** includes confirmed and waitlisted campers with registration,
-  attendance, authorized-pickup, and payment/balance columns.
-- **Check-in sheet** includes confirmed campers with arrival, departure, pickup,
-  and operational-note columns.
+    Staff->>Web: Choose preset, sessions, dates, and registration status
+    Web->>API: POST /v1/reports/preview
+    API->>DB: Read tenant-scoped operational projection
+    DB-->>API: Registration, contact, payment, readiness, and attendance rows
+    API-->>Web: Bounded screen preview or full print dataset plus total
+    Staff->>API: GET /v1/reports/export?format=CSV|XLSX
+    API->>DB: Re-evaluate filters under tenant RLS
+    API->>DB: Audit preset, format, filters, and row count
+    API-->>Staff: Private no-store attachment
+```
 
-The browser downloads through the same-origin API proxy. The reports service
-requires a staff or administrator role, the store reads under tenant RLS and
-records `report.session_exported`, and CSV cells that could be interpreted as
-spreadsheet formulas are prefixed before quoting. Audit details contain only the
-preset and row count; exported camper data is not copied into the audit log.
+The expanded center provides cross-session roster, check-in, contact, balance,
+waitlist, readiness, attendance, pickup, and camper-label presets. Filters can be
+saved as tenant-owned optimistic-versioned views. Staff can export UTF-8 CSV or
+native XLSX and use the authenticated preview for print layouts. The original
+single-session CSV endpoint remains available for compatibility.
+
+The reporting projection includes operational form counts and only a boolean
+support-note indicator. It excludes form responses, support-note text, clinical
+details, and future restricted health records. The browser never supplies report
+rows or counts. CSV formula prefixes are neutralized, XLSX values are stored as
+non-formula cells, and audit details never copy camper or contact content.
 
 ### Lifecycle Communications
 
@@ -1018,28 +1038,28 @@ Seed data:
 
 ## Implemented Versus Planned
 
-| Workflow or component                     | Current state                                                |
-| ----------------------------------------- | ------------------------------------------------------------ |
-| Catalog programs, seasons, sessions       | Implemented                                                  |
-| Family, adult, camper, contact management | Implemented                                                  |
-| Direct admin registration                 | Implemented                                                  |
-| Parent-style direct registration          | Implemented as local workflow                                |
-| Waitlist insertion when full              | Implemented                                                  |
-| Time-boxed waitlist offers                | Implemented with parent, staff, and admin queue controls     |
-| Capacity holds                            | Implemented for unexpired pending waitlist offers            |
-| Versioned forms and electronic waivers    | Implemented with session assignments and parent signing      |
-| Provider-hosted deposit payments          | Implemented with Stripe and local adapters                   |
-| Signed webhook reconciliation             | Implemented with idempotent, ordered ledger application      |
-| Restricted health forms and medical data  | Not implemented                                              |
-| Transactional waitlist email              | Implemented with SMTP, issue visibility, and replay          |
-| File uploads/object storage               | Not implemented                                              |
-| Real authentication provider              | Not implemented                                              |
-| Parent object ownership checks            | Implemented for family reads, checkout, and cancellation     |
-| Registration cancellation                 | Implemented                                                  |
-| Multi-camper atomic checkout              | Implemented with one household order and payment             |
-| Session housing and bed assignment        | Implemented with age and bunk-buddy placement                |
-| Session roster and check-in CSV presets   | Implemented with staff authorization and export auditing     |
-| Lifecycle communication center            | Implemented with templates, audiences, schedules, and replay |
+| Workflow or component                     | Current state                                                 |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| Catalog programs, seasons, sessions       | Implemented                                                   |
+| Family, adult, camper, contact management | Implemented                                                   |
+| Direct admin registration                 | Implemented                                                   |
+| Parent-style direct registration          | Implemented as local workflow                                 |
+| Waitlist insertion when full              | Implemented                                                   |
+| Time-boxed waitlist offers                | Implemented with parent, staff, and admin queue controls      |
+| Capacity holds                            | Implemented for unexpired pending waitlist offers             |
+| Versioned forms and electronic waivers    | Implemented with session assignments and parent signing       |
+| Provider-hosted deposit payments          | Implemented with Stripe and local adapters                    |
+| Signed webhook reconciliation             | Implemented with idempotent, ordered ledger application       |
+| Restricted health forms and medical data  | Not implemented                                               |
+| Transactional waitlist email              | Implemented with SMTP, issue visibility, and replay           |
+| File uploads/object storage               | Not implemented                                               |
+| Real authentication provider              | Not implemented                                               |
+| Parent object ownership checks            | Implemented for family reads, checkout, and cancellation      |
+| Registration cancellation                 | Implemented                                                   |
+| Multi-camper atomic checkout              | Implemented with one household order and payment              |
+| Session housing and bed assignment        | Implemented with age and bunk-buddy placement                 |
+| Operational reporting and saved presets   | Implemented with CSV, XLSX, print layouts, filters, and audit |
+| Lifecycle communication center            | Implemented with templates, audiences, schedules, and replay  |
 
 ## Session Housing and Bunk-Buddy Flow
 

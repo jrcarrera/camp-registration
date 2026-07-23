@@ -27,3 +27,4 @@ clarifications and links to superseding decisions.
 | [0019](0019-pricing-assistance-and-installments.md)            | Accepted | Pricing, assistance, and installments |
 | [0020](0020-session-housing-and-bunk-buddies.md)               | Accepted | Session housing and bunk buddies      |
 | [0021](0021-lifecycle-communications-center.md)                | Accepted | Lifecycle communications center       |
+| [0022](0022-operational-reporting-expansion.md)                | Accepted | Operational reporting expansion       |

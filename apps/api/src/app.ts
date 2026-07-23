@@ -19,6 +19,7 @@ import {
   OrderStore,
   PaymentStore,
   PricingStore,
+  ReportingStore,
   WaitlistOperationsStore,
   type DatabaseClient,
 } from '@camp-registration/database';
@@ -222,7 +223,12 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       ? (request: FastifyRequest) => {
           const context = resolveRequestContext(request);
           return context
-            ? new ReportsService(catalogStore, context.identity, context.organizationId)
+            ? new ReportsService(
+                catalogStore,
+                context.identity,
+                context.organizationId,
+                options.database ? new ReportingStore(options.database) : undefined,
+              )
             : undefined;
         }
       : undefined);

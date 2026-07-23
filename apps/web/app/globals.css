@@ -3181,6 +3181,148 @@ tbody tr + tr td {
   font-size: 13px;
 }
 
+.reportingCenter {
+  display: grid;
+  gap: 20px;
+}
+
+.savedReportGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.savedReportCard {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid #d5dcd8;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #35423c;
+  text-align: left;
+  cursor: pointer;
+}
+
+.savedReportCard:hover,
+.savedReportCard[aria-pressed='true'] {
+  border-color: #146b4d;
+  background: #f1f8f4;
+}
+
+.savedReportCard span {
+  color: #66736d;
+  font-size: 12px;
+}
+
+.reportFilterGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.reportSessionFilter {
+  margin: 20px 0 0;
+  padding: 16px;
+  border: 1px solid #d5dcd8;
+  border-radius: 6px;
+}
+
+.reportSessionFilter legend {
+  padding: 0 6px;
+  font-weight: 700;
+}
+
+.reportSessionFilter > p {
+  margin: 10px 0 0;
+  color: #66736d;
+  font-size: 12px;
+}
+
+.reportSessionChoices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 230px;
+  overflow: auto;
+}
+
+.reportSessionChoices label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px 8px;
+  align-items: start;
+  padding: 10px;
+  border-radius: 5px;
+  background: #f7f9f8;
+  cursor: pointer;
+}
+
+.reportSessionChoices input {
+  grid-row: span 2;
+  margin-top: 2px;
+}
+
+.reportSessionChoices small {
+  color: #66736d;
+}
+
+.reportActions,
+.reportSaveForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.reportSaveForm .formField {
+  flex: 1 1 280px;
+}
+
+.reportPreview {
+  overflow: hidden;
+}
+
+.reportPreviewTableWrap {
+  overflow-x: auto;
+}
+
+.reportPreviewTable {
+  min-width: 760px;
+}
+
+.reportPreviewTable th,
+.reportPreviewTable td {
+  white-space: nowrap;
+}
+
+.reportLabelGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.reportLabel {
+  display: grid;
+  gap: 3px;
+  min-height: 118px;
+  padding: 16px;
+  border: 1px dashed #8b9691;
+  border-radius: 4px;
+  break-inside: avoid;
+}
+
+.reportLabel strong {
+  font-size: 18px;
+}
+
+.reportLabel small,
+.reportLabel span {
+  color: #596660;
+}
+
 /* Household orders, pricing, and financial assistance */
 .householdCheckout {
   display: grid;
@@ -4988,5 +5130,91 @@ tbody tr + tr td {
   .inlineActions .buttonPrimary,
   .inlineActions .buttonSecondary {
     width: 100%;
+  }
+}
+
+@media (max-width: 980px) {
+  .savedReportGrid,
+  .reportSessionChoices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reportFilterGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .savedReportGrid,
+  .reportFilterGrid,
+  .reportSessionChoices,
+  .reportLabelGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .reportActions,
+  .reportSaveForm {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reportActions > *,
+  .reportSaveForm > * {
+    width: 100%;
+  }
+}
+
+@media print {
+  @page {
+    margin: 0.45in;
+    size: landscape;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .appSidebar,
+  .mobileHeader,
+  .pageHeader,
+  .savedReportViews,
+  .reportBuilder {
+    display: none !important;
+  }
+
+  .appShell,
+  .appMain,
+  .pageContent,
+  .reportingCenter {
+    display: block;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .reportPreview {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .reportPreviewTableWrap {
+    overflow: visible;
+  }
+
+  .reportPreviewTable {
+    min-width: 0;
+    font-size: 9pt;
+  }
+
+  .reportPreviewTable th,
+  .reportPreviewTable td {
+    padding: 5px;
+    white-space: normal;
+  }
+
+  .reportLabelGrid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
