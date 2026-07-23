@@ -1,4 +1,5 @@
 export * from './catalog.js';
+export * from './communications.js';
 export * from './families.js';
 export * from './forms.js';
 export * from './generated.js';

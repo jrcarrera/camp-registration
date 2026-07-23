@@ -1,5 +1,6 @@
 import type {
   CatalogContext,
+  CommunicationsCenter,
   FamilyDetail,
   FamilyListResponse,
   FinancialAssistanceListResponse,
@@ -55,6 +56,10 @@ export function getParentApiHeaders(): ApiHeaders {
 
 export async function getCatalog(): Promise<CatalogContext> {
   return getJson('/v1/catalog');
+}
+
+export async function getCommunications(): Promise<CommunicationsCenter> {
+  return getJson('/v1/communications');
 }
 
 export async function getParentCatalog(headers = getParentApiHeaders()): Promise<CatalogContext> {

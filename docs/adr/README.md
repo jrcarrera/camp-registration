@@ -25,3 +25,5 @@ clarifications and links to superseding decisions.
 | [0017](0017-provider-backed-deposit-reconciliation.md)         | Accepted | Provider deposit reconciliation       |
 | [0018](0018-household-order-capacity-holds.md)                 | Accepted | Household orders and capacity holds   |
 | [0019](0019-pricing-assistance-and-installments.md)            | Accepted | Pricing, assistance, and installments |
+| [0020](0020-session-housing-and-bunk-buddies.md)               | Accepted | Session housing and bunk buddies      |
+| [0021](0021-lifecycle-communications-center.md)                | Accepted | Lifecycle communications center       |

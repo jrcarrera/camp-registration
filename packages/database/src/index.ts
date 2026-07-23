@@ -1,5 +1,6 @@
 export * from './catalog-store.js';
 export * from './client.js';
+export * from './communications-store.js';
 export * from './family-store.js';
 export * from './forms-store.js';
 export * from './housing-store.js';

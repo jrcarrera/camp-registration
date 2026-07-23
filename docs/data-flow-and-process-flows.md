@@ -907,6 +907,42 @@ records `report.session_exported`, and CSV cells that could be interpreted as
 spreadsheet formulas are prefixed before quoting. Audit details contain only the
 preset and row count; exported camper data is not copied into the audit log.
 
+### Lifecycle Communications
+
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Web
+    participant API
+    participant DB
+    participant Worker
+    participant SMTP
+
+    Admin->>Web: Select template, audience, session, and send time
+    Web->>API: Preview operational audience
+    API->>DB: Count current eligible adult deliveries under tenant RLS
+    DB-->>Web: Delivery count only
+    Admin->>API: Schedule campaign
+    API->>DB: Snapshot active subject and body
+    Worker->>DB: Lock due campaigns and re-evaluate recipients
+    DB->>DB: Render merge values and enqueue idempotent messages
+    Worker->>SMTP: Deliver through email adapter
+    Worker->>DB: Mark delivered or retry/failed
+    Admin->>API: Replay one terminal failed delivery
+    API->>DB: Audit replay and return message to pending
+```
+
+Templates support documented family, camper, session, form-due, balance, and
+portal variables. Recipient addresses are derived server-side from active
+adults who opted into operational communication. Campaigns target confirmed,
+waitlisted, missing-form, or balance-due registrations. The browser receives a
+masked delivery timeline and never supplies an email address.
+
+The template is snapshotted when scheduled; recipient-specific rendering occurs
+when the worker queues the due campaign. This keeps scheduled content stable
+while still using authoritative registration, consent, balance, and form state
+at delivery time.
+
 ## Provider-Backed Deposit Payment
 
 ```mermaid
@@ -982,27 +1018,28 @@ Seed data:
 
 ## Implemented Versus Planned
 
-| Workflow or component                     | Current state                                            |
-| ----------------------------------------- | -------------------------------------------------------- |
-| Catalog programs, seasons, sessions       | Implemented                                              |
-| Family, adult, camper, contact management | Implemented                                              |
-| Direct admin registration                 | Implemented                                              |
-| Parent-style direct registration          | Implemented as local workflow                            |
-| Waitlist insertion when full              | Implemented                                              |
-| Time-boxed waitlist offers                | Implemented with parent, staff, and admin queue controls |
-| Capacity holds                            | Implemented for unexpired pending waitlist offers        |
-| Versioned forms and electronic waivers    | Implemented with session assignments and parent signing  |
-| Provider-hosted deposit payments          | Implemented with Stripe and local adapters               |
-| Signed webhook reconciliation             | Implemented with idempotent, ordered ledger application  |
-| Restricted health forms and medical data  | Not implemented                                          |
-| Transactional waitlist email              | Implemented with SMTP, issue visibility, and replay      |
-| File uploads/object storage               | Not implemented                                          |
-| Real authentication provider              | Not implemented                                          |
-| Parent object ownership checks            | Implemented for family reads, checkout, and cancellation |
-| Registration cancellation                 | Implemented                                              |
-| Multi-camper atomic checkout              | Implemented with one household order and payment         |
-| Session housing and bed assignment        | Implemented with age and bunk-buddy placement            |
-| Session roster and check-in CSV presets   | Implemented with staff authorization and export auditing |
+| Workflow or component                     | Current state                                                |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| Catalog programs, seasons, sessions       | Implemented                                                  |
+| Family, adult, camper, contact management | Implemented                                                  |
+| Direct admin registration                 | Implemented                                                  |
+| Parent-style direct registration          | Implemented as local workflow                                |
+| Waitlist insertion when full              | Implemented                                                  |
+| Time-boxed waitlist offers                | Implemented with parent, staff, and admin queue controls     |
+| Capacity holds                            | Implemented for unexpired pending waitlist offers            |
+| Versioned forms and electronic waivers    | Implemented with session assignments and parent signing      |
+| Provider-hosted deposit payments          | Implemented with Stripe and local adapters                   |
+| Signed webhook reconciliation             | Implemented with idempotent, ordered ledger application      |
+| Restricted health forms and medical data  | Not implemented                                              |
+| Transactional waitlist email              | Implemented with SMTP, issue visibility, and replay          |
+| File uploads/object storage               | Not implemented                                              |
+| Real authentication provider              | Not implemented                                              |
+| Parent object ownership checks            | Implemented for family reads, checkout, and cancellation     |
+| Registration cancellation                 | Implemented                                                  |
+| Multi-camper atomic checkout              | Implemented with one household order and payment             |
+| Session housing and bed assignment        | Implemented with age and bunk-buddy placement                |
+| Session roster and check-in CSV presets   | Implemented with staff authorization and export auditing     |
+| Lifecycle communication center            | Implemented with templates, audiences, schedules, and replay |
 
 ## Session Housing and Bunk-Buddy Flow
 

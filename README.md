@@ -15,6 +15,9 @@ allocations. Reusable forms and waivers, version-bound drafts,
 acknowledgements, electronic signatures, attendance check-in, scheduled queue
 advancement, transactional email delivery, and audited session roster/check-in
 CSV presets are also implemented.
+The staff lifecycle communications center adds reusable versioned email
+templates, operational audience previews, scheduled campaigns, delivery
+history, and audited failed-delivery replay on the same tenant-safe outbox.
 Authentication remains local-development oriented; the domain layer enforces
 linked-adult family ownership and tenant isolation for parent actions.
 
@@ -25,7 +28,7 @@ linked-adult family ownership and tenant isolation for parent actions.
 - Versioned registration forms and electronic waivers
 - Expanded operational exports and downstream reporting
 - Parent portal enhancements and administrative dashboard
-- Rosters, health records, attendance, and communications
+- Restricted health records and expanded roster/reporting presets
 
 ## Local Development
 
@@ -46,7 +49,8 @@ The local services are:
 - API and OpenAPI UI: <http://localhost:3001/docs>
 - Mailpit email inbox: <http://localhost:8025>
 - Waitlist worker: background service for expiration, advancement, reminders,
-  outbox delivery, automatic tenant discovery, and persistent health reporting
+  lifecycle campaign queueing, outbox delivery, automatic tenant discovery,
+  and persistent health reporting
 - Billing worker: background service that expires hosted checkout sessions
   before releasing capacity holds, updates installment states, and queues
   installment reminders
@@ -90,6 +94,8 @@ coverage will be added with the registration workflow.
 - [Provider-backed deposit reconciliation decision](docs/adr/0017-provider-backed-deposit-reconciliation.md)
 - [Household orders and capacity holds decision](docs/adr/0018-household-order-capacity-holds.md)
 - [Pricing, assistance, and installment decision](docs/adr/0019-pricing-assistance-and-installments.md)
+- [Session housing and bunk-buddy decision](docs/adr/0020-session-housing-and-bunk-buddies.md)
+- [Lifecycle communications decision](docs/adr/0021-lifecycle-communications-center.md)
 - [Foundation stack decision](docs/adr/0001-foundation-stack.md)
 - [Terraform deployment boundary](infra/terraform/README.md)
 - [Contributor guidance](CONTRIBUTING.md)

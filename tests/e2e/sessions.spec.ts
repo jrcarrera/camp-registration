@@ -123,6 +123,26 @@ test('offers responsive operational report presets', async ({ page }) => {
   expect(layout.documentWidth).toBe(layout.viewportWidth);
 });
 
+test('offers a responsive lifecycle communications workspace', async ({ page }) => {
+  await page.goto('/communications');
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Lifecycle communications' }),
+  ).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Message templates' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Schedule a communication' }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Create draft' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Preview recipients' })).toBeVisible();
+
+  const layout = await page.evaluate(() => ({
+    documentWidth: document.documentElement.scrollWidth,
+    viewportWidth: window.innerWidth,
+  }));
+  expect(layout.documentWidth).toBe(layout.viewportWidth);
+});
+
 test('edits and restores a camp week', async ({ page }, testInfo) => {
   test.setTimeout(60_000);
   test.skip(testInfo.project.name !== 'desktop-chromium', 'One project owns the persisted edit.');

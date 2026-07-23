@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type {
   FamilyStore,
   FamilyWriteContext,
+  CommunicationsStore,
   NotificationOutboxRecord,
   NotificationStore,
   WaitlistAutomationResult,
@@ -25,6 +26,7 @@ export interface WaitlistWorkerOptions {
 }
 
 export interface WaitlistWorkerCycleResult {
+  communications_queued: number;
   delivered: number;
   failed: number;
   organizations: number;
@@ -53,12 +55,24 @@ export class WaitlistWorker {
     private readonly emailSender: EmailSender,
     private readonly logger: WaitlistWorkerLogger,
     private readonly options: WaitlistWorkerOptions,
+    private readonly communicationsStore?: Pick<
+      CommunicationsStore,
+      'listOrganizationIds' | 'processDueCampaigns'
+    >,
   ) {}
 
   async runCycle(): Promise<WaitlistWorkerCycleResult> {
     const cycleId = randomUUID();
-    const organizationIds = await this.operationsStore.listEnabledOrganizationIds();
+    const waitlistOrganizationIds = await this.operationsStore.listEnabledOrganizationIds();
+    const communicationOrganizationIds = this.communicationsStore
+      ? await this.communicationsStore.listOrganizationIds()
+      : [];
+    const organizationIds = [
+      ...new Set([...waitlistOrganizationIds, ...communicationOrganizationIds]),
+    ];
+    const waitlistOrganizations = new Set(waitlistOrganizationIds);
     const total: WaitlistWorkerCycleResult = {
+      communications_queued: 0,
       delivered: 0,
       failed: 0,
       organizations: organizationIds.length,
@@ -85,39 +99,57 @@ export class WaitlistWorker {
         sessions_scanned_count: 0,
       };
       let errorCode: string | null = null;
-      try {
-        await this.operationsStore.recordCycleStarted(organizationId, this.options.workerId);
-      } catch (error) {
-        this.logger.error(
-          {
-            error_type: error instanceof Error ? error.name : 'UnknownError',
-            organization_id: organizationId,
-          },
-          'waitlist worker heartbeat start failed',
-        );
+      if (waitlistOrganizations.has(organizationId)) {
+        try {
+          await this.operationsStore.recordCycleStarted(organizationId, this.options.workerId);
+        } catch (error) {
+          this.logger.error(
+            {
+              error_type: error instanceof Error ? error.name : 'UnknownError',
+              organization_id: organizationId,
+            },
+            'waitlist worker heartbeat start failed',
+          );
+        }
+        try {
+          const waitlist = await this.familyStore.processWaitlistAutomation(
+            context,
+            this.options.reminderLeadHours,
+          );
+          total.waitlist.expired_offers += waitlist.expired_offers;
+          total.waitlist.offers_created += waitlist.offers_created;
+          total.waitlist.reminders_queued += waitlist.reminders_queued;
+          total.waitlist.sessions_scanned += waitlist.sessions_scanned;
+          organizationMetrics.expired_offer_count = waitlist.expired_offers;
+          organizationMetrics.offers_created_count = waitlist.offers_created;
+          organizationMetrics.reminders_queued_count = waitlist.reminders_queued;
+          organizationMetrics.sessions_scanned_count = waitlist.sessions_scanned;
+        } catch (error) {
+          errorCode = 'waitlist_automation_failed';
+          this.logger.error(
+            {
+              error_type: error instanceof Error ? error.name : 'UnknownError',
+              organization_id: organizationId,
+            },
+            'waitlist automation failed',
+          );
+        }
       }
-      try {
-        const waitlist = await this.familyStore.processWaitlistAutomation(
-          context,
-          this.options.reminderLeadHours,
-        );
-        total.waitlist.expired_offers += waitlist.expired_offers;
-        total.waitlist.offers_created += waitlist.offers_created;
-        total.waitlist.reminders_queued += waitlist.reminders_queued;
-        total.waitlist.sessions_scanned += waitlist.sessions_scanned;
-        organizationMetrics.expired_offer_count = waitlist.expired_offers;
-        organizationMetrics.offers_created_count = waitlist.offers_created;
-        organizationMetrics.reminders_queued_count = waitlist.reminders_queued;
-        organizationMetrics.sessions_scanned_count = waitlist.sessions_scanned;
-      } catch (error) {
-        errorCode = 'waitlist_automation_failed';
-        this.logger.error(
-          {
-            error_type: error instanceof Error ? error.name : 'UnknownError',
-            organization_id: organizationId,
-          },
-          'waitlist automation failed',
-        );
+
+      if (this.communicationsStore) {
+        try {
+          total.communications_queued +=
+            await this.communicationsStore.processDueCampaigns(organizationId);
+        } catch (error) {
+          errorCode = errorCode ? 'multiple_cycle_steps_failed' : 'communications_queue_failed';
+          this.logger.error(
+            {
+              error_type: error instanceof Error ? error.name : 'UnknownError',
+              organization_id: organizationId,
+            },
+            'lifecycle communication queue failed',
+          );
+        }
       }
 
       let messages: NotificationOutboxRecord[];
@@ -159,27 +191,30 @@ export class WaitlistWorker {
           );
         }
       }
-      try {
-        await this.operationsStore.recordCycleCompleted(
-          organizationId,
-          this.options.workerId,
-          organizationMetrics,
-          errorCode,
-        );
-      } catch (error) {
-        this.logger.error(
-          {
-            error_type: error instanceof Error ? error.name : 'UnknownError',
-            organization_id: organizationId,
-          },
-          'waitlist worker heartbeat completion failed',
-        );
+      if (waitlistOrganizations.has(organizationId)) {
+        try {
+          await this.operationsStore.recordCycleCompleted(
+            organizationId,
+            this.options.workerId,
+            organizationMetrics,
+            errorCode,
+          );
+        } catch (error) {
+          this.logger.error(
+            {
+              error_type: error instanceof Error ? error.name : 'UnknownError',
+              organization_id: organizationId,
+            },
+            'waitlist worker heartbeat completion failed',
+          );
+        }
       }
     }
 
     this.logger.info(
       {
         cycle_id: cycleId,
+        communications_queued: total.communications_queued,
         delivered: total.delivered,
         expired_offers: total.waitlist.expired_offers,
         failed: total.failed,

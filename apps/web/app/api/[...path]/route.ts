@@ -40,6 +40,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     revalidatePath('/');
     revalidatePath('/families');
     revalidatePath('/forms');
+    revalidatePath('/communications');
     revalidatePath('/portal');
     revalidatePath('/portal/forms');
     revalidatePath('/sessions');

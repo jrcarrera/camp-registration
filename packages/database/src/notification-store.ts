@@ -15,7 +15,14 @@ export type NotificationType =
   | 'PAYMENT_RECEIPT'
   | 'ORDER_CONFIRMATION'
   | 'INSTALLMENT_DUE_SOON'
-  | 'INSTALLMENT_DUE';
+  | 'INSTALLMENT_DUE'
+  | 'LIFECYCLE_MESSAGE';
+
+export interface LifecycleNotificationTemplateData {
+  body: string;
+  portal_path: string;
+  subject: string;
+}
 
 export interface WaitlistNotificationTemplateData {
   camper_name: string;
@@ -87,14 +94,16 @@ export interface NotificationOutboxRecord {
   template_data:
     | WaitlistNotificationTemplateData
     | PaymentReceiptNotificationTemplateData
-    | BillingNotificationTemplateData;
+    | BillingNotificationTemplateData
+    | LifecycleNotificationTemplateData;
 }
 
 interface NotificationOutboxRow extends Omit<NotificationOutboxRecord, 'template_data'> {
   template_data:
     | WaitlistNotificationTemplateData
     | PaymentReceiptNotificationTemplateData
-    | BillingNotificationTemplateData;
+    | BillingNotificationTemplateData
+    | LifecycleNotificationTemplateData;
 }
 
 export class NotificationStore {

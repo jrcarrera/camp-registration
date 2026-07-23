@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import {
   createDatabaseClient,
+  CommunicationsStore,
   FamilyStore,
   NotificationStore,
   WaitlistOperationsStore,
@@ -58,6 +59,7 @@ const worker = new WaitlistWorker(
     reminderLeadHours: integerSetting('WAITLIST_REMINDER_LEAD_HOURS', 12, 1, 72),
     workerId: process.env.WAITLIST_WORKER_ID?.trim() || `waitlist-worker:${randomUUID()}`,
   },
+  new CommunicationsStore(database),
 );
 const intervalMs = integerSetting('WAITLIST_WORKER_INTERVAL_MS', 30_000, 5_000, 3_600_000);
 let running = false;

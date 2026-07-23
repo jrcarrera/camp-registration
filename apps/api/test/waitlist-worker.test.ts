@@ -171,6 +171,42 @@ describe('waitlist worker', () => {
       'waitlist_automation_failed',
     );
   });
+
+  it('queues lifecycle campaigns for every tenant before claiming notifications', async () => {
+    const familyStore = { processWaitlistAutomation: vi.fn() };
+    const notificationStore = {
+      claimPending: vi.fn().mockResolvedValue([]),
+      markDelivered: vi.fn(),
+      markFailed: vi.fn(),
+    };
+    const operationsStore = {
+      listEnabledOrganizationIds: vi.fn().mockResolvedValue([]),
+      recordCycleCompleted: vi.fn(),
+      recordCycleStarted: vi.fn(),
+    };
+    const communicationsStore = {
+      listOrganizationIds: vi.fn().mockResolvedValue([organizationId]),
+      processDueCampaigns: vi.fn().mockResolvedValue(3),
+    };
+    const worker = new WaitlistWorker(
+      familyStore as never,
+      notificationStore as never,
+      operationsStore as never,
+      { send: vi.fn() },
+      { error: vi.fn(), info: vi.fn() },
+      workerOptions(),
+      communicationsStore as never,
+    );
+
+    await expect(worker.runCycle()).resolves.toMatchObject({ communications_queued: 3 });
+    expect(communicationsStore.processDueCampaigns).toHaveBeenCalledWith(organizationId);
+    expect(familyStore.processWaitlistAutomation).not.toHaveBeenCalled();
+    expect(notificationStore.claimPending).toHaveBeenCalledWith(
+      organizationId,
+      'test-waitlist-worker',
+      25,
+    );
+  });
 });
 
 describe('waitlist email templates', () => {
@@ -228,5 +264,25 @@ describe('waitlist email templates', () => {
     expect(email.text).toContain('Amount paid: $100.00');
     expect(email.text).toContain('Remaining balance: $430.00');
     expect(email.text).toContain('2027-03-01: $215.00 (scheduled)');
+  });
+
+  it('renders lifecycle messages with a provider-independent portal link', () => {
+    const lifecycle: NotificationOutboxRecord = {
+      attempt_count: 1,
+      id: '96181710-105f-4d9c-b552-53951c86bc48',
+      idempotency_key: 'communication:campaign:registration:adult',
+      notification_type: 'LIFECYCLE_MESSAGE',
+      recipient_email: 'parent@example.test',
+      template_data: {
+        body: 'Hello Adams Family. Review forms at {{portal_url}}.',
+        portal_path: '/portal/forms',
+        subject: 'Forms due for Avery',
+      },
+    };
+
+    const email = buildWaitlistEmail(lifecycle, 'https://camp.example');
+
+    expect(email.subject).toBe('Forms due for Avery');
+    expect(email.text).toContain('https://camp.example/portal/forms');
   });
 });

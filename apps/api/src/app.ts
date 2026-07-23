@@ -12,6 +12,7 @@ import {
 } from '@camp-registration/contracts';
 import {
   CatalogStore,
+  CommunicationsStore,
   FamilyStore,
   FormsStore,
   HousingStore,
@@ -29,6 +30,8 @@ import Fastify, {
 
 import { registerCatalogRoutes } from './catalog/routes.js';
 import { CatalogService, type CatalogServiceApi } from './catalog/service.js';
+import { registerCommunicationsRoutes } from './communications/routes.js';
+import { CommunicationsService, type CommunicationsServiceApi } from './communications/service.js';
 import { registerFamilyRoutes } from './families/routes.js';
 import { FamilyService, type FamilyServiceApi } from './families/service.js';
 import { registerFormsRoutes } from './forms/routes.js';
@@ -53,6 +56,7 @@ import { ReportsService, type ReportsServiceApi } from './reports/service.js';
 
 export interface BuildAppOptions {
   catalogService?: CatalogServiceApi;
+  communicationsService?: CommunicationsServiceApi;
   database?: DatabaseClient;
   familyService?: FamilyServiceApi;
   formsService?: FormsServiceApi;
@@ -112,6 +116,25 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         }
       : undefined);
   registerCatalogRoutes(app, catalogService);
+
+  const communicationsStore = options.database
+    ? new CommunicationsStore(options.database)
+    : undefined;
+  const communicationsService =
+    options.communicationsService ??
+    (communicationsStore
+      ? (request: FastifyRequest) => {
+          const context = resolveRequestContext(request);
+          return context
+            ? new CommunicationsService(
+                communicationsStore,
+                context.identity,
+                context.organizationId,
+              )
+            : undefined;
+        }
+      : undefined);
+  registerCommunicationsRoutes(app, communicationsService);
 
   const familyStore = options.database ? new FamilyStore(options.database) : undefined;
   const familyService =

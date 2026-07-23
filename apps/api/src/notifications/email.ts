@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import type {
   NotificationOutboxRecord,
   BillingNotificationTemplateData,
+  LifecycleNotificationTemplateData,
   OrderNotificationSummary,
   PaymentReceiptNotificationTemplateData,
   WaitlistNotificationTemplateData,
@@ -118,6 +119,17 @@ export function buildWaitlistEmail(
   record: NotificationOutboxRecord,
   portalBaseUrl: string,
 ): EmailMessage {
+  if (record.notification_type === 'LIFECYCLE_MESSAGE') {
+    const data = record.template_data as LifecycleNotificationTemplateData;
+    const portalUrl = new URL(data.portal_path, portalBaseUrl).toString();
+    return {
+      messageId: deterministicMessageId(record.idempotency_key),
+      subject: data.subject.replaceAll('{{portal_url}}', portalUrl),
+      text: data.body.replaceAll('{{portal_url}}', portalUrl),
+      to: record.recipient_email,
+    };
+  }
+
   if (record.notification_type === 'PAYMENT_RECEIPT') {
     const data = record.template_data as PaymentReceiptNotificationTemplateData;
     const amount = new Intl.NumberFormat('en-US', {
