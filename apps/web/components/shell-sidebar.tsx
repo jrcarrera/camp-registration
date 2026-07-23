@@ -46,13 +46,14 @@ const adminNavigation: NavigationItem[] = [
   { href: '/pricing', icon: Tags, label: 'Pricing' },
   { href: '/financial-assistance', icon: HandCoins, label: 'Assistance' },
   { href: '/payments', icon: CircleDollarSign, label: 'Payments' },
-  { href: '/#health', icon: HeartPulse, label: 'Health' },
+  { href: '/health-records', icon: HeartPulse, label: 'Health' },
 ];
 
 const portalNavigation: NavigationItem[] = [
   { exact: true, href: '/portal', icon: House, label: 'My Family' },
   { href: '/portal/register', icon: ClipboardPlus, label: 'Register' },
   { href: '/portal/readiness', icon: HeartPulse, label: 'Readiness' },
+  { href: '/portal/health', icon: ShieldCheck, label: 'Health records' },
   { href: '/portal/forms', icon: FileSignature, label: 'Forms & waivers' },
   { href: '/portal/assistance', icon: HandCoins, label: 'Assistance' },
 ];

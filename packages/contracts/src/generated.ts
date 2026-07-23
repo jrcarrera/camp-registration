@@ -9809,6 +9809,692 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/health-records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List minimum operational health-readiness projections for authorized staff or a parent’s campers. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            records: {
+                                camper_id: string;
+                                camper_name: string;
+                                family_id: string;
+                                family_name: string;
+                                has_accessibility_needs: boolean;
+                                has_allergies: boolean;
+                                has_dietary_needs: boolean;
+                                has_emergency_instructions: boolean;
+                                has_medications: boolean;
+                                immunization_status: "UNKNOWN" | "CURRENT" | "INCOMPLETE" | "EXEMPT";
+                                record_id: string | null;
+                                review_status: "DRAFT" | "SUBMITTED" | "NEEDS_CHANGES" | "APPROVED";
+                                session_names: string[];
+                                updated_at: string | null;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/health-records/campers/{camperId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Decrypt one camper health record after object-level authorization and record the access. */
+        get: {
+            parameters: {
+                query?: {
+                    break_glass?: boolean;
+                    reason_code?: "EMERGENCY_CARE" | "CONTINUITY_OF_CARE" | "AUDIT_INVESTIGATION";
+                };
+                header?: never;
+                path: {
+                    camperId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            camper_id: string;
+                            camper_name: string;
+                            family_id: string;
+                            family_name: string;
+                            has_accessibility_needs: boolean;
+                            has_allergies: boolean;
+                            has_dietary_needs: boolean;
+                            has_emergency_instructions: boolean;
+                            has_medications: boolean;
+                            immunization_status: "UNKNOWN" | "CURRENT" | "INCOMPLETE" | "EXEMPT";
+                            record_id: string | null;
+                            review_status: "DRAFT" | "SUBMITTED" | "NEEDS_CHANGES" | "APPROVED";
+                            session_names: string[];
+                            updated_at: string | null;
+                        } & {
+                            accessibility_needs: string[];
+                            allergies: string[];
+                            dietary_needs: string[];
+                            document_references: {
+                                label: string;
+                                storage_reference: string;
+                                type: "IMMUNIZATION" | "CARE_PLAN" | "MEDICATION_ORDER" | "OTHER";
+                            }[];
+                            emergency_instructions: string;
+                            immunization_notes: string;
+                            medications: string[];
+                            review_message: string;
+                            reviewed_at: string | null;
+                            submitted_at: string | null;
+                            version: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        /** @description Create or replace an application-encrypted health record for an owned camper. */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    camperId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        accessibility_needs: string[];
+                        allergies: string[];
+                        dietary_needs: string[];
+                        document_references: {
+                            label: string;
+                            storage_reference: string;
+                            type: "IMMUNIZATION" | "CARE_PLAN" | "MEDICATION_ORDER" | "OTHER";
+                        }[];
+                        emergency_instructions: string;
+                        immunization_notes: string;
+                        immunization_status: "UNKNOWN" | "CURRENT" | "INCOMPLETE" | "EXEMPT";
+                        medications: string[];
+                        version?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            camper_id: string;
+                            camper_name: string;
+                            family_id: string;
+                            family_name: string;
+                            has_accessibility_needs: boolean;
+                            has_allergies: boolean;
+                            has_dietary_needs: boolean;
+                            has_emergency_instructions: boolean;
+                            has_medications: boolean;
+                            immunization_status: "UNKNOWN" | "CURRENT" | "INCOMPLETE" | "EXEMPT";
+                            record_id: string | null;
+                            review_status: "DRAFT" | "SUBMITTED" | "NEEDS_CHANGES" | "APPROVED";
+                            session_names: string[];
+                            updated_at: string | null;
+                        } & {
+                            accessibility_needs: string[];
+                            allergies: string[];
+                            dietary_needs: string[];
+                            document_references: {
+                                label: string;
+                                storage_reference: string;
+                                type: "IMMUNIZATION" | "CARE_PLAN" | "MEDICATION_ORDER" | "OTHER";
+                            }[];
+                            emergency_instructions: string;
+                            immunization_notes: string;
+                            medications: string[];
+                            review_message: string;
+                            reviewed_at: string | null;
+                            submitted_at: string | null;
+                            version: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/health-records/campers/{camperId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Submit a saved health record for staff pre-arrival review. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    camperId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            camper_id: string;
+                            camper_name: string;
+                            family_id: string;
+                            family_name: string;
+                            has_accessibility_needs: boolean;
+                            has_allergies: boolean;
+                            has_dietary_needs: boolean;
+                            has_emergency_instructions: boolean;
+                            has_medications: boolean;
+                            immunization_status: "UNKNOWN" | "CURRENT" | "INCOMPLETE" | "EXEMPT";
+                            record_id: string | null;
+                            review_status: "DRAFT" | "SUBMITTED" | "NEEDS_CHANGES" | "APPROVED";
+                            session_names: string[];
+                            updated_at: string | null;
+                        } & {
+                            accessibility_needs: string[];
+                            allergies: string[];
+                            dietary_needs: string[];
+                            document_references: {
+                                label: string;
+                                storage_reference: string;
+                                type: "IMMUNIZATION" | "CARE_PLAN" | "MEDICATION_ORDER" | "OTHER";
+                            }[];
+                            emergency_instructions: string;
+                            immunization_notes: string;
+                            medications: string[];
+                            review_message: string;
+                            reviewed_at: string | null;
+                            submitted_at: string | null;
+                            version: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/health-records/campers/{camperId}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Approve a submitted health record or request parent changes. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    camperId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        review_message: string;
+                        status: "APPROVED" | "NEEDS_CHANGES";
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            camper_id: string;
+                            camper_name: string;
+                            family_id: string;
+                            family_name: string;
+                            has_accessibility_needs: boolean;
+                            has_allergies: boolean;
+                            has_dietary_needs: boolean;
+                            has_emergency_instructions: boolean;
+                            has_medications: boolean;
+                            immunization_status: "UNKNOWN" | "CURRENT" | "INCOMPLETE" | "EXEMPT";
+                            record_id: string | null;
+                            review_status: "DRAFT" | "SUBMITTED" | "NEEDS_CHANGES" | "APPROVED";
+                            session_names: string[];
+                            updated_at: string | null;
+                        } & {
+                            accessibility_needs: string[];
+                            allergies: string[];
+                            dietary_needs: string[];
+                            document_references: {
+                                label: string;
+                                storage_reference: string;
+                                type: "IMMUNIZATION" | "CARE_PLAN" | "MEDICATION_ORDER" | "OTHER";
+                            }[];
+                            emergency_instructions: string;
+                            immunization_notes: string;
+                            medications: string[];
+                            review_message: string;
+                            reviewed_at: string | null;
+                            submitted_at: string | null;
+                            version: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/health-records/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Download a separately authorized and audited restricted health CSV. */
+        get: {
+            parameters: {
+                query?: {
+                    session_id?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A private Restricted-data export. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/csv": string;
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/operations/waitlist": {
         parameters: {
             query?: never;

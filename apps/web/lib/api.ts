@@ -9,6 +9,7 @@ import type {
   PaymentAttemptListResponse,
   HouseholdOrderListResponse,
   HousingInventory,
+  HealthRecordCenter,
   PricingConfiguration,
   ProblemResponse,
   OperationalReportCenter,
@@ -93,6 +94,16 @@ export async function getPricing(): Promise<PricingConfiguration> {
 
 export async function getHousing(): Promise<HousingInventory> {
   return getJson('/v1/housing');
+}
+
+export async function getHealthRecords(): Promise<HealthRecordCenter> {
+  return getJson('/v1/health-records');
+}
+
+export async function getParentHealthRecords(
+  headers = getParentApiHeaders(),
+): Promise<HealthRecordCenter> {
+  return getJson('/v1/health-records', headers);
 }
 
 export async function getSessionHousing(sessionId: string): Promise<SessionHousing> {

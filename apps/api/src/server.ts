@@ -4,6 +4,7 @@ import { createDatabaseClient } from '@camp-registration/database';
 import { buildApp, type BuildAppOptions } from './app.js';
 import { LocalPaymentProvider, type PaymentProvider } from './payments/provider.js';
 import { StripePaymentProvider } from './payments/stripe-provider.js';
+import { AesGcmHealthEncryptionProvider } from './health-records/encryption.js';
 
 const port = Number.parseInt(process.env.API_PORT ?? '3001', 10);
 const host = process.env.API_HOST ?? '0.0.0.0';
@@ -66,12 +67,16 @@ const localRequestContext: BuildAppOptions['requestContext'] | undefined =
       }
     : undefined;
 const paymentProvider = paymentProviderFromEnvironment();
+const healthEncryptionProvider = database
+  ? AesGcmHealthEncryptionProvider.fromEnvironment()
+  : undefined;
 
 const appOptions: BuildAppOptions = {
   logger: true,
   ...(database ? { database } : {}),
   ...(localRequestContext ? { requestContext: localRequestContext } : {}),
   ...(paymentProvider ? { paymentProvider } : {}),
+  ...(healthEncryptionProvider ? { healthEncryptionProvider } : {}),
 };
 const app = await buildApp(appOptions);
 

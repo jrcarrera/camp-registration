@@ -20,6 +20,10 @@ print layouts for rosters, pickup sheets, and camper labels.
 The staff lifecycle communications center adds reusable versioned email
 templates, operational audience previews, scheduled campaigns, delivery
 history, and audited failed-delivery replay on the same tenant-safe outbox.
+Restricted Health Records v1 adds application-encrypted camper health
+aggregates, minimum readiness projections, a dedicated health role, linked-parent
+updates, staff review, constrained break-glass access, and audited private CSV
+exports without exposing health contents to ordinary profiles or reports.
 Authentication remains local-development oriented; the domain layer enforces
 linked-adult family ownership and tenant isolation for parent actions.
 
@@ -30,7 +34,7 @@ linked-adult family ownership and tenant isolation for parent actions.
 - Versioned registration forms and electronic waivers
 - Downstream analytics, custom report builders, and scheduled report delivery
 - Parent portal enhancements and administrative dashboard
-- Restricted health records and clinical reporting projections
+- Medication administration, incident workflows, and clinical print projections
 
 ## Local Development
 
@@ -68,6 +72,9 @@ For faster host-based application development, start the supporting services
 with `pnpm infra:up`, run `pnpm db:migrate` and
 `pnpm db:seed:winter-families`, then run `pnpm dev`. The root `.env` must
 provide the runtime and migration database URLs shown in `.env.example`.
+Health-record encryption also requires a versioned keyring. The example contains
+a local-only key; production key material belongs in a secrets manager and old
+key versions must remain available during rotation.
 
 ## Quality Checks
 
@@ -98,6 +105,8 @@ coverage will be added with the registration workflow.
 - [Pricing, assistance, and installment decision](docs/adr/0019-pricing-assistance-and-installments.md)
 - [Session housing and bunk-buddy decision](docs/adr/0020-session-housing-and-bunk-buddies.md)
 - [Lifecycle communications decision](docs/adr/0021-lifecycle-communications-center.md)
+- [Operational reporting expansion decision](docs/adr/0022-operational-reporting-expansion.md)
+- [Restricted health records decision](docs/adr/0023-restricted-health-records-v1.md)
 - [Foundation stack decision](docs/adr/0001-foundation-stack.md)
 - [Terraform deployment boundary](infra/terraform/README.md)
 - [Contributor guidance](CONTRIBUTING.md)

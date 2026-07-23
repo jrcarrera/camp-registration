@@ -28,3 +28,4 @@ clarifications and links to superseding decisions.
 | [0020](0020-session-housing-and-bunk-buddies.md)               | Accepted | Session housing and bunk buddies      |
 | [0021](0021-lifecycle-communications-center.md)                | Accepted | Lifecycle communications center       |
 | [0022](0022-operational-reporting-expansion.md)                | Accepted | Operational reporting expansion       |
+| [0023](0023-restricted-health-records-v1.md)                   | Accepted | Restricted health records v1          |

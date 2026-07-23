@@ -35053,6 +35053,2306 @@
         }
       }
     },
+    "/v1/health-records": {
+      "get": {
+        "tags": [
+          "restricted health records"
+        ],
+        "description": "List minimum operational health-readiness projections for authorized staff or a parent’s campers.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "records"
+                  ],
+                  "properties": {
+                    "records": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "camper_id",
+                          "camper_name",
+                          "family_id",
+                          "family_name",
+                          "has_accessibility_needs",
+                          "has_allergies",
+                          "has_dietary_needs",
+                          "has_emergency_instructions",
+                          "has_medications",
+                          "immunization_status",
+                          "record_id",
+                          "review_status",
+                          "session_names",
+                          "updated_at"
+                        ],
+                        "properties": {
+                          "camper_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "camper_name": {
+                            "type": "string"
+                          },
+                          "family_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "family_name": {
+                            "type": "string"
+                          },
+                          "has_accessibility_needs": {
+                            "type": "boolean"
+                          },
+                          "has_allergies": {
+                            "type": "boolean"
+                          },
+                          "has_dietary_needs": {
+                            "type": "boolean"
+                          },
+                          "has_emergency_instructions": {
+                            "type": "boolean"
+                          },
+                          "has_medications": {
+                            "type": "boolean"
+                          },
+                          "immunization_status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "UNKNOWN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CURRENT"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "INCOMPLETE"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "EXEMPT"
+                                ]
+                              }
+                            ]
+                          },
+                          "record_id": {
+                            "anyOf": [
+                              {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "review_status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "DRAFT"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "SUBMITTED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NEEDS_CHANGES"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "APPROVED"
+                                ]
+                              }
+                            ]
+                          },
+                          "session_names": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "updated_at": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "title": "HealthRecordSummary"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/health-records/campers/{camperId}": {
+      "get": {
+        "tags": [
+          "restricted health records"
+        ],
+        "description": "Decrypt one camper health record after object-level authorization and record the access.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "break_glass",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "EMERGENCY_CARE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CONTINUITY_OF_CARE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "AUDIT_INVESTIGATION"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "reason_code",
+            "required": false
+          },
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "camperId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "camper_id",
+                        "camper_name",
+                        "family_id",
+                        "family_name",
+                        "has_accessibility_needs",
+                        "has_allergies",
+                        "has_dietary_needs",
+                        "has_emergency_instructions",
+                        "has_medications",
+                        "immunization_status",
+                        "record_id",
+                        "review_status",
+                        "session_names",
+                        "updated_at"
+                      ],
+                      "properties": {
+                        "camper_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "camper_name": {
+                          "type": "string"
+                        },
+                        "family_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "family_name": {
+                          "type": "string"
+                        },
+                        "has_accessibility_needs": {
+                          "type": "boolean"
+                        },
+                        "has_allergies": {
+                          "type": "boolean"
+                        },
+                        "has_dietary_needs": {
+                          "type": "boolean"
+                        },
+                        "has_emergency_instructions": {
+                          "type": "boolean"
+                        },
+                        "has_medications": {
+                          "type": "boolean"
+                        },
+                        "immunization_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "UNKNOWN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "CURRENT"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "INCOMPLETE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "EXEMPT"
+                              ]
+                            }
+                          ]
+                        },
+                        "record_id": {
+                          "anyOf": [
+                            {
+                              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "review_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "DRAFT"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SUBMITTED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NEEDS_CHANGES"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "APPROVED"
+                              ]
+                            }
+                          ]
+                        },
+                        "session_names": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "updated_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "accessibility_needs",
+                        "allergies",
+                        "dietary_needs",
+                        "document_references",
+                        "emergency_instructions",
+                        "immunization_notes",
+                        "medications",
+                        "review_message",
+                        "reviewed_at",
+                        "submitted_at",
+                        "version"
+                      ],
+                      "properties": {
+                        "accessibility_needs": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "allergies": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "dietary_needs": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "document_references": {
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "label",
+                              "storage_reference",
+                              "type"
+                            ],
+                            "properties": {
+                              "label": {
+                                "minLength": 1,
+                                "maxLength": 160,
+                                "type": "string"
+                              },
+                              "storage_reference": {
+                                "minLength": 1,
+                                "maxLength": 500,
+                                "type": "string"
+                              },
+                              "type": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "IMMUNIZATION"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "CARE_PLAN"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "MEDICATION_ORDER"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "OTHER"
+                                    ]
+                                  }
+                                ]
+                              }
+                            },
+                            "title": "HealthDocumentReference"
+                          }
+                        },
+                        "emergency_instructions": {
+                          "type": "string"
+                        },
+                        "immunization_notes": {
+                          "type": "string"
+                        },
+                        "medications": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "review_message": {
+                          "type": "string"
+                        },
+                        "reviewed_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "submitted_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "version": {
+                          "minimum": 1,
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "restricted health records"
+        ],
+        "description": "Create or replace an application-encrypted health record for an owned camper.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "accessibility_needs",
+                  "allergies",
+                  "dietary_needs",
+                  "document_references",
+                  "emergency_instructions",
+                  "immunization_notes",
+                  "immunization_status",
+                  "medications"
+                ],
+                "properties": {
+                  "accessibility_needs": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "minLength": 1,
+                      "maxLength": 500,
+                      "type": "string"
+                    }
+                  },
+                  "allergies": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "minLength": 1,
+                      "maxLength": 500,
+                      "type": "string"
+                    }
+                  },
+                  "dietary_needs": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "minLength": 1,
+                      "maxLength": 500,
+                      "type": "string"
+                    }
+                  },
+                  "document_references": {
+                    "maxItems": 25,
+                    "type": "array",
+                    "items": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "label",
+                        "storage_reference",
+                        "type"
+                      ],
+                      "properties": {
+                        "label": {
+                          "minLength": 1,
+                          "maxLength": 160,
+                          "type": "string"
+                        },
+                        "storage_reference": {
+                          "minLength": 1,
+                          "maxLength": 500,
+                          "type": "string"
+                        },
+                        "type": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "IMMUNIZATION"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "CARE_PLAN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MEDICATION_ORDER"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "OTHER"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "emergency_instructions": {
+                    "maxLength": 5000,
+                    "type": "string"
+                  },
+                  "immunization_notes": {
+                    "maxLength": 5000,
+                    "type": "string"
+                  },
+                  "immunization_status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "UNKNOWN"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CURRENT"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "INCOMPLETE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "EXEMPT"
+                        ]
+                      }
+                    ]
+                  },
+                  "medications": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "minLength": 1,
+                      "maxLength": 500,
+                      "type": "string"
+                    }
+                  },
+                  "version": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "camperId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "camper_id",
+                        "camper_name",
+                        "family_id",
+                        "family_name",
+                        "has_accessibility_needs",
+                        "has_allergies",
+                        "has_dietary_needs",
+                        "has_emergency_instructions",
+                        "has_medications",
+                        "immunization_status",
+                        "record_id",
+                        "review_status",
+                        "session_names",
+                        "updated_at"
+                      ],
+                      "properties": {
+                        "camper_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "camper_name": {
+                          "type": "string"
+                        },
+                        "family_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "family_name": {
+                          "type": "string"
+                        },
+                        "has_accessibility_needs": {
+                          "type": "boolean"
+                        },
+                        "has_allergies": {
+                          "type": "boolean"
+                        },
+                        "has_dietary_needs": {
+                          "type": "boolean"
+                        },
+                        "has_emergency_instructions": {
+                          "type": "boolean"
+                        },
+                        "has_medications": {
+                          "type": "boolean"
+                        },
+                        "immunization_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "UNKNOWN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "CURRENT"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "INCOMPLETE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "EXEMPT"
+                              ]
+                            }
+                          ]
+                        },
+                        "record_id": {
+                          "anyOf": [
+                            {
+                              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "review_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "DRAFT"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SUBMITTED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NEEDS_CHANGES"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "APPROVED"
+                              ]
+                            }
+                          ]
+                        },
+                        "session_names": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "updated_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "accessibility_needs",
+                        "allergies",
+                        "dietary_needs",
+                        "document_references",
+                        "emergency_instructions",
+                        "immunization_notes",
+                        "medications",
+                        "review_message",
+                        "reviewed_at",
+                        "submitted_at",
+                        "version"
+                      ],
+                      "properties": {
+                        "accessibility_needs": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "allergies": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "dietary_needs": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "document_references": {
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "label",
+                              "storage_reference",
+                              "type"
+                            ],
+                            "properties": {
+                              "label": {
+                                "minLength": 1,
+                                "maxLength": 160,
+                                "type": "string"
+                              },
+                              "storage_reference": {
+                                "minLength": 1,
+                                "maxLength": 500,
+                                "type": "string"
+                              },
+                              "type": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "IMMUNIZATION"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "CARE_PLAN"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "MEDICATION_ORDER"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "OTHER"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "emergency_instructions": {
+                          "type": "string"
+                        },
+                        "immunization_notes": {
+                          "type": "string"
+                        },
+                        "medications": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "review_message": {
+                          "type": "string"
+                        },
+                        "reviewed_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "submitted_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "version": {
+                          "minimum": 1,
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/health-records/campers/{camperId}/submit": {
+      "post": {
+        "tags": [
+          "restricted health records"
+        ],
+        "description": "Submit a saved health record for staff pre-arrival review.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "version"
+                ],
+                "properties": {
+                  "version": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "camperId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "camper_id",
+                        "camper_name",
+                        "family_id",
+                        "family_name",
+                        "has_accessibility_needs",
+                        "has_allergies",
+                        "has_dietary_needs",
+                        "has_emergency_instructions",
+                        "has_medications",
+                        "immunization_status",
+                        "record_id",
+                        "review_status",
+                        "session_names",
+                        "updated_at"
+                      ],
+                      "properties": {
+                        "camper_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "camper_name": {
+                          "type": "string"
+                        },
+                        "family_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "family_name": {
+                          "type": "string"
+                        },
+                        "has_accessibility_needs": {
+                          "type": "boolean"
+                        },
+                        "has_allergies": {
+                          "type": "boolean"
+                        },
+                        "has_dietary_needs": {
+                          "type": "boolean"
+                        },
+                        "has_emergency_instructions": {
+                          "type": "boolean"
+                        },
+                        "has_medications": {
+                          "type": "boolean"
+                        },
+                        "immunization_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "UNKNOWN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "CURRENT"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "INCOMPLETE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "EXEMPT"
+                              ]
+                            }
+                          ]
+                        },
+                        "record_id": {
+                          "anyOf": [
+                            {
+                              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "review_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "DRAFT"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SUBMITTED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NEEDS_CHANGES"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "APPROVED"
+                              ]
+                            }
+                          ]
+                        },
+                        "session_names": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "updated_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "accessibility_needs",
+                        "allergies",
+                        "dietary_needs",
+                        "document_references",
+                        "emergency_instructions",
+                        "immunization_notes",
+                        "medications",
+                        "review_message",
+                        "reviewed_at",
+                        "submitted_at",
+                        "version"
+                      ],
+                      "properties": {
+                        "accessibility_needs": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "allergies": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "dietary_needs": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "document_references": {
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "label",
+                              "storage_reference",
+                              "type"
+                            ],
+                            "properties": {
+                              "label": {
+                                "minLength": 1,
+                                "maxLength": 160,
+                                "type": "string"
+                              },
+                              "storage_reference": {
+                                "minLength": 1,
+                                "maxLength": 500,
+                                "type": "string"
+                              },
+                              "type": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "IMMUNIZATION"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "CARE_PLAN"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "MEDICATION_ORDER"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "OTHER"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "emergency_instructions": {
+                          "type": "string"
+                        },
+                        "immunization_notes": {
+                          "type": "string"
+                        },
+                        "medications": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "review_message": {
+                          "type": "string"
+                        },
+                        "reviewed_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "submitted_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "version": {
+                          "minimum": 1,
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/health-records/campers/{camperId}/review": {
+      "post": {
+        "tags": [
+          "restricted health records"
+        ],
+        "description": "Approve a submitted health record or request parent changes.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "review_message",
+                  "status",
+                  "version"
+                ],
+                "properties": {
+                  "review_message": {
+                    "maxLength": 1000,
+                    "type": "string"
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "APPROVED"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "NEEDS_CHANGES"
+                        ]
+                      }
+                    ]
+                  },
+                  "version": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "camperId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "camper_id",
+                        "camper_name",
+                        "family_id",
+                        "family_name",
+                        "has_accessibility_needs",
+                        "has_allergies",
+                        "has_dietary_needs",
+                        "has_emergency_instructions",
+                        "has_medications",
+                        "immunization_status",
+                        "record_id",
+                        "review_status",
+                        "session_names",
+                        "updated_at"
+                      ],
+                      "properties": {
+                        "camper_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "camper_name": {
+                          "type": "string"
+                        },
+                        "family_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "family_name": {
+                          "type": "string"
+                        },
+                        "has_accessibility_needs": {
+                          "type": "boolean"
+                        },
+                        "has_allergies": {
+                          "type": "boolean"
+                        },
+                        "has_dietary_needs": {
+                          "type": "boolean"
+                        },
+                        "has_emergency_instructions": {
+                          "type": "boolean"
+                        },
+                        "has_medications": {
+                          "type": "boolean"
+                        },
+                        "immunization_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "UNKNOWN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "CURRENT"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "INCOMPLETE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "EXEMPT"
+                              ]
+                            }
+                          ]
+                        },
+                        "record_id": {
+                          "anyOf": [
+                            {
+                              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "review_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "DRAFT"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SUBMITTED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NEEDS_CHANGES"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "APPROVED"
+                              ]
+                            }
+                          ]
+                        },
+                        "session_names": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "updated_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "accessibility_needs",
+                        "allergies",
+                        "dietary_needs",
+                        "document_references",
+                        "emergency_instructions",
+                        "immunization_notes",
+                        "medications",
+                        "review_message",
+                        "reviewed_at",
+                        "submitted_at",
+                        "version"
+                      ],
+                      "properties": {
+                        "accessibility_needs": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "allergies": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "dietary_needs": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "document_references": {
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "label",
+                              "storage_reference",
+                              "type"
+                            ],
+                            "properties": {
+                              "label": {
+                                "minLength": 1,
+                                "maxLength": 160,
+                                "type": "string"
+                              },
+                              "storage_reference": {
+                                "minLength": 1,
+                                "maxLength": 500,
+                                "type": "string"
+                              },
+                              "type": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "IMMUNIZATION"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "CARE_PLAN"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "MEDICATION_ORDER"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "OTHER"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "emergency_instructions": {
+                          "type": "string"
+                        },
+                        "immunization_notes": {
+                          "type": "string"
+                        },
+                        "medications": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "minLength": 1,
+                            "maxLength": 500,
+                            "type": "string"
+                          }
+                        },
+                        "review_message": {
+                          "type": "string"
+                        },
+                        "reviewed_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "submitted_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "version": {
+                          "minimum": 1,
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/health-records/export": {
+      "get": {
+        "tags": [
+          "restricted health records"
+        ],
+        "description": "Download a separately authorized and audited restricted health CSV.",
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "query",
+            "name": "session_id",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A private Restricted-data export.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/operations/waitlist": {
       "get": {
         "tags": [
