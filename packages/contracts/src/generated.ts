@@ -4,6 +4,3464 @@
  */
 
 export interface paths {
+    "/v1/public/organizations/{organizationSlug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    organizationSlug: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            name: string;
+                            self_service_signup_enabled: boolean;
+                            slug: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/challenges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                        intent: "SIGN_IN" | "JOIN_ORGANIZATION" | "ACCEPT_INVITATION" | "RECOVER_PASSWORD";
+                        invitation_token?: string;
+                        organization_slug?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            challenge_id: string;
+                            expires_at: string;
+                            next_step: "EMAIL_OTP" | "RECOVERY_CODE" | "PASSWORD" | "TOTP" | "SET_PASSWORD" | "ENROLL_TOTP" | "AUTHENTICATED";
+                            setup_secret?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/challenges/{challengeId}/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    challengeId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        response: string;
+                        step: "EMAIL_OTP" | "RECOVERY_CODE" | "PASSWORD" | "TOTP" | "SET_PASSWORD" | "ENROLL_TOTP" | "AUTHENTICATED";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            challenge_id: string;
+                            expires_at: string;
+                            next_step: "EMAIL_OTP" | "RECOVERY_CODE" | "PASSWORD" | "TOTP" | "SET_PASSWORD" | "ENROLL_TOTP" | "AUTHENTICATED";
+                            setup_secret?: string;
+                        } | {
+                            account_id: string;
+                            active_organization_id: string | null;
+                            authentication_method: "EMAIL_OTP" | "PASSWORD_TOTP" | "LOCAL";
+                            /** Format: email */
+                            email: string;
+                            email_verified: boolean;
+                            expires_at: string;
+                            mfa_verified: boolean;
+                            organizations: {
+                                name: string;
+                                organization_id: string;
+                                roles: ("parent_guardian" | ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin"))[];
+                                slug: string;
+                            }[];
+                            platform_role: "system_admin" | null;
+                            requires_mfa_setup: boolean;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/identity/onboarding/{requestId}/matches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    requestId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            matches: {
+                                adult_id: string;
+                                adult_name: string;
+                                family_id: string;
+                                family_name: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_id: string;
+                            active_organization_id: string | null;
+                            authentication_method: "EMAIL_OTP" | "PASSWORD_TOTP" | "LOCAL";
+                            /** Format: email */
+                            email: string;
+                            email_verified: boolean;
+                            expires_at: string;
+                            mfa_verified: boolean;
+                            organizations: {
+                                name: string;
+                                organization_id: string;
+                                roles: ("parent_guardian" | ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin"))[];
+                                slug: string;
+                            }[];
+                            platform_role: "system_admin" | null;
+                            requires_mfa_setup: boolean;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            sessions: {
+                                created_at: string;
+                                current: boolean;
+                                expires_at: string;
+                                id: string;
+                                last_seen_at: string;
+                                mfa_verified: boolean;
+                                revoked_at: string | null;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/session/organization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        organization_id: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_id: string;
+                            active_organization_id: string | null;
+                            authentication_method: "EMAIL_OTP" | "PASSWORD_TOTP" | "LOCAL";
+                            /** Format: email */
+                            email: string;
+                            email_verified: boolean;
+                            expires_at: string;
+                            mfa_verified: boolean;
+                            organizations: {
+                                name: string;
+                                organization_id: string;
+                                roles: ("parent_guardian" | ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin"))[];
+                                slug: string;
+                            }[];
+                            platform_role: "system_admin" | null;
+                            requires_mfa_setup: boolean;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/email-change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            challenge_id: string;
+                            expires_at: string;
+                            next_step: "EMAIL_OTP" | "RECOVERY_CODE" | "PASSWORD" | "TOTP" | "SET_PASSWORD" | "ENROLL_TOTP" | "AUTHENTICATED";
+                            setup_secret?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/email-change/{challengeId}/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    challengeId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        response: string;
+                        step: "EMAIL_OTP" | "RECOVERY_CODE" | "PASSWORD" | "TOTP" | "SET_PASSWORD" | "ENROLL_TOTP" | "AUTHENTICATED";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_id: string;
+                            active_organization_id: string | null;
+                            authentication_method: "EMAIL_OTP" | "PASSWORD_TOTP" | "LOCAL";
+                            /** Format: email */
+                            email: string;
+                            email_verified: boolean;
+                            expires_at: string;
+                            mfa_verified: boolean;
+                            organizations: {
+                                name: string;
+                                organization_id: string;
+                                roles: ("parent_guardian" | ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin"))[];
+                                slug: string;
+                            }[];
+                            platform_role: "system_admin" | null;
+                            requires_mfa_setup: boolean;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/public/organizations/{organizationSlug}/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    organizationSlug: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_id: string;
+                            created_at: string;
+                            decision_reason: string | null;
+                            /** Format: email */
+                            email: string;
+                            family_id: string | null;
+                            first_name: string;
+                            id: string;
+                            last_name: string;
+                            organization_id: string;
+                            phone: string | null;
+                            resolution: "NEW_FAMILY" | "MATCHED_ADULT" | null;
+                            status: "PENDING" | "APPROVED" | "REJECTED";
+                            updated_at: string;
+                        } | null;
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    organizationSlug: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        first_name: string;
+                        last_name: string;
+                        phone?: string | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_id: string;
+                            created_at: string;
+                            decision_reason: string | null;
+                            /** Format: email */
+                            email: string;
+                            family_id: string | null;
+                            first_name: string;
+                            id: string;
+                            last_name: string;
+                            organization_id: string;
+                            phone: string | null;
+                            resolution: "NEW_FAMILY" | "MATCHED_ADULT" | null;
+                            status: "PENDING" | "APPROVED" | "REJECTED";
+                            updated_at: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/identity/administration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            invitations: {
+                                adult_id: string | null;
+                                created_at: string;
+                                email_hint: string;
+                                expires_at: string;
+                                family_id: string | null;
+                                id: string;
+                                invitation_type: "FAMILY_ADULT" | "WORKFORCE";
+                                organization_id: string;
+                                roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                                status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
+                            }[];
+                            memberships: {
+                                account_id: string;
+                                /** Format: email */
+                                email: string;
+                                id: string;
+                                organization_id: string;
+                                roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                                status: "ACTIVE" | "DISABLED";
+                                version: number;
+                            }[];
+                            onboarding_requests: {
+                                account_id: string;
+                                created_at: string;
+                                decision_reason: string | null;
+                                /** Format: email */
+                                email: string;
+                                family_id: string | null;
+                                first_name: string;
+                                id: string;
+                                last_name: string;
+                                organization_id: string;
+                                phone: string | null;
+                                resolution: "NEW_FAMILY" | "MATCHED_ADULT" | null;
+                                status: "PENDING" | "APPROVED" | "REJECTED";
+                                updated_at: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/identity/onboarding/{requestId}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    requestId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        action: "APPROVE_NEW" | "APPROVE_MATCH" | "REJECT" | "REOPEN";
+                        adult_id?: string;
+                        family_id?: string;
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_id: string;
+                            created_at: string;
+                            decision_reason: string | null;
+                            /** Format: email */
+                            email: string;
+                            family_id: string | null;
+                            first_name: string;
+                            id: string;
+                            last_name: string;
+                            organization_id: string;
+                            phone: string | null;
+                            resolution: "NEW_FAMILY" | "MATCHED_ADULT" | null;
+                            status: "PENDING" | "APPROVED" | "REJECTED";
+                            updated_at: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/families/{familyId}/adults/{adultId}/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    adultId: string;
+                    familyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            adult_id: string | null;
+                            created_at: string;
+                            email_hint: string;
+                            expires_at: string;
+                            family_id: string | null;
+                            id: string;
+                            invitation_type: "FAMILY_ADULT" | "WORKFORCE";
+                            organization_id: string;
+                            roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                            status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/identity/workforce-invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                        roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            adult_id: string | null;
+                            created_at: string;
+                            email_hint: string;
+                            expires_at: string;
+                            family_id: string | null;
+                            id: string;
+                            invitation_type: "FAMILY_ADULT" | "WORKFORCE";
+                            organization_id: string;
+                            roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                            status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/identity/invitations/{invitationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    invitationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/identity/invitations/{invitationId}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    invitationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            adult_id: string | null;
+                            created_at: string;
+                            email_hint: string;
+                            expires_at: string;
+                            family_id: string | null;
+                            id: string;
+                            invitation_type: "FAMILY_ADULT" | "WORKFORCE";
+                            organization_id: string;
+                            roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                            status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/identity/memberships/{membershipId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    membershipId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        reason: string;
+                        roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                        status: "ACTIVE" | "DISABLED";
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_id: string;
+                            /** Format: email */
+                            email: string;
+                            id: string;
+                            organization_id: string;
+                            roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                            status: "ACTIVE" | "DISABLED";
+                            version: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/v1/system/accounts/{accountId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    accountId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        reason: string;
+                        status: "ACTIVE" | "SUSPENDED";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/v1/system/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query: {
+                    email: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            accounts: {
+                                /** Format: email */
+                                email: string;
+                                email_verified: boolean;
+                                id: string;
+                                platform_role: "system_admin" | null;
+                                status: "ACTIVE" | "SUSPENDED";
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/system/organizations/{organizationId}/administrator-invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    organizationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            adult_id: string | null;
+                            created_at: string;
+                            email_hint: string;
+                            expires_at: string;
+                            family_id: string | null;
+                            id: string;
+                            invitation_type: "FAMILY_ADULT" | "WORKFORCE";
+                            organization_id: string;
+                            roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                            status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/system/accounts/{accountId}/recovery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    accountId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email?: string;
+                        reason: string;
+                        reset_mfa: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/catalog": {
         parameters: {
             query?: never;
@@ -32,6 +3490,7 @@ export interface paths {
                                 id: string;
                                 slug: string;
                                 name: string;
+                                self_service_signup_enabled: boolean;
                                 stripe_connected_account_id: string | null;
                                 timezone: string;
                                 waitlist_offer_duration_hours: 24 | 48 | 72 | 168;
@@ -172,6 +3631,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         stripe_connected_account_id?: string | null;
+                        self_service_signup_enabled: boolean;
                         waitlist_offer_duration_hours: 24 | 48 | 72 | 168;
                     };
                 };
@@ -187,6 +3647,7 @@ export interface paths {
                             id: string;
                             slug: string;
                             name: string;
+                            self_service_signup_enabled: boolean;
                             stripe_connected_account_id: string | null;
                             timezone: string;
                             waitlist_offer_duration_hours: 24 | 48 | 72 | 168;

@@ -291,6 +291,14 @@ export class WaitlistOperationsStore {
              ) AS expired_offer_count
            FROM notification_outbox outbox
            WHERE outbox.organization_id = $1
+             AND outbox.notification_type IN (
+               'WAITLIST_OFFERED',
+               'WAITLIST_EXPIRING_SOON',
+               'WAITLIST_ACCEPTED',
+               'WAITLIST_DECLINED',
+               'WAITLIST_EXPIRED',
+               'WAITLIST_CANCELLED'
+             )
          ) backlog ON true`,
         [organizationId, staleAfterSeconds],
       );
@@ -327,6 +335,14 @@ export class WaitlistOperationsStore {
            FROM notification_coverage_issues coverage
            WHERE coverage.organization_id = $1
              AND coverage.status = 'OPEN'
+             AND coverage.notification_type IN (
+               'WAITLIST_OFFERED',
+               'WAITLIST_EXPIRING_SOON',
+               'WAITLIST_ACCEPTED',
+               'WAITLIST_DECLINED',
+               'WAITLIST_EXPIRED',
+               'WAITLIST_CANCELLED'
+             )
 
            UNION ALL
 
@@ -344,6 +360,14 @@ export class WaitlistOperationsStore {
            FROM notification_outbox outbox
            WHERE outbox.organization_id = $1
              AND outbox.status = 'FAILED'
+             AND outbox.notification_type IN (
+               'WAITLIST_OFFERED',
+               'WAITLIST_EXPIRING_SOON',
+               'WAITLIST_ACCEPTED',
+               'WAITLIST_DECLINED',
+               'WAITLIST_EXPIRED',
+               'WAITLIST_CANCELLED'
+             )
          ) issues
          ORDER BY observed_at DESC, id
          LIMIT $2`,

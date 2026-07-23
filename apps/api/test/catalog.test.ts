@@ -68,6 +68,7 @@ const context: CatalogContext = {
   organization: {
     id: organizationId,
     name: 'Test Camp',
+    self_service_signup_enabled: false,
     slug: 'test-camp',
     stripe_connected_account_id: null,
     timezone: 'America/Chicago',
@@ -223,7 +224,11 @@ describe('catalog routes', () => {
     const response = await app.inject({
       headers: { 'x-request-id': 'organization-settings-test' },
       method: 'PATCH',
-      payload: { waitlist_offer_duration_hours: 72 },
+      payload: {
+        self_service_signup_enabled: false,
+        stripe_connected_account_id: null,
+        waitlist_offer_duration_hours: 72,
+      },
       url: '/v1/organization/settings',
     });
 
@@ -233,7 +238,11 @@ describe('catalog routes', () => {
       waitlist_offer_duration_hours: 72,
     });
     expect(service.updateOrganizationSettings).toHaveBeenCalledWith(
-      { waitlist_offer_duration_hours: 72 },
+      {
+        self_service_signup_enabled: false,
+        stripe_connected_account_id: null,
+        waitlist_offer_duration_hours: 72,
+      },
       'organization-settings-test',
     );
   });

@@ -1,4 +1,5 @@
 import { Settings } from 'lucide-react';
+import Link from 'next/link';
 
 import { OrganizationSettingsForm } from '../../components/organization-settings-form';
 import { getCatalog } from '../../lib/api';
@@ -23,6 +24,15 @@ export default async function SettingsPage() {
         </span>
       </header>
       <OrganizationSettingsForm organization={catalog.organization} />
+      <section className="editorSection settingsAccessCard">
+        <div className="editorSectionHeading">
+          <h2>Access and onboarding</h2>
+          <p>Approve new family accounts and manage workforce invitations and roles.</p>
+        </div>
+        <Link className="buttonSecondary" href="/settings/access">
+          Manage access
+        </Link>
+      </section>
     </>
   );
 }

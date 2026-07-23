@@ -58,6 +58,8 @@ import { registerPricingRoutes } from './pricing/routes.js';
 import { PricingService, type PricingServiceApi } from './pricing/service.js';
 import { registerReportsRoutes } from './reports/routes.js';
 import { ReportsService, type ReportsServiceApi } from './reports/service.js';
+import { registerIdentityRoutes } from './identity/routes.js';
+import type { IdentityRequestContext, IdentityService } from './identity/service.js';
 
 export interface BuildAppOptions {
   catalogService?: CatalogServiceApi;
@@ -69,6 +71,7 @@ export interface BuildAppOptions {
   healthEncryptionProvider?: HealthEncryptionProvider;
   healthRecordService?: HealthRecordServiceApi;
   identity?: RequestIdentity;
+  identityService?: IdentityService;
   logger?: boolean | FastifyBaseLogger;
   operationsService?: OperationsServiceApi;
   orderService?: OrderServiceApi;
@@ -105,11 +108,140 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     routePrefix: '/docs',
   });
 
+  const identityContexts = new WeakMap<FastifyRequest, IdentityRequestContext>();
+  if (options.identityService) {
+    app.addHook('onRequest', async (request, reply) => {
+      const origin = request.headers.origin;
+      if (
+        origin &&
+        request.method !== 'GET' &&
+        request.method !== 'HEAD' &&
+        !request.url.startsWith('/v1/webhooks/')
+      ) {
+        const forwardedHost = request.headers['x-forwarded-host'];
+        const requestHost =
+          (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) ?? request.headers.host;
+        const forwardedProto = request.headers['x-forwarded-proto'];
+        const protocol =
+          (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) ??
+          (process.env.NODE_ENV === 'production' ? 'https' : 'http');
+        if (!requestHost || new URL(origin).origin !== `${protocol}://${requestHost}`) {
+          return reply.code(403).send({
+            code: 'origin_not_allowed',
+            message: 'The request origin is not allowed.',
+          });
+        }
+      }
+      const cookieHeader = request.headers.cookie;
+      const sessionToken = cookieHeader
+        ?.split(';')
+        .map((part) => part.trim())
+        .find((part) => part.startsWith('camp_session='))
+        ?.slice('camp_session='.length);
+      const context = await options.identityService!.resolveRequest(
+        sessionToken ? decodeURIComponent(sessionToken) : undefined,
+      );
+      if (context) identityContexts.set(request, context);
+
+      const path = request.url.split('?')[0] ?? request.url;
+      const publicRequest =
+        path === '/health' ||
+        path === '/ready' ||
+        path.startsWith('/docs') ||
+        path.startsWith('/v1/webhooks/') ||
+        (request.method === 'GET' && /^\/v1\/public\/organizations\/[^/]+$/.test(path)) ||
+        (request.method === 'POST' &&
+          (path === '/v1/auth/challenges' ||
+            /^\/v1\/auth\/challenges\/[^/]+\/respond$/.test(path) ||
+            path === '/v1/auth/logout'));
+      if (publicRequest || (!context && options.requestContext?.(request))) return;
+      if (context) {
+        const accountLifecycleRequest =
+          path.startsWith('/v1/auth/') ||
+          path.startsWith('/v1/identity/') ||
+          path.startsWith('/v1/system/') ||
+          /^\/v1\/public\/organizations\/[^/]+\/onboarding$/.test(path);
+        if (accountLifecycleRequest || context.requestIdentity) return;
+        return reply.code(403).send({
+          code: 'organization_access_required',
+          message: 'Approved organization access is required.',
+        });
+      }
+      return reply.code(401).send({
+        code: 'authentication_required',
+        message: 'Sign in to continue.',
+      });
+    });
+  }
+
   const resolveRequestContext = (request: FastifyRequest): RequestServiceContext | undefined =>
+    (() => {
+      const identityContext = identityContexts.get(request);
+      if (identityContext?.requestIdentity && identityContext.session.active_organization_id) {
+        return {
+          identity: identityContext.requestIdentity,
+          organizationId: identityContext.session.active_organization_id,
+        };
+      }
+      return undefined;
+    })() ??
     options.requestContext?.(request) ??
     (options.identity && options.organizationId
       ? { identity: options.identity, organizationId: options.organizationId }
       : undefined);
+
+  registerIdentityRoutes(app, options.identityService, (request) => {
+    const sessionContext = identityContexts.get(request);
+    if (sessionContext) return sessionContext;
+    if (
+      request.url.startsWith('/v1/auth/') ||
+      request.url.startsWith('/v1/public/organizations/')
+    ) {
+      return undefined;
+    }
+    const local = options.requestContext?.(request);
+    if (!local) return undefined;
+    const membership = local.identity.memberships.find(
+      (candidate) => candidate.organizationId === local.organizationId,
+    );
+    if (!membership) return undefined;
+    const now = new Date().toISOString();
+    return {
+      requestIdentity: local.identity,
+      session: {
+        absolute_expires_at: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+        account: {
+          email_normalized: local.identity.email.toLowerCase(),
+          email_verified: local.identity.emailVerified,
+          id: local.identity.subject,
+          platform_role: null,
+          primary_email: local.identity.email,
+          status: 'ACTIVE',
+        },
+        account_id: local.identity.subject,
+        active_organization_id: local.organizationId,
+        authentication_method: 'LOCAL',
+        created_at: now,
+        id: request.id,
+        idle_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+        last_seen_at: now,
+        mfa_verified: local.identity.mfaVerified,
+        organizations: [
+          {
+            name: 'Local organization',
+            organization_id: local.organizationId,
+            roles: membership.roles.filter(
+              (role): role is Exclude<(typeof membership.roles)[number], 'system_admin'> =>
+                role !== 'system_admin',
+            ),
+            slug: 'local',
+          },
+        ],
+        requires_mfa_setup: false,
+        revoked_at: null,
+      },
+    };
+  });
 
   const catalogStore = options.database ? new CatalogStore(options.database) : undefined;
   const catalogService =

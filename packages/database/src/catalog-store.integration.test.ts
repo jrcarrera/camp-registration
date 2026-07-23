@@ -124,6 +124,7 @@ describe('catalog store', () => {
       action: string;
       details: {
         previous_waitlist_offer_duration_hours: number;
+        self_service_signup_enabled: boolean;
         waitlist_offer_duration_hours: number;
       };
     }>(
@@ -147,6 +148,7 @@ describe('catalog store', () => {
         action: 'organization.settings_updated',
         details: {
           previous_waitlist_offer_duration_hours: 48,
+          self_service_signup_enabled: true,
           stripe_connected_account_changed: false,
           waitlist_offer_duration_hours: 72,
         },

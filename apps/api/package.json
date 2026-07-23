@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "auth:bootstrap": "tsx src/identity/bootstrap-system-admin.ts",
     "dev": "tsx watch src/server.ts",
     "openapi:write": "tsx src/openapi.ts",
     "predev": "pnpm --filter @camp-registration/auth build && pnpm --filter @camp-registration/contracts build && pnpm --filter @camp-registration/database build",
@@ -20,9 +21,11 @@
     "@camp-registration/auth": "workspace:*",
     "@camp-registration/contracts": "workspace:*",
     "@camp-registration/database": "workspace:*",
+    "@aws-sdk/client-cognito-identity-provider": "3.1087.0",
     "@fastify/swagger": "9.7.0",
     "@fastify/swagger-ui": "6.0.0",
     "@fastify/type-provider-typebox": "6.1.0",
+    "@sinclair/typebox": "0.34.49",
     "fastify": "5.8.5",
     "nodemailer": "9.0.3",
     "stripe": "22.3.1"

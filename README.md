@@ -24,8 +24,13 @@ Restricted Health Records v1 adds application-encrypted camper health
 aggregates, minimum readiness projections, a dedicated health role, linked-parent
 updates, staff review, constrained break-glass access, and audited private CSV
 exports without exposing health contents to ordinary profiles or reports.
-Authentication remains local-development oriented; the domain layer enforces
-linked-adult family ownership and tenant isolation for parent actions.
+Production identity uses application-owned opaque sessions behind a
+provider-neutral boundary. Amazon Cognito is the first production adapter;
+local development uses deterministic email, password, and authenticator
+challenges without AWS. Organization join links create approval-only family
+applications, existing adults are linked by email-matched invitations, and
+workforce access requires password plus TOTP MFA. Signed-in users can verify a
+new login email without changing the adult contact email on a family record.
 
 ## Planned Scope
 
@@ -34,6 +39,7 @@ linked-adult family ownership and tenant isolation for parent actions.
 - Versioned registration forms and electronic waivers
 - Downstream analytics, custom report builders, and scheduled report delivery
 - Parent portal enhancements and administrative dashboard
+- Social sign-in, passkeys, and custom authentication domains
 - Medication administration, incident workflows, and clinical print projections
 
 ## Local Development
@@ -76,6 +82,12 @@ Health-record encryption also requires a versioned keyring. The example contains
 a local-only key; production key material belongs in a secrets manager and old
 key versions must remain available during rotation.
 
+Identity challenge state and queued invitation content use the separate
+`AUTH_TOKEN_*` AES-GCM keyring. Local email/recovery code `123456`, staff
+password `CampLocal!123`, and authenticator code `654321` exercise the same
+challenge states as Cognito. Production refuses to start with local identity or
+local header authentication enabled, and without the auth keyring.
+
 ## Quality Checks
 
 ```bash
@@ -107,6 +119,7 @@ coverage will be added with the registration workflow.
 - [Lifecycle communications decision](docs/adr/0021-lifecycle-communications-center.md)
 - [Operational reporting expansion decision](docs/adr/0022-operational-reporting-expansion.md)
 - [Restricted health records decision](docs/adr/0023-restricted-health-records-v1.md)
+- [Production identity and sessions decision](docs/adr/0024-production-identity-and-application-sessions.md)
 - [Foundation stack decision](docs/adr/0001-foundation-stack.md)
 - [Terraform deployment boundary](infra/terraform/README.md)
 - [Contributor guidance](CONTRIBUTING.md)

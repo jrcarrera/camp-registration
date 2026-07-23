@@ -852,10 +852,14 @@ Current parent ownership behavior:
 - Parent family lists are filtered to owned families.
 - Parent reads and parent-source checkout/cancellation require object-level
   family authorization.
-- Adult identity claim exists for local/domain testing: a parent identity with a
-  verified matching email can claim an unlinked adult record. Full invite,
-  passwordless login, recovery, and provider-backed account management are not
-  implemented yet.
+- Parent accounts authenticate with verified email OTP. A family owner or
+  authorized administrator can invite an existing adult whose email matches the
+  verified account; acceptance links the adult atomically.
+- New-family applicants enter through an organization join link and remain
+  status-only until an administrator creates a new family or matches an
+  unclaimed adult with the same normalized email.
+- Workforce memberships are application-owned and require password plus TOTP.
+  Dual-role parent/workforce accounts follow the workforce policy.
 
 Tenant isolation is still enforced in depth:
 
@@ -1025,8 +1029,11 @@ Local runtime identity:
 - `LOCAL_AUTH_ENABLED=true`
 - `LOCAL_ORGANIZATION_ID=a60b272f-b028-4f1a-b666-3ef3cffd9827`
 - `LOCAL_ACTOR_ID=local-camp-admin`
+- `IDENTITY_PROVIDER=local`
 - `PAYMENT_PROVIDER=local`
-- The API builds a local `RequestIdentity` with `organization_admin`.
+- Cookie sessions use deterministic local email, password, and TOTP challenge
+  values. Legacy header identity is available only when explicitly enabled and
+  production startup rejects it.
 
 Seed data:
 
@@ -1053,7 +1060,11 @@ Seed data:
 | Restricted health forms and medical data  | Not implemented                                               |
 | Transactional waitlist email              | Implemented with SMTP, issue visibility, and replay           |
 | File uploads/object storage               | Not implemented                                               |
-| Real authentication provider              | Not implemented                                               |
+| Cognito authentication boundary           | Implemented with disabled-by-default Terraform                |
+| Parent email OTP and recovery             | Implemented with application-owned opaque sessions            |
+| Workforce password and TOTP               | Implemented with mandatory privileged MFA                     |
+| Family and workforce invitations          | Implemented with hashed, expiring, single-use tokens          |
+| New-family approval workflow              | Implemented with new-family and email-match decisions         |
 | Parent object ownership checks            | Implemented for family reads, checkout, and cancellation      |
 | Registration cancellation                 | Implemented                                                   |
 | Multi-camper atomic checkout              | Implemented with one household order and payment              |

@@ -1,10 +1,16 @@
 import { platformRoles, type PlatformRole, type RequestIdentity } from '@camp-registration/auth';
-import { createDatabaseClient } from '@camp-registration/database';
+import { createDatabaseClient, IdentityStore } from '@camp-registration/database';
 
 import { buildApp, type BuildAppOptions } from './app.js';
 import { LocalPaymentProvider, type PaymentProvider } from './payments/provider.js';
 import { StripePaymentProvider } from './payments/stripe-provider.js';
 import { AesGcmHealthEncryptionProvider } from './health-records/encryption.js';
+import { CognitoIdentityProvider } from './identity/cognito-provider.js';
+import { validateIdentityRuntime } from './identity/config.js';
+import { AuthStateCipher } from './identity/encryption.js';
+import { LocalIdentityProvider } from './identity/local-provider.js';
+import type { IdentityProvider } from './identity/provider.js';
+import { IdentityService } from './identity/service.js';
 
 const port = Number.parseInt(process.env.API_PORT ?? '3001', 10);
 const host = process.env.API_HOST ?? '0.0.0.0';
@@ -15,6 +21,31 @@ const organizationId = process.env.LOCAL_ORGANIZATION_ID;
 const actorId = process.env.LOCAL_ACTOR_ID ?? 'local-camp-admin';
 const defaultRoles = rolesFrom(process.env.LOCAL_ROLES ?? 'organization_admin');
 const publicAppBaseUrl = process.env.PUBLIC_APP_BASE_URL ?? 'http://localhost:3000';
+const identityProviderName = process.env.IDENTITY_PROVIDER?.trim().toLowerCase() ?? 'local';
+
+validateIdentityRuntime({
+  cognitoClientId: process.env.COGNITO_CLIENT_ID,
+  cognitoRegion: process.env.COGNITO_REGION,
+  cognitoUserPoolId: process.env.COGNITO_USER_POOL_ID,
+  hasEncryptionKeyring: Boolean(process.env.AUTH_TOKEN_ENCRYPTION_KEYS),
+  localAuthEnabled,
+  nodeEnvironment: process.env.NODE_ENV,
+  providerName: identityProviderName,
+});
+
+function identityProviderFromEnvironment(): IdentityProvider {
+  if (identityProviderName === 'local') {
+    return new LocalIdentityProvider(process.env.NODE_ENV !== 'production');
+  }
+  if (identityProviderName === 'cognito') {
+    const region = process.env.COGNITO_REGION;
+    const userPoolId = process.env.COGNITO_USER_POOL_ID;
+    const clientId = process.env.COGNITO_CLIENT_ID;
+    if (!region || !userPoolId || !clientId) throw new Error('Cognito configuration is required');
+    return new CognitoIdentityProvider(clientId, userPoolId, region);
+  }
+  throw new Error(`Unsupported IDENTITY_PROVIDER: ${identityProviderName}`);
+}
 
 function paymentProviderFromEnvironment(): PaymentProvider | undefined {
   const provider = process.env.PAYMENT_PROVIDER?.trim().toLowerCase();
@@ -70,6 +101,27 @@ const paymentProvider = paymentProviderFromEnvironment();
 const healthEncryptionProvider = database
   ? AesGcmHealthEncryptionProvider.fromEnvironment()
   : undefined;
+const identityProvider = database ? identityProviderFromEnvironment() : undefined;
+const authStateCipher = database
+  ? process.env.AUTH_TOKEN_ENCRYPTION_KEYS
+    ? AuthStateCipher.fromEnvironment()
+    : process.env.NODE_ENV === 'production'
+      ? (() => {
+          throw new Error(
+            'AUTH_TOKEN_ACTIVE_KEY_VERSION and AUTH_TOKEN_ENCRYPTION_KEYS are required in production',
+          );
+        })()
+      : AuthStateCipher.forDevelopment()
+  : undefined;
+const identityService =
+  database && identityProvider && authStateCipher
+    ? new IdentityService(
+        new IdentityStore(database),
+        identityProvider,
+        authStateCipher,
+        publicAppBaseUrl,
+      )
+    : undefined;
 
 const appOptions: BuildAppOptions = {
   logger: true,
@@ -77,6 +129,7 @@ const appOptions: BuildAppOptions = {
   ...(localRequestContext ? { requestContext: localRequestContext } : {}),
   ...(paymentProvider ? { paymentProvider } : {}),
   ...(healthEncryptionProvider ? { healthEncryptionProvider } : {}),
+  ...(identityService ? { identityService } : {}),
 };
 const app = await buildApp(appOptions);
 

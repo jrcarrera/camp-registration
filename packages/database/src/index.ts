@@ -5,6 +5,7 @@ export * from './family-store.js';
 export * from './forms-store.js';
 export * from './housing-store.js';
 export * from './health-record-store.js';
+export * from './identity-store.js';
 export * from './migrate.js';
 export * from './notification-store.js';
 export * from './order-store.js';

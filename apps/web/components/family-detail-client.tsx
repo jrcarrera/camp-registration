@@ -22,6 +22,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, type ReactNode, useEffect, useState } from 'react';
 
+import { FamilyInvitationButton } from './family-invitation-button';
+
 interface SaveState {
   fieldErrors: Record<string, string>;
   message: string | null;
@@ -566,6 +568,9 @@ function AdultEditor({
       <Message state={state} />
       <AdultFields form={form} state={state} set={set} />
       <div className="inlineActions">
+        {!adult.identity_subject && adult.email ? (
+          <FamilyInvitationButton adultId={adult.id} familyId={familyId} />
+        ) : null}
         {linkedCamper ? (
           <Link className="buttonSecondary" href={`#camper-${linkedCamper.id}`}>
             Camper profile

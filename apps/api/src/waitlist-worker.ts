@@ -10,6 +10,7 @@ import {
 
 import { SmtpEmailSender } from './notifications/email.js';
 import { WaitlistWorker, type WaitlistWorkerLogger } from './waitlist/worker.js';
+import { AuthStateCipher } from './identity/encryption.js';
 
 function integerSetting(name: string, fallback: number, minimum: number, maximum: number): number {
   const raw = process.env[name];
@@ -60,6 +61,15 @@ const worker = new WaitlistWorker(
     workerId: process.env.WAITLIST_WORKER_ID?.trim() || `waitlist-worker:${randomUUID()}`,
   },
   new CommunicationsStore(database),
+  process.env.AUTH_TOKEN_ENCRYPTION_KEYS
+    ? AuthStateCipher.fromEnvironment()
+    : process.env.NODE_ENV === 'production'
+      ? (() => {
+          throw new Error(
+            'AUTH_TOKEN_ACTIVE_KEY_VERSION and AUTH_TOKEN_ENCRYPTION_KEYS are required in production',
+          );
+        })()
+      : AuthStateCipher.forDevelopment(),
 );
 const intervalMs = integerSetting('WAITLIST_WORKER_INTERVAL_MS', 30_000, 5_000, 3_600_000);
 let running = false;

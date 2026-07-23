@@ -4104,6 +4104,199 @@ tbody tr + tr td {
   gap: 8px;
 }
 
+.authWorkspace {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  background:
+    radial-gradient(circle at top left, rgba(20, 107, 77, 0.12), transparent 34rem), #f4f7f5;
+}
+
+.authPage {
+  width: min(100%, 480px);
+  display: grid;
+  gap: 20px;
+}
+
+.authHeader {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+}
+
+.authHeader h1,
+.authHeader p {
+  margin: 0;
+}
+
+.authCard {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid #dce5e0;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 18px 50px rgba(23, 54, 41, 0.1);
+}
+
+.authCard form,
+.identityStack {
+  display: grid;
+  gap: 16px;
+}
+
+.authIcon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e8f2ed;
+  color: #146b4d;
+}
+
+.authSubmit {
+  width: 100%;
+  justify-content: center;
+}
+
+.authLocalHint,
+.authRecoveryLink {
+  color: #596962;
+  font-size: 12px;
+}
+
+.totpSecret {
+  display: block;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.08em;
+}
+
+.identityInviteForm {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.7fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.identityList {
+  display: grid;
+  gap: 8px;
+}
+
+.identityListRow {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e0e7e3;
+  border-radius: 8px;
+  background: #fafcfb;
+}
+
+.identityListRow > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.identityListRow strong,
+.identityListRow small {
+  overflow-wrap: anywhere;
+}
+
+.identityListRow small {
+  color: #66736d;
+}
+
+.securitySummary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.securitySummary p {
+  margin: 3px 0 0;
+  color: #5c6b64;
+}
+
+.identityInlineForm {
+  display: grid;
+  grid-template-columns: auto minmax(14rem, 1fr) minmax(10rem, auto);
+  align-items: end;
+  gap: 12px;
+}
+
+.identityInlineForm label {
+  display: grid;
+  gap: 5px;
+}
+
+@media (max-width: 760px) {
+  .identityInlineForm {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .identityInlineForm > svg {
+    display: none;
+  }
+}
+
+.familyInvitationAction {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.familyInvitationAction small {
+  color: #53675d;
+}
+
+.buttonCompact {
+  min-height: 32px;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #35423c;
+  font-weight: 700;
+}
+
+.checkRow input {
+  width: 18px;
+  height: 18px;
+  accent-color: #146b4d;
+}
+
+.settingsAccessCard {
+  margin-top: 16px;
+}
+
+@media (max-width: 720px) {
+  .identityInviteForm {
+    grid-template-columns: 1fr;
+  }
+
+  .identityListRow {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .identityListRow > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
 .waitlistAction {
   display: grid;
   justify-items: end;

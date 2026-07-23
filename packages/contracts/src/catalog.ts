@@ -21,6 +21,7 @@ export const OrganizationFixtureSchema = Type.Object(
     id: UuidSchema,
     slug: Type.String({ minLength: 1, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }),
     name: Type.String({ minLength: 1 }),
+    self_service_signup_enabled: Type.Boolean(),
     stripe_connected_account_id: Type.Union([
       Type.String({ minLength: 6, pattern: '^acct_[A-Za-z0-9]+$' }),
       Type.Null(),
@@ -133,6 +134,7 @@ export const OrganizationSettingsUpdateSchema = Type.Object(
     stripe_connected_account_id: Type.Optional(
       Type.Union([Type.String({ maxLength: 255, pattern: '^acct_[A-Za-z0-9]+$' }), Type.Null()]),
     ),
+    self_service_signup_enabled: Type.Boolean(),
     waitlist_offer_duration_hours: WaitlistOfferDurationHoursSchema,
   },
   { additionalProperties: false, $id: 'OrganizationSettingsUpdate' },

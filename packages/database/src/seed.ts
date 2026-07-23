@@ -144,9 +144,11 @@ export async function seedCatalog(connectionString: string): Promise<void> {
     for (const organization of fixture.organizations) {
       await client.query(
         `INSERT INTO organizations (
-           id, slug, name, timezone, waitlist_offer_duration_hours
-         ) VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (id) DO NOTHING`,
+           id, slug, name, timezone, waitlist_offer_duration_hours,
+           self_service_signup_enabled
+         ) VALUES ($1, $2, $3, $4, $5, true)
+         ON CONFLICT (id) DO UPDATE
+         SET self_service_signup_enabled = true`,
         [
           organization.id,
           organization.slug,
@@ -283,6 +285,32 @@ export async function seedFamilyFixture(
       );
 
       for (const adult of family.adults) {
+        if (adult.identity_subject) {
+          await client.query(
+            `INSERT INTO user_accounts (
+               id, primary_email, email_normalized, email_verified
+             ) VALUES ($1, $2, $3, true)
+             ON CONFLICT (id) DO UPDATE
+             SET primary_email = EXCLUDED.primary_email,
+                 email_normalized = EXCLUDED.email_normalized,
+                 email_verified = true,
+                 updated_at = transaction_timestamp()`,
+            [adult.identity_subject, adult.email, normalizedEmail(adult.email)],
+          );
+          await client.query(
+            `INSERT INTO external_identities (
+               id, account_id, provider, issuer, provider_subject, email_snapshot
+             ) VALUES ($1, $2, 'local', 'camp-registration-local', $2, $3)
+             ON CONFLICT (provider, issuer, provider_subject) DO UPDATE
+             SET email_snapshot = EXCLUDED.email_snapshot,
+                 updated_at = transaction_timestamp()`,
+            [
+              deterministicUuid(`external-identity:${adult.identity_subject}`),
+              adult.identity_subject,
+              adult.email,
+            ],
+          );
+        }
         await client.query(
           `INSERT INTO adults (
              id, organization_id, family_id, identity_subject, first_name, last_name,

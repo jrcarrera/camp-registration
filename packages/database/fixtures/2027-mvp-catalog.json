@@ -5,6 +5,7 @@
       "id": "a60b272f-b028-4f1a-b666-3ef3cffd9827",
       "slug": "test-camp",
       "name": "Test Camp",
+      "self_service_signup_enabled": true,
       "timezone": "America/Chicago",
       "stripe_connected_account_id": null,
       "waitlist_offer_duration_hours": 48

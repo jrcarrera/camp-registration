@@ -65,6 +65,7 @@ services:
       DATABASE_URL: postgresql://camp_app:camp-app-local@postgres:5432/camp_registration
       HEALTH_DATA_ACTIVE_KEY_VERSION: '1'
       HEALTH_DATA_ENCRYPTION_KEYS: '{"1":"Y2FtcC1oZWFsdGgtbG9jYWwta2V5LW1hdGVyaWFsLXY="}'
+      ALLOW_LEGACY_PARENT_CHECKOUT: 'true'
       LOCAL_ACTOR_ID: local-camp-admin
       LOCAL_AUTH_ENABLED: 'true'
       LOCAL_ORGANIZATION_ID: a60b272f-b028-4f1a-b666-3ef3cffd9827
@@ -140,6 +141,7 @@ services:
     environment:
       API_INTERNAL_BASE_URL: http://api:3001
       HOSTNAME: 0.0.0.0
+      LOCAL_AUTH_ENABLED: 'true'
       NODE_ENV: development
       PORT: 3000
     ports:

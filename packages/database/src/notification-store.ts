@@ -16,7 +16,12 @@ export type NotificationType =
   | 'ORDER_CONFIRMATION'
   | 'INSTALLMENT_DUE_SOON'
   | 'INSTALLMENT_DUE'
-  | 'LIFECYCLE_MESSAGE';
+  | 'LIFECYCLE_MESSAGE'
+  | 'IDENTITY_MESSAGE';
+
+export interface IdentityNotificationTemplateData {
+  encrypted_payload: string;
+}
 
 export interface LifecycleNotificationTemplateData {
   body: string;
@@ -95,6 +100,7 @@ export interface NotificationOutboxRecord {
     | WaitlistNotificationTemplateData
     | PaymentReceiptNotificationTemplateData
     | BillingNotificationTemplateData
+    | IdentityNotificationTemplateData
     | LifecycleNotificationTemplateData;
 }
 
@@ -103,6 +109,7 @@ interface NotificationOutboxRow extends Omit<NotificationOutboxRecord, 'template
     | WaitlistNotificationTemplateData
     | PaymentReceiptNotificationTemplateData
     | BillingNotificationTemplateData
+    | IdentityNotificationTemplateData
     | LifecycleNotificationTemplateData;
 }
 

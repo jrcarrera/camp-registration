@@ -16,6 +16,12 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     accept: request.headers.get('accept') ?? 'application/json',
     'x-request-id': request.headers.get('x-request-id') ?? crypto.randomUUID(),
   });
+  const cookie = request.headers.get('cookie');
+  if (cookie) headers.set('cookie', cookie);
+  for (const header of ['host', 'origin', 'x-forwarded-host', 'x-forwarded-proto']) {
+    const value = request.headers.get(header);
+    if (value) headers.set(header, value);
+  }
   if (body !== null) {
     headers.set('content-type', request.headers.get('content-type') ?? 'application/json');
   }
@@ -59,6 +65,8 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     const value = response.headers.get(header);
     if (value) responseHeaders.set(header, value);
   }
+  const setCookie = response.headers.get('set-cookie');
+  if (setCookie) responseHeaders.set('set-cookie', setCookie);
 
   return new Response(response.body, { headers: responseHeaders, status: response.status });
 }

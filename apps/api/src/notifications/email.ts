@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import type {
   NotificationOutboxRecord,
   BillingNotificationTemplateData,
+  IdentityNotificationTemplateData,
   LifecycleNotificationTemplateData,
   OrderNotificationSummary,
   PaymentReceiptNotificationTemplateData,
@@ -10,6 +11,8 @@ import type {
   WaitlistNotificationType,
 } from '@camp-registration/database';
 import nodemailer, { type Transporter } from 'nodemailer';
+
+import type { AuthStateCipher } from '../identity/encryption.js';
 
 export interface EmailMessage {
   messageId: string;
@@ -118,7 +121,22 @@ function orderSummaryText(summary: OrderNotificationSummary): string {
 export function buildWaitlistEmail(
   record: NotificationOutboxRecord,
   portalBaseUrl: string,
+  identityCipher?: AuthStateCipher,
 ): EmailMessage {
+  if (record.notification_type === 'IDENTITY_MESSAGE') {
+    const data = record.template_data as IdentityNotificationTemplateData;
+    if (!identityCipher) throw new Error('Identity notification encryption is not configured');
+    const payload = JSON.parse(identityCipher.decrypt(data.encrypted_payload)) as {
+      body: string;
+      subject: string;
+    };
+    return {
+      messageId: deterministicMessageId(record.idempotency_key),
+      subject: payload.subject,
+      text: payload.body,
+      to: record.recipient_email,
+    };
+  }
   if (record.notification_type === 'LIFECYCLE_MESSAGE') {
     const data = record.template_data as LifecycleNotificationTemplateData;
     const portalUrl = new URL(data.portal_path, portalBaseUrl).toString();

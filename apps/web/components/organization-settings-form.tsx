@@ -22,6 +22,10 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
   const [savedStripeAccountId, setSavedStripeAccountId] = useState(
     organization.stripe_connected_account_id ?? '',
   );
+  const [signupEnabled, setSignupEnabled] = useState(organization.self_service_signup_enabled);
+  const [savedSignupEnabled, setSavedSignupEnabled] = useState(
+    organization.self_service_signup_enabled,
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +36,7 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
     try {
       const response = await fetch('/api/v1/organization/settings', {
         body: JSON.stringify({
+          self_service_signup_enabled: signupEnabled,
           stripe_connected_account_id: stripeAccountId.trim() || null,
           waitlist_offer_duration_hours: durationHours,
         }),
@@ -47,6 +52,8 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
       setSavedDurationHours(updated.waitlist_offer_duration_hours);
       setStripeAccountId(updated.stripe_connected_account_id ?? '');
       setSavedStripeAccountId(updated.stripe_connected_account_id ?? '');
+      setSignupEnabled(updated.self_service_signup_enabled);
+      setSavedSignupEnabled(updated.self_service_signup_enabled);
       setMessage('Organization settings saved.');
     } catch (caught) {
       setError(
@@ -91,6 +98,27 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
             .
           </p>
         </div>
+      </section>
+      <section className="editorSection" aria-labelledby="family-signup-heading">
+        <div className="editorSectionHeading">
+          <h2 id="family-signup-heading">New family applications</h2>
+          <p>
+            When enabled, the organization join link accepts verified applications. Applicants
+            receive family access only after an administrator approves or matches the request.
+          </p>
+        </div>
+        <label className="checkRow">
+          <input
+            checked={signupEnabled}
+            disabled={saving}
+            onChange={(event) => setSignupEnabled(event.target.checked)}
+            type="checkbox"
+          />
+          <span>Enable organization-specific family applications</span>
+        </label>
+        <p className="settingsPolicySummary">
+          Join link: <strong>/o/{organization.slug}/join</strong>
+        </p>
       </section>
       <section className="editorSection" aria-labelledby="payment-provider-heading">
         <div className="editorSectionHeading">
@@ -137,7 +165,9 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
             className="buttonPrimary settingsSaveButton"
             disabled={
               saving ||
-              (durationHours === savedDurationHours && stripeAccountId === savedStripeAccountId)
+              (durationHours === savedDurationHours &&
+                stripeAccountId === savedStripeAccountId &&
+                signupEnabled === savedSignupEnabled)
             }
             onClick={() => void save()}
             type="button"

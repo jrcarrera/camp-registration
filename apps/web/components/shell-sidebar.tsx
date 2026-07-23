@@ -14,6 +14,7 @@ import {
   BedDouble,
   Library,
   Settings,
+  UserRoundCog,
   TableProperties,
   ShieldCheck,
   TentTree,
@@ -98,6 +99,15 @@ export function ShellSidebar() {
       </nav>
 
       <nav className="sidebarFooter" aria-label="Secondary navigation">
+        <Link
+          aria-current={pathname.startsWith('/account') ? 'page' : undefined}
+          className="navLink"
+          href="/account/security"
+          title="Account"
+        >
+          <UserRoundCog size={18} aria-hidden="true" />
+          <span>Account</span>
+        </Link>
         {isPortal ? (
           <Link className="navLink settingsLink" href="/" title="Staff workspace">
             <ShieldCheck size={18} aria-hidden="true" />

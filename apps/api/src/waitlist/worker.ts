@@ -11,6 +11,7 @@ import type {
 } from '@camp-registration/database';
 
 import { buildWaitlistEmail, type EmailSender } from '../notifications/email.js';
+import type { AuthStateCipher } from '../identity/encryption.js';
 
 export interface WaitlistWorkerLogger {
   error(data: Record<string, unknown>, message: string): void;
@@ -59,6 +60,7 @@ export class WaitlistWorker {
       CommunicationsStore,
       'listOrganizationIds' | 'processDueCampaigns'
     >,
+    private readonly identityCipher?: AuthStateCipher,
   ) {}
 
   async runCycle(): Promise<WaitlistWorkerCycleResult> {
@@ -233,7 +235,9 @@ export class WaitlistWorker {
     record: NotificationOutboxRecord,
   ): Promise<boolean> {
     try {
-      await this.emailSender.send(buildWaitlistEmail(record, this.options.portalBaseUrl));
+      await this.emailSender.send(
+        buildWaitlistEmail(record, this.options.portalBaseUrl, this.identityCipher),
+      );
       await this.notificationStore.markDelivered(organizationId, this.options.workerId, record.id);
       return true;
     } catch (error) {

@@ -27,6 +27,8 @@ import {
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
+import { FamilyInvitationButton } from './family-invitation-button';
+
 interface ParentPortalDashboardProps {
   initialFamilies: FamilyDetail[];
   requestHeaders: Record<string, string>;
@@ -455,7 +457,15 @@ function CamperCard({ camper }: { camper: Camper }) {
   );
 }
 
-function AdultSummary({ adult }: { adult: Adult }) {
+function AdultSummary({
+  adult,
+  familyId,
+  requestHeaders,
+}: {
+  adult: Adult;
+  familyId: string;
+  requestHeaders: Record<string, string>;
+}) {
   const badges = [
     adult.account_owner ? 'Owner' : null,
     adult.can_register ? 'Registration' : null,
@@ -468,6 +478,13 @@ function AdultSummary({ adult }: { adult: Adult }) {
       <div>
         <strong>{fullName(adult)}</strong>
         <span>{personContactLine(adult)}</span>
+        {!adult.identity_subject && adult.email ? (
+          <FamilyInvitationButton
+            adultId={adult.id}
+            familyId={familyId}
+            requestHeaders={requestHeaders}
+          />
+        ) : null}
       </div>
       <div className="portalBadgeRow">
         {badges.map((badge) => (
@@ -500,7 +517,13 @@ function ContactSummary({ contact }: { contact: Contact }) {
   );
 }
 
-function FamilyPanel({ family }: { family: FamilyDetail }) {
+function FamilyPanel({
+  family,
+  requestHeaders,
+}: {
+  family: FamilyDetail;
+  requestHeaders: Record<string, string>;
+}) {
   const activeRegistrationCount = family.campers.reduce(
     (total, camper) => total + activeRegistrations(camper).length,
     0,
@@ -544,7 +567,12 @@ function FamilyPanel({ family }: { family: FamilyDetail }) {
             <h3>Adults</h3>
             <div>
               {family.adults.map((adult) => (
-                <AdultSummary adult={adult} key={adult.id} />
+                <AdultSummary
+                  adult={adult}
+                  familyId={family.id}
+                  key={adult.id}
+                  requestHeaders={requestHeaders}
+                />
               ))}
             </div>
           </div>
@@ -724,7 +752,7 @@ export function ParentPortalDashboard({
       />
 
       {families.map((family) => (
-        <FamilyPanel family={family} key={family.id} />
+        <FamilyPanel family={family} key={family.id} requestHeaders={requestHeaders} />
       ))}
     </>
   );

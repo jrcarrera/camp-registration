@@ -1,4 +1,9 @@
 import type {
+  AuthSession,
+  AuthSessionList,
+  MembershipList,
+  OnboardingRequest,
+  PublicOrganization,
   CatalogContext,
   CommunicationsCenter,
   FamilyDetail,
@@ -18,6 +23,7 @@ import type {
   SessionHousing,
   WaitlistOperationsStatus,
 } from '@camp-registration/contracts';
+import { cookies } from 'next/headers';
 
 const apiBaseUrl = process.env.API_INTERNAL_BASE_URL ?? 'http://127.0.0.1:3001';
 
@@ -34,13 +40,42 @@ export class ApiError extends Error {
 
 async function getJson<T>(path: string, headers?: ApiHeaders): Promise<T> {
   const init: RequestInit = { cache: 'no-store' };
-  if (headers) init.headers = headers;
+  const requestHeaders = new Headers(headers);
+  const cookieStore = await cookies();
+  const session = cookieStore.get('camp_session');
+  if (session) requestHeaders.set('cookie', `camp_session=${encodeURIComponent(session.value)}`);
+  if ([...requestHeaders].length > 0) init.headers = requestHeaders;
   const response = await fetch(new URL(path, apiBaseUrl), init);
   if (!response.ok) {
     const problem = (await response.json().catch(() => null)) as ProblemResponse | null;
     throw new ApiError(problem?.message ?? 'The API request failed.', response.status);
   }
   return (await response.json()) as T;
+}
+
+export async function getAuthSession(): Promise<AuthSession | null> {
+  try {
+    return await getJson<AuthSession>('/v1/auth/session');
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) return null;
+    throw error;
+  }
+}
+
+export async function getAuthSessions(): Promise<AuthSessionList> {
+  return getJson('/v1/auth/sessions');
+}
+
+export async function getPublicOrganization(slug: string): Promise<PublicOrganization> {
+  return getJson(`/v1/public/organizations/${encodeURIComponent(slug)}`);
+}
+
+export async function getOnboarding(slug: string): Promise<OnboardingRequest | null> {
+  return getJson(`/v1/public/organizations/${encodeURIComponent(slug)}/onboarding`);
+}
+
+export async function getIdentityAdministration(): Promise<MembershipList> {
+  return getJson('/v1/identity/administration');
 }
 
 export function getParentApiHeaders(): ApiHeaders {
