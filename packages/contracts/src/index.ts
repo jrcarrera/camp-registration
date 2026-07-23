@@ -8,3 +8,4 @@ export * from './operations.js';
 export * from './orders.js';
 export * from './payments.js';
 export * from './pricing.js';
+export * from './reports.js';

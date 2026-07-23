@@ -48,6 +48,8 @@ import {
 } from './payments/service.js';
 import { registerPricingRoutes } from './pricing/routes.js';
 import { PricingService, type PricingServiceApi } from './pricing/service.js';
+import { registerReportsRoutes } from './reports/routes.js';
+import { ReportsService, type ReportsServiceApi } from './reports/service.js';
 
 export interface BuildAppOptions {
   catalogService?: CatalogServiceApi;
@@ -63,6 +65,7 @@ export interface BuildAppOptions {
   paymentProvider?: PaymentProvider;
   paymentService?: PaymentServiceApi;
   pricingService?: PricingServiceApi;
+  reportsService?: ReportsServiceApi;
   requestContext?: (request: FastifyRequest) => RequestServiceContext | undefined;
 }
 
@@ -189,6 +192,18 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         }
       : undefined);
   registerPricingRoutes(app, pricingService);
+
+  const reportsService =
+    options.reportsService ??
+    (catalogStore
+      ? (request: FastifyRequest) => {
+          const context = resolveRequestContext(request);
+          return context
+            ? new ReportsService(catalogStore, context.identity, context.organizationId)
+            : undefined;
+        }
+      : undefined);
+  registerReportsRoutes(app, reportsService);
 
   const paymentStore = options.database ? new PaymentStore(options.database) : undefined;
   const paymentService =

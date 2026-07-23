@@ -98,6 +98,31 @@ test('keeps session management within the mobile viewport', async ({ page }) => 
   });
 });
 
+test('offers responsive operational report presets', async ({ page }) => {
+  await page.goto('/reports');
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Reports and exports' })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Session' })).toBeVisible();
+  const preset = page.getByRole('combobox', { name: 'Report preset' });
+  await expect(preset).toHaveValue('SESSION_ROSTER');
+  await expect(page.getByRole('link', { name: 'Download CSV' })).toHaveAttribute(
+    'href',
+    /preset=SESSION_ROSTER$/,
+  );
+
+  await preset.selectOption('CHECK_IN_SHEET');
+  await expect(page.getByRole('link', { name: 'Download CSV' })).toHaveAttribute(
+    'href',
+    /preset=CHECK_IN_SHEET$/,
+  );
+
+  const layout = await page.evaluate(() => ({
+    documentWidth: document.documentElement.scrollWidth,
+    viewportWidth: window.innerWidth,
+  }));
+  expect(layout.documentWidth).toBe(layout.viewportWidth);
+});
+
 test('edits and restores a camp week', async ({ page }, testInfo) => {
   test.setTimeout(60_000);
   test.skip(testInfo.project.name !== 'desktop-chromium', 'One project owns the persisted edit.');

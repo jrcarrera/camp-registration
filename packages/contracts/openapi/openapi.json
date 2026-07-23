@@ -42158,6 +42158,153 @@
         }
       }
     },
+    "/v1/reports/sessions/{sessionId}/export": {
+      "get": {
+        "tags": [
+          "reports",
+          "sessions"
+        ],
+        "description": "Download an audited, tenant-scoped operational session report as CSV.",
+        "parameters": [
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "SESSION_ROSTER"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CHECK_IN_SHEET"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "preset",
+            "required": true
+          },
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "sessionId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A UTF-8 CSV file using the selected operational report preset.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "title": "CsvReport"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/families/{familyId}/registrations/{registrationId}/online-payment": {
       "post": {
         "tags": [

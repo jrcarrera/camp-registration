@@ -1,4 +1,4 @@
-import { ArrowLeft, ClipboardCheck } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck, Download } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { RegisteredCamper } from '@camp-registration/contracts';
@@ -103,6 +103,14 @@ function RegisteredCampers({
           </p>
         </div>
         <div className="sectionActions">
+          <a
+            className="buttonSecondary"
+            download
+            href={`/api/v1/reports/sessions/${sessionId}/export?preset=SESSION_ROSTER`}
+          >
+            <Download size={17} aria-hidden="true" />
+            Export roster
+          </a>
           <Link className="buttonPrimary" href={`/sessions/${sessionId}/check-in`}>
             <ClipboardCheck size={17} aria-hidden="true" />
             Check-in desk

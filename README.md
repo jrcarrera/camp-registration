@@ -13,7 +13,8 @@ provider-hosted payments. Staff can configure pricing, review assistance,
 inspect stuck holds, and reconcile immutable per-registration ledger
 allocations. Reusable forms and waivers, version-bound drafts,
 acknowledgements, electronic signatures, attendance check-in, scheduled queue
-advancement, and transactional email delivery are also implemented.
+advancement, transactional email delivery, and audited session roster/check-in
+CSV presets are also implemented.
 Authentication remains local-development oriented; the domain layer enforces
 linked-adult family ownership and tenant isolation for parent actions.
 
@@ -22,7 +23,7 @@ linked-adult family ownership and tenant isolation for parent actions.
 - Family and camper profiles
 - Camp programs and sessions
 - Versioned registration forms and electronic waivers
-- Operational exports and downstream reporting
+- Expanded operational exports and downstream reporting
 - Parent portal enhancements and administrative dashboard
 - Rosters, health records, attendance, and communications
 

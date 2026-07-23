@@ -12106,6 +12106,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/reports/sessions/{sessionId}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Download an audited, tenant-scoped operational session report as CSV. */
+        get: {
+            parameters: {
+                query: {
+                    preset: "SESSION_ROSTER" | "CHECK_IN_SHEET";
+                };
+                header?: never;
+                path: {
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A UTF-8 CSV file using the selected operational report preset. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/csv": string;
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/families/{familyId}/registrations/{registrationId}/online-payment": {
         parameters: {
             query?: never;

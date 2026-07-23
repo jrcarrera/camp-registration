@@ -50,10 +50,15 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     revalidatePath('/programs');
   }
 
-  return new Response(response.body, {
-    headers: { 'content-type': response.headers.get('content-type') ?? 'application/json' },
-    status: response.status,
+  const responseHeaders = new Headers({
+    'content-type': response.headers.get('content-type') ?? 'application/json',
   });
+  for (const header of ['cache-control', 'content-disposition', 'x-report-row-count']) {
+    const value = response.headers.get(header);
+    if (value) responseHeaders.set(header, value);
+  }
+
+  return new Response(response.body, { headers: responseHeaders, status: response.status });
 }
 
 export const GET = proxy;

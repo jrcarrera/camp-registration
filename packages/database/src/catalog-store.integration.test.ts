@@ -52,6 +52,50 @@ describe('catalog store', () => {
     expect(direct.rows).toEqual([]);
   });
 
+  it('records tenant-scoped session report exports without auditing missing sessions', async () => {
+    const store = new CatalogStore(runtimeDatabase);
+    const sessionId = '58bc426a-eb35-4e17-8f2b-7f2a2adc27ff';
+
+    const exported = await store.exportSessionReport({
+      actorId: 'integration-report-user',
+      organizationId,
+      preset: 'SESSION_ROSTER',
+      requestId: 'session-report-export-test',
+      sessionId,
+    });
+    const missing = await store.exportSessionReport({
+      actorId: 'other-tenant-report-user',
+      organizationId: otherOrganizationId,
+      preset: 'SESSION_ROSTER',
+      requestId: 'missing-session-report-export-test',
+      sessionId,
+    });
+
+    expect(exported?.id).toBe(sessionId);
+    expect(missing).toBeNull();
+
+    const admin = new Pool({ connectionString: migrationUrl });
+    const audit = await admin.query<{
+      action: string;
+      actor_id: string;
+      details: { preset: string; row_count: number };
+    }>(
+      `SELECT action, actor_id, details
+       FROM audit_events
+       WHERE request_id IN ('session-report-export-test', 'missing-session-report-export-test')
+       ORDER BY request_id`,
+    );
+    await admin.end();
+
+    expect(audit.rows).toEqual([
+      {
+        action: 'report.session_exported',
+        actor_id: 'integration-report-user',
+        details: { preset: 'SESSION_ROSTER', row_count: exported?.registered_campers.length ?? 0 },
+      },
+    ]);
+  });
+
   it('updates tenant-owned waitlist offer policy with audit metadata', async () => {
     const store = new CatalogStore(runtimeDatabase);
 

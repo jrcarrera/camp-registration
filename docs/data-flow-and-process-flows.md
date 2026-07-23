@@ -885,10 +885,27 @@ Current writes append audit rows for:
 - `contact.created`
 - `contact.updated`
 - `registration.created`
+- `report.session_exported`
 
 Audit event details intentionally contain metadata such as changed field names,
 registration status, source, session id, camper id, or program code. They do not
 store full request bodies, health data, secrets, or payment data.
+
+### Operational Session Reports
+
+Staff can choose a live session and download one of two reusable UTF-8 CSV
+presets:
+
+- **Session roster** includes confirmed and waitlisted campers with registration,
+  attendance, authorized-pickup, and payment/balance columns.
+- **Check-in sheet** includes confirmed campers with arrival, departure, pickup,
+  and operational-note columns.
+
+The browser downloads through the same-origin API proxy. The reports service
+requires a staff or administrator role, the store reads under tenant RLS and
+records `report.session_exported`, and CSV cells that could be interpreted as
+spreadsheet formulas are prefixed before quoting. Audit details contain only the
+preset and row count; exported camper data is not copied into the audit log.
 
 ## Provider-Backed Deposit Payment
 
@@ -985,6 +1002,7 @@ Seed data:
 | Registration cancellation                 | Implemented                                              |
 | Multi-camper atomic checkout              | Implemented with one household order and payment         |
 | Session housing and bed assignment        | Implemented with age and bunk-buddy placement            |
+| Session roster and check-in CSV presets   | Implemented with staff authorization and export auditing |
 
 ## Session Housing and Bunk-Buddy Flow
 

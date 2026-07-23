@@ -235,6 +235,11 @@ export interface UpdateSessionAttendanceContext {
   update: SessionAttendanceUpdateRecord;
 }
 
+export interface ExportSessionReportContext extends CreateCatalogContext {
+  preset: 'SESSION_ROSTER' | 'CHECK_IN_SHEET';
+  sessionId: string;
+}
+
 export interface UpdateProgramContext {
   actorId: string;
   organizationId: string;
@@ -640,6 +645,41 @@ export class CatalogStore {
   async getSession(organizationId: string, sessionId: string): Promise<SessionDetailRecord | null> {
     return this.withTenant(organizationId, async (client) => {
       return this.getSessionForClient(client, organizationId, sessionId);
+    });
+  }
+
+  async exportSessionReport(
+    context: ExportSessionReportContext,
+  ): Promise<SessionDetailRecord | null> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const session = await this.getSessionForClient(
+        client,
+        context.organizationId,
+        context.sessionId,
+      );
+      if (!session) return null;
+
+      await client.query(
+        `INSERT INTO audit_events (
+           organization_id, actor_id, action, target_type, target_id, outcome,
+           request_id, details
+         ) VALUES ($1, $2, 'report.session_exported', 'session', $3, 'success', $4, $5::jsonb)`,
+        [
+          context.organizationId,
+          context.actorId,
+          context.sessionId,
+          context.requestId,
+          JSON.stringify({
+            preset: context.preset,
+            row_count:
+              context.preset === 'CHECK_IN_SHEET'
+                ? session.registered_campers.filter((camper) => camper.status === 'CONFIRMED')
+                    .length
+                : session.registered_campers.length,
+          }),
+        ],
+      );
+      return session;
     });
   }
 

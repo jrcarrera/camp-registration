@@ -2846,6 +2846,92 @@ tbody tr + tr td {
   background: #edf2ef;
 }
 
+/* Operational reports */
+.reportControls {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.4fr) minmax(210px, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+}
+
+.reportControls .buttonPrimary {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.disabledLink {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.reportPresetGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.reportPresetCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #d5dcd8;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #35423c;
+  text-align: left;
+  cursor: pointer;
+}
+
+.reportPresetCard:hover {
+  border-color: #8aa99a;
+  background: #f7faf8;
+}
+
+.reportPresetCard:focus-visible {
+  outline: 3px solid rgba(20, 107, 77, 0.28);
+  outline-offset: 2px;
+}
+
+.reportPresetCardSelected {
+  border-color: #146b4d;
+  box-shadow: inset 0 0 0 1px #146b4d;
+  background: #f1f8f4;
+}
+
+.reportPresetIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  height: 38px;
+  border-radius: 6px;
+  background: #e5f1eb;
+  color: #146b4d;
+}
+
+.reportPresetCard strong,
+.reportPresetCard small {
+  display: block;
+}
+
+.reportPresetCard small {
+  margin-top: 5px;
+  color: #66736d;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.reportSelectionSummary {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid #e1e6e3;
+  color: #66736d;
+  font-size: 13px;
+}
+
 /* Household orders, pricing, and financial assistance */
 .householdCheckout {
   display: grid;
@@ -4106,6 +4192,14 @@ tbody tr + tr td {
   .orderAdminLayout {
     grid-template-columns: 1fr;
   }
+
+  .reportControls {
+    grid-template-columns: 1fr;
+  }
+
+  .reportControls .buttonPrimary {
+    width: 100%;
+  }
 }
 
 @media (max-width: 620px) {
@@ -4139,6 +4233,10 @@ tbody tr + tr td {
 
   .cartLineFields .iconButton {
     width: 100%;
+  }
+
+  .reportPresetGrid {
+    grid-template-columns: 1fr;
   }
 
   .cartActions,
