@@ -383,6 +383,44 @@ export const SeasonCreateSchema = Type.Object(
   { additionalProperties: false, $id: 'SeasonCreate' },
 );
 
+export const SeasonParamsSchema = Type.Object(
+  { seasonId: UuidSchema },
+  { additionalProperties: false, $id: 'SeasonParams' },
+);
+
+export const SeasonRolloverCreateSchema = Type.Object(
+  {
+    name: Type.String({ minLength: 1, maxLength: 160 }),
+    year: Type.Integer({ minimum: 2000, maximum: 2200 }),
+  },
+  { additionalProperties: false, $id: 'SeasonRolloverCreate' },
+);
+
+export const SeasonRolloverSessionSchema = Type.Object(
+  {
+    source_session_id: UuidSchema,
+    target_session_id: UuidSchema,
+    source_code: Type.String({ minLength: 1 }),
+    target_code: Type.String({ minLength: 1 }),
+    name: Type.String({ minLength: 1 }),
+    starts_on: LocalDateSchema,
+    ends_on: LocalDateSchema,
+    status: Type.Literal('DRAFT'),
+  },
+  { additionalProperties: false, $id: 'SeasonRolloverSession' },
+);
+
+export const SeasonRolloverResultSchema = Type.Object(
+  {
+    id: UuidSchema,
+    source_season: SeasonFixtureSchema,
+    target_season: SeasonFixtureSchema,
+    sessions: Type.Array(SeasonRolloverSessionSchema),
+    created_at: UtcTimestampSchema,
+  },
+  { additionalProperties: false, $id: 'SeasonRolloverResult' },
+);
+
 export const ProgramCreateSchema = Type.Object(
   {
     code: Type.String({ minLength: 1, maxLength: 64, pattern: '^[A-Z0-9-]+$' }),
@@ -465,6 +503,10 @@ export type SessionUpdate = Static<typeof SessionUpdateSchema>;
 export type SessionAttendanceUpdate = Static<typeof SessionAttendanceUpdateSchema>;
 export type SessionCreate = Static<typeof SessionCreateSchema>;
 export type SeasonCreate = Static<typeof SeasonCreateSchema>;
+export type SeasonParams = Static<typeof SeasonParamsSchema>;
+export type SeasonRolloverCreate = Static<typeof SeasonRolloverCreateSchema>;
+export type SeasonRolloverSession = Static<typeof SeasonRolloverSessionSchema>;
+export type SeasonRolloverResult = Static<typeof SeasonRolloverResultSchema>;
 export type ProgramCreate = Static<typeof ProgramCreateSchema>;
 export type ProgramUpdate = Static<typeof ProgramUpdateSchema>;
 export type ProgramParams = Static<typeof ProgramParamsSchema>;

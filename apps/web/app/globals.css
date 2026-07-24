@@ -3767,6 +3767,16 @@ tbody tr + tr td {
   gap: 6px;
 }
 
+.orderHistorySession {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.orderHistoryLines > span > strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .orderHistoryLines small {
   color: #66736d;
 }
@@ -4959,6 +4969,10 @@ tbody tr + tr td {
   }
 
   .orderHistoryLines small {
+    grid-column: 2;
+  }
+
+  .orderHistorySession {
     grid-column: 2;
   }
 

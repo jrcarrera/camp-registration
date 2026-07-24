@@ -34,6 +34,7 @@ interface CartLine {
 interface HouseholdCartProps {
   family: FamilyDetail;
   initialCamperId?: string | undefined;
+  initialSessionId?: string | undefined;
   initialOrders: HouseholdOrder[];
   pricing: PricingConfiguration;
   requestHeaders: Record<string, string>;
@@ -49,6 +50,12 @@ function formatDate(value: string): string {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+  });
+}
+
+function formatTimestampDate(value: string): string {
+  return new Date(value).toLocaleDateString('en-US', {
+    timeZone: 'UTC',
   });
 }
 
@@ -99,6 +106,7 @@ function outcomeLabel(outcome: HouseholdOrder['lines'][number]['outcome']): stri
 export function HouseholdCart({
   family,
   initialCamperId,
+  initialSessionId,
   initialOrders,
   pricing,
   requestHeaders,
@@ -117,7 +125,10 @@ export function HouseholdCart({
     family.campers.find((camper) => camper.id === initialCamperId)?.id ??
     family.campers[0]?.id ??
     '';
-  const firstSessionId = activeSessions[0]?.id ?? '';
+  const firstSessionId =
+    activeSessions.find((session) => session.id === initialSessionId)?.id ??
+    activeSessions[0]?.id ??
+    '';
   const [lines, setLines] = useState<CartLine[]>(
     firstCamperId && firstSessionId ? [newLine(pricing, firstCamperId, firstSessionId)] : [],
   );
@@ -595,7 +606,7 @@ export function HouseholdCart({
               <article className="orderCard" key={order.id}>
                 <header>
                   <div>
-                    <strong>{new Date(order.created_at).toLocaleDateString()}</strong>
+                    <strong>{formatTimestampDate(order.created_at)}</strong>
                     <small>
                       {order.lines.length} camper-session choice
                       {order.lines.length === 1 ? '' : 's'}
@@ -609,7 +620,8 @@ export function HouseholdCart({
                   {order.lines.map((line) => (
                     <span key={line.id}>
                       <CalendarDays size={15} />
-                      <strong>{line.camper_name}</strong> · {line.session_name}
+                      <strong>{line.camper_name}</strong>
+                      <span className="orderHistorySession">· {line.session_name}</span>
                       <small>
                         {outcomeLabel(line.outcome)} · {money(line.net_price_cents)}
                       </small>

@@ -4179,6 +4179,152 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/seasons/{seasonId}/rollover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Copy active sessions into a new draft season and retain re-enrollment mappings. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    seasonId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        name: string;
+                        year: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id: string;
+                            source_season: {
+                                id: string;
+                                organization_id: string;
+                                name: string;
+                                year: number;
+                            };
+                            target_season: {
+                                id: string;
+                                organization_id: string;
+                                name: string;
+                                year: number;
+                            };
+                            sessions: {
+                                source_session_id: string;
+                                target_session_id: string;
+                                source_code: string;
+                                target_code: string;
+                                name: string;
+                                starts_on: string;
+                                ends_on: string;
+                                /** @enum {string} */
+                                status: "DRAFT";
+                            }[];
+                            created_at: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/programs": {
         parameters: {
             query?: never;
@@ -6911,6 +7057,136 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/v1/families/{familyId}/re-enrollment-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Published rollover sessions matching a family camper’s confirmed registration history. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    familyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            family_id: string;
+                            options: {
+                                camper_id: string;
+                                camper_name: string;
+                                previous_registration_id: string;
+                                previous_session_id: string;
+                                previous_session_name: string;
+                                previous_season_name: string;
+                                target_session_id: string;
+                                target_session_name: string;
+                                target_season_name: string;
+                                starts_on: string;
+                                ends_on: string;
+                                registration_opens_at: string;
+                                registration_closes_at: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/families/{familyId}/adults": {

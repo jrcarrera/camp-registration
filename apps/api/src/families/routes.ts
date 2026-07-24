@@ -19,6 +19,7 @@ import {
   FamilyUpdateSchema,
   ParentCheckoutCreateSchema,
   ProblemResponseSchema,
+  ReEnrollmentOptionsResponseSchema,
   SessionParamsSchema,
   WaitlistOfferCreateSchema,
   WaitlistOfferParamsSchema,
@@ -45,6 +46,7 @@ import {
   type FamilyUpdate,
   type ParentCheckoutCreate,
   type ProblemResponse,
+  type ReEnrollmentOptionsResponse,
   type SessionParams,
   type WaitlistOfferCreate,
   type WaitlistOfferParams,
@@ -195,6 +197,28 @@ export function registerFamilyRoutes(app: FastifyInstance, service: FamilyServic
       if (!familyService) return unavailable(reply);
       try {
         return await familyService.getFamily(request.params.familyId);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.get<{ Params: FamilyParams; Reply: ReEnrollmentOptionsResponse | ProblemResponse }>(
+    '/v1/families/:familyId/re-enrollment-options',
+    {
+      schema: {
+        description:
+          'Published rollover sessions matching a family camper’s confirmed registration history.',
+        params: FamilyParamsSchema,
+        response: { 200: ReEnrollmentOptionsResponseSchema, ...errorResponses },
+        tags: ['families', 'registrations', 'season-rollover'],
+      },
+    },
+    async (request, reply) => {
+      const familyService = resolveFamilyService(service, request);
+      if (!familyService) return unavailable(reply);
+      try {
+        return await familyService.getReEnrollmentOptions(request.params.familyId);
       } catch (error) {
         return sendProblem(reply, error);
       }

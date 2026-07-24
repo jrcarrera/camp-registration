@@ -33,6 +33,12 @@ challenges without AWS. Organization join links create approval-only family
 applications, existing adults are linked by email-matched invitations, and
 workforce access requires password plus TOTP MFA. Signed-in users can verify a
 new login email without changing the adult contact email on a family record.
+Administrators can also roll an active season into a new draft season in one
+audited transaction. Copied session dates and registration windows shift by
+year while operational settings stay intact. Durable source mappings offer
+returning families published matches from confirmed registration history and
+prefill the existing household cart without bypassing current eligibility,
+availability, pricing, or payment checks.
 
 ## Planned Scope
 
@@ -124,6 +130,7 @@ coverage will be added with the registration workflow.
 - [Operational reporting expansion decision](docs/adr/0022-operational-reporting-expansion.md)
 - [Restricted health records decision](docs/adr/0023-restricted-health-records-v1.md)
 - [Production identity and sessions decision](docs/adr/0024-production-identity-and-application-sessions.md)
+- [Season rollover and re-enrollment decision](docs/adr/0026-season-rollover-and-re-enrollment.md)
 - [Foundation stack decision](docs/adr/0001-foundation-stack.md)
 - [Terraform deployment boundary](infra/terraform/README.md)
 - [Contributor guidance](CONTRIBUTING.md)

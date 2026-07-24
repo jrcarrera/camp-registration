@@ -16,6 +16,7 @@ import type {
   FamilySummary,
   FamilyUpdate,
   ParentCheckoutCreate,
+  ReEnrollmentOptionsResponse,
   WaitlistOfferCreate,
   WaitlistQueueOrderResult,
   WaitlistQueueOrderUpdate,
@@ -53,6 +54,7 @@ export class FamilyValidationError extends Error {
 export interface FamilyServiceApi {
   listFamilies(): Promise<FamilySummary[]>;
   getFamily(familyId: string): Promise<FamilyDetail>;
+  getReEnrollmentOptions(familyId: string): Promise<ReEnrollmentOptionsResponse>;
   createFamily(family: FamilyCreate, requestId: string): Promise<FamilyDetail>;
   updateFamily(familyId: string, update: FamilyUpdate, requestId: string): Promise<FamilyDetail>;
   claimAdultIdentity(familyId: string, adultId: string, requestId: string): Promise<FamilyDetail>;
@@ -350,6 +352,14 @@ export class FamilyService implements FamilyServiceApi {
     const family = await this.store.getFamily(this.organizationId, familyId);
     if (!family) throw new FamilyNotFoundError('Family not found');
     return family;
+  }
+
+  async getReEnrollmentOptions(familyId: string): Promise<ReEnrollmentOptionsResponse> {
+    await this.authorizeFamilyRead(familyId);
+    return {
+      family_id: familyId,
+      options: await this.store.listReEnrollmentOptions(this.organizationId, familyId),
+    };
   }
 
   async createFamily(family: FamilyCreate, requestId: string): Promise<FamilyDetail> {

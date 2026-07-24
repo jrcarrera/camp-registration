@@ -10,6 +10,8 @@ import type {
   ProgramUpdate,
   SeasonCreate,
   SeasonFixture,
+  SeasonRolloverCreate,
+  SeasonRolloverResult,
   SessionAttendanceUpdate,
   SessionCreate,
   SessionDetail,
@@ -54,6 +56,11 @@ export interface CatalogServiceApi {
     requestId: string,
   ): Promise<ProgramFixture>;
   createSeason(season: SeasonCreate, requestId: string): Promise<SeasonFixture>;
+  rolloverSeason(
+    sourceSeasonId: string,
+    rollover: SeasonRolloverCreate,
+    requestId: string,
+  ): Promise<SeasonRolloverResult>;
   createSession(session: SessionCreate, requestId: string): Promise<SessionDetail>;
   updateSessionAttendance(
     sessionId: string,
@@ -133,6 +140,16 @@ function validateSeason(season: SeasonCreate): void {
   if (Object.keys(errors).length > 0) {
     throw new CatalogValidationError(errors, 'Season details are invalid');
   }
+}
+
+function rolloverCode(sourceCode: string, sourceYear: number, targetYear: number): string {
+  const sourceYearText = String(sourceYear);
+  const targetYearText = String(targetYear);
+  if (sourceCode.includes(sourceYearText)) {
+    return sourceCode.replace(sourceYearText, targetYearText);
+  }
+  const suffix = `-${targetYearText}`;
+  return `${sourceCode.slice(0, 64 - suffix.length)}${suffix}`;
 }
 
 function todayLocalDate(): string {
@@ -257,6 +274,58 @@ export class CatalogService implements CatalogServiceApi {
       },
       { ...season, id: randomUUID(), name: season.name.trim() },
     );
+  }
+
+  async rolloverSeason(
+    sourceSeasonId: string,
+    rollover: SeasonRolloverCreate,
+    requestId: string,
+  ): Promise<SeasonRolloverResult> {
+    this.authorize(editRoles);
+    validateSeason(rollover);
+    const catalog = await this.store.getContext(this.organizationId);
+    const sourceSeason = catalog.seasons.find((season) => season.id === sourceSeasonId);
+    if (!sourceSeason) throw new CatalogNotFoundError('Source season not found');
+    if (sourceSeason.year === rollover.year) {
+      throw new CatalogValidationError(
+        { year: 'Choose a year different from the source season.' },
+        'Season rollover details are invalid',
+      );
+    }
+    const sessions = (await this.store.listSessions(this.organizationId)).filter(
+      (session) =>
+        session.season_id === sourceSeasonId &&
+        (session.status === 'DRAFT' || session.status === 'PUBLISHED'),
+    );
+    if (sessions.length === 0) {
+      throw new CatalogReferenceError('Source season has no active sessions to copy');
+    }
+    const targetCodes = sessions.map((session) =>
+      rolloverCode(session.code, sourceSeason.year, rollover.year),
+    );
+    if (new Set(targetCodes).size !== targetCodes.length) {
+      throw new CatalogValidationError(
+        { year: 'This year would create duplicate copied session codes.' },
+        'Season rollover details are invalid',
+      );
+    }
+    return this.store.createSeasonRollover({
+      actorId: this.identity.subject,
+      id: randomUUID(),
+      organizationId: this.organizationId,
+      requestId,
+      sessions: sessions.map((session, index) => ({
+        id: randomUUID(),
+        source_session_id: session.id,
+        target_code: targetCodes[index]!,
+      })),
+      sourceSeasonId,
+      targetSeason: {
+        id: randomUUID(),
+        name: rollover.name.trim(),
+        year: rollover.year,
+      },
+    });
   }
 
   async createSession(session: SessionCreate, requestId: string): Promise<SessionDetail> {

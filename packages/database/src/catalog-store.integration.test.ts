@@ -542,6 +542,74 @@ describe('catalog store', () => {
       { action: 'session.created' },
     ]);
   });
+
+  it('copies active sessions into an audited draft season with durable mappings', async () => {
+    const store = new CatalogStore(runtimeDatabase);
+    const sourceSeasonId = 'd5d8a8b7-c4ff-43be-a849-60cbd5914c85';
+    const sourceSessions = (await store.listSessions(organizationId)).filter(
+      (session) =>
+        session.season_id === sourceSeasonId &&
+        (session.status === 'DRAFT' || session.status === 'PUBLISHED'),
+    );
+    const targetSeasonId = '41b94c27-57da-4c37-87a2-a0ca31e09047';
+    const rolloverId = '6a999586-2917-4c9e-8ad6-c1fb87e876c7';
+    const targetIds = sourceSessions.map(
+      (_, index) => `10000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+    );
+
+    const rollover = await store.createSeasonRollover({
+      actorId: 'integration-admin',
+      id: rolloverId,
+      organizationId,
+      requestId: 'season-rollover-integration-test',
+      sessions: sourceSessions.map((session, index) => ({
+        id: targetIds[index]!,
+        source_session_id: session.id,
+        target_code: session.code.replace('2027', '2032'),
+      })),
+      sourceSeasonId,
+      targetSeason: {
+        id: targetSeasonId,
+        name: 'Summer 2032',
+        year: 2032,
+      },
+    });
+
+    expect(rollover.source_season).toMatchObject({ id: sourceSeasonId, year: 2027 });
+    expect(rollover.target_season).toMatchObject({ id: targetSeasonId, year: 2032 });
+    expect(rollover.sessions).toHaveLength(sourceSessions.length);
+    expect(rollover.sessions.every((session) => session.status === 'DRAFT')).toBe(true);
+    expect(rollover.sessions[0]?.starts_on.slice(0, 4)).toBe('2032');
+
+    const copied = (await store.listSessions(organizationId)).filter(
+      (session) => session.season_id === targetSeasonId,
+    );
+    expect(copied).toHaveLength(sourceSessions.length);
+    expect(copied.every((session) => session.status === 'DRAFT')).toBe(true);
+    await expect(store.listSessions(otherOrganizationId)).resolves.not.toContainEqual(
+      expect.objectContaining({ season_id: targetSeasonId }),
+    );
+
+    const admin = new Pool({ connectionString: migrationUrl });
+    const evidence = await admin.query<{
+      action: string;
+      mappings: string;
+    }>(
+      `SELECT ae.action,
+              (SELECT count(*)::text
+               FROM season_rollover_sessions srs
+               WHERE srs.organization_id = ae.organization_id
+                 AND srs.season_rollover_id = $2) AS mappings
+       FROM audit_events ae
+       WHERE ae.organization_id = $1
+         AND ae.request_id = 'season-rollover-integration-test'`,
+      [organizationId, rolloverId],
+    );
+    await admin.end();
+    expect(evidence.rows).toEqual([
+      { action: 'season.rolled_over', mappings: String(sourceSessions.length) },
+    ]);
+  });
 });
 
 function editable(session: SessionDetailRecord) {

@@ -30,9 +30,11 @@ function selectedFamilyForCamper(
 export default async function ParentRegistrationPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ camperId?: string }>;
+  searchParams?: Promise<{ camperId?: string; sessionId?: string }>;
 }) {
-  const initialCamperId = (await searchParams)?.camperId;
+  const resolvedSearchParams = await searchParams;
+  const initialCamperId = resolvedSearchParams?.camperId;
+  const initialSessionId = resolvedSearchParams?.sessionId;
   const parentHeaders = getParentApiHeaders();
   const [familiesResult, sessionsResult, pricingResult] = await Promise.allSettled([
     getParentFamilies(parentHeaders),
@@ -104,6 +106,7 @@ export default async function ParentRegistrationPage({
           <HouseholdCart
             family={family}
             initialCamperId={initialCamperId}
+            initialSessionId={initialSessionId}
             initialOrders={
               ordersResult[0]?.status === 'fulfilled' ? ordersResult[0].value.orders : []
             }

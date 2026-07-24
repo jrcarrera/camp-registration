@@ -9,6 +9,9 @@ import {
   ProgramUpdateSchema,
   SeasonCreateSchema,
   SeasonFixtureSchema,
+  SeasonParamsSchema,
+  SeasonRolloverCreateSchema,
+  SeasonRolloverResultSchema,
   SessionAttendanceUpdateSchema,
   SessionCreateSchema,
   SessionDetailSchema,
@@ -26,6 +29,9 @@ import {
   type ProblemResponse,
   type SeasonCreate,
   type SeasonFixture,
+  type SeasonParams,
+  type SeasonRolloverCreate,
+  type SeasonRolloverResult,
   type SessionAttendanceUpdate,
   type SessionDetail,
   type SessionCreate,
@@ -83,7 +89,11 @@ function sendProblem(reply: FastifyReply, error: unknown) {
     return reply.code(409).send({ code: 'version_conflict', message: error.message });
   }
   if (error instanceof CatalogDuplicateError) {
-    const code = error.message.startsWith('A season') ? 'duplicate_season' : 'duplicate_code';
+    const code = error.message.startsWith('A season')
+      ? 'duplicate_season'
+      : error.message.startsWith('A target season')
+        ? 'duplicate_rollover'
+        : 'duplicate_code';
     return reply.code(409).send({ code, message: error.message });
   }
   if (error instanceof CatalogReferenceError) {
@@ -209,6 +219,43 @@ export function registerCatalogRoutes(app: FastifyInstance, service: CatalogServ
       try {
         const season = await catalogService.createSeason(request.body, request.id);
         return reply.code(201).send(season);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Body: SeasonRolloverCreate;
+    Params: SeasonParams;
+    Reply: SeasonRolloverResult | ProblemResponse;
+  }>(
+    '/v1/seasons/:seasonId/rollover',
+    {
+      schema: {
+        body: SeasonRolloverCreateSchema,
+        description:
+          'Copy active sessions into a new draft season and retain re-enrollment mappings.',
+        params: SeasonParamsSchema,
+        response: { 201: SeasonRolloverResultSchema, ...errorResponses },
+        tags: ['seasons', 'rollover'],
+      },
+    },
+    async (request, reply) => {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        const result = await catalogService.rolloverSeason(
+          request.params.seasonId,
+          request.body,
+          request.id,
+        );
+        return reply.code(201).send(result);
       } catch (error) {
         return sendProblem(reply, error);
       }

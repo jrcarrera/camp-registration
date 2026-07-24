@@ -128,6 +128,22 @@ export interface FamilyDetailRecord extends FamilySummaryRecord {
   contacts: ContactRecord[];
 }
 
+export interface ReEnrollmentOptionRecord {
+  camper_id: string;
+  camper_name: string;
+  previous_registration_id: string;
+  previous_session_id: string;
+  previous_session_name: string;
+  previous_season_name: string;
+  target_session_id: string;
+  target_session_name: string;
+  target_season_name: string;
+  starts_on: string;
+  ends_on: string;
+  registration_opens_at: string;
+  registration_closes_at: string;
+}
+
 export interface FamilyWriteContext {
   actorId: string;
   organizationId: string;
@@ -551,6 +567,79 @@ export class FamilyStore {
     return this.withTenant(organizationId, (client) =>
       this.getFamilyInTenant(client, organizationId, familyId),
     );
+  }
+
+  async listReEnrollmentOptions(
+    organizationId: string,
+    familyId: string,
+  ): Promise<ReEnrollmentOptionRecord[]> {
+    return this.withTenant(organizationId, async (client) => {
+      await this.ensureFamilyExists(client, organizationId, familyId);
+      const result = await client.query<
+        Omit<ReEnrollmentOptionRecord, 'registration_opens_at' | 'registration_closes_at'> & {
+          registration_opens_at: Date | string;
+          registration_closes_at: Date | string;
+        }
+      >(
+        `SELECT
+           c.id AS camper_id,
+           concat_ws(' ', COALESCE(c.preferred_name, c.first_name), c.last_name) AS camper_name,
+           r.id AS previous_registration_id,
+           source_session.id AS previous_session_id,
+           source_session.name AS previous_session_name,
+           source_season.name AS previous_season_name,
+           target_session.id AS target_session_id,
+           target_session.name AS target_session_name,
+           target_season.name AS target_season_name,
+           target_session.starts_on::text,
+           target_session.ends_on::text,
+           target_session.registration_opens_at,
+           target_session.registration_closes_at
+         FROM registrations r
+         JOIN campers c
+           ON c.organization_id = r.organization_id
+          AND c.family_id = r.family_id
+          AND c.id = r.camper_id
+          AND c.archived_at IS NULL
+         JOIN season_rollover_sessions mapping
+           ON mapping.organization_id = r.organization_id
+          AND mapping.source_session_id = r.session_id
+         JOIN sessions source_session
+           ON source_session.organization_id = mapping.organization_id
+          AND source_session.id = mapping.source_session_id
+         JOIN seasons source_season
+           ON source_season.organization_id = source_session.organization_id
+          AND source_season.id = source_session.season_id
+         JOIN sessions target_session
+           ON target_session.organization_id = mapping.organization_id
+          AND target_session.id = mapping.target_session_id
+         JOIN seasons target_season
+           ON target_season.organization_id = target_session.organization_id
+          AND target_season.id = target_session.season_id
+         WHERE r.organization_id = $1
+           AND r.family_id = $2
+           AND r.status = 'CONFIRMED'
+           AND target_session.status = 'PUBLISHED'
+           AND target_session.registration_closes_at > transaction_timestamp()
+           AND NOT EXISTS (
+             SELECT 1
+             FROM registrations existing
+             WHERE existing.organization_id = r.organization_id
+               AND existing.family_id = r.family_id
+               AND existing.camper_id = r.camper_id
+               AND existing.session_id = target_session.id
+               AND existing.status <> 'CANCELLED'
+           )
+         ORDER BY target_session.starts_on, lower(c.last_name), lower(c.first_name),
+                  target_session.code, target_session.id`,
+        [organizationId, familyId],
+      );
+      return result.rows.map((row) => ({
+        ...row,
+        registration_closes_at: timestamp(row.registration_closes_at),
+        registration_opens_at: timestamp(row.registration_opens_at),
+      }));
+    });
   }
 
   async adultIdentityCanAccessFamily(

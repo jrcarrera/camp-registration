@@ -6,6 +6,8 @@ import type {
   ProgramUpdate,
   SeasonCreate,
   SeasonFixture,
+  SeasonRolloverCreate,
+  SeasonRolloverResult,
   SessionAttendanceUpdate,
   SessionCreate,
   SessionDetail,
@@ -175,6 +177,30 @@ const createdSeason: SeasonFixture = {
   organization_id: organizationId,
 };
 
+const seasonRolloverCreate: SeasonRolloverCreate = {
+  name: 'Summer 2028',
+  year: 2028,
+};
+
+const seasonRolloverResult: SeasonRolloverResult = {
+  created_at: '2026-07-24T12:00:00Z',
+  id: '10baaa9e-678e-420e-98ef-67fbf89dc71e',
+  sessions: [
+    {
+      ends_on: '2028-06-11',
+      name: 'Day Camp Week 1',
+      source_code: 'DAY-2027-01',
+      source_session_id: sessionId,
+      starts_on: '2028-06-07',
+      status: 'DRAFT',
+      target_code: 'DAY-2028-01',
+      target_session_id: '14b39af8-dcf6-4c76-8567-68f4d58aa6f2',
+    },
+  ],
+  source_season: context.seasons[0]!,
+  target_season: createdSeason,
+};
+
 const sessionCreate: SessionCreate = {
   code: 'TEEN-2027-01',
   ends_on: '2027-07-09',
@@ -340,6 +366,27 @@ describe('catalog routes', () => {
     expect(service.createSession).toHaveBeenCalledWith(sessionCreate, 'session-create-test');
   });
 
+  it('rolls a season into audited draft sessions through the documented API', async () => {
+    const service = fakeService();
+    const app = await buildApp({ catalogService: service });
+    applications.push(app);
+
+    const response = await app.inject({
+      headers: { 'x-request-id': 'season-rollover-test' },
+      method: 'POST',
+      payload: seasonRolloverCreate,
+      url: `/v1/seasons/${seasonId}/rollover`,
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).toEqual(seasonRolloverResult);
+    expect(service.rolloverSeason).toHaveBeenCalledWith(
+      seasonId,
+      seasonRolloverCreate,
+      'season-rollover-test',
+    );
+  });
+
   it('returns a stable conflict response', async () => {
     const service = fakeService();
     service.updateSession = vi.fn().mockRejectedValue(new CatalogConflictError('Stale version'));
@@ -433,6 +480,46 @@ describe('catalog service validation', () => {
     });
     expect(store.updateSessionAttendance).not.toHaveBeenCalled();
   });
+
+  it('derives draft rollover mappings and keeps rollover admin-only', async () => {
+    const store = {
+      createSeasonRollover: vi.fn().mockResolvedValue(seasonRolloverResult),
+      getContext: vi.fn().mockResolvedValue(context),
+      listSessions: vi.fn().mockResolvedValue([summary]),
+    } as unknown as CatalogStore;
+    const service = new CatalogService(store, localIdentity, organizationId);
+
+    await expect(
+      service.rolloverSeason(seasonId, seasonRolloverCreate, 'rollover-service-test'),
+    ).resolves.toEqual(seasonRolloverResult);
+    expect(store.createSeasonRollover).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: localIdentity.subject,
+        organizationId,
+        requestId: 'rollover-service-test',
+        sessions: [
+          expect.objectContaining({
+            source_session_id: sessionId,
+            target_code: 'DAY-2028-01',
+          }),
+        ],
+        sourceSeasonId: seasonId,
+        targetSeason: expect.objectContaining({ name: 'Summer 2028', year: 2028 }),
+      }),
+    );
+
+    const staffService = new CatalogService(
+      store,
+      {
+        ...localIdentity,
+        memberships: [{ campIds: [], organizationId, roles: ['camp_staff'] }],
+      },
+      organizationId,
+    );
+    await expect(
+      staffService.rolloverSeason(seasonId, seasonRolloverCreate, 'rollover-denied-test'),
+    ).rejects.toMatchObject({ message: 'Catalog access is not permitted' });
+  });
 });
 
 const localIdentity: RequestIdentity = {
@@ -453,6 +540,7 @@ function fakeService(): CatalogServiceApi & {
   createProgram: ReturnType<typeof vi.fn<CatalogServiceApi['createProgram']>>;
   createSeason: ReturnType<typeof vi.fn<CatalogServiceApi['createSeason']>>;
   createSession: ReturnType<typeof vi.fn<CatalogServiceApi['createSession']>>;
+  rolloverSeason: ReturnType<typeof vi.fn<CatalogServiceApi['rolloverSeason']>>;
   updateSessionAttendance: ReturnType<typeof vi.fn<CatalogServiceApi['updateSessionAttendance']>>;
   updateProgram: ReturnType<typeof vi.fn<CatalogServiceApi['updateProgram']>>;
   updateOrganizationSettings: ReturnType<
@@ -482,6 +570,7 @@ function fakeService(): CatalogServiceApi & {
     getContext: vi.fn().mockResolvedValue(context),
     getSession: vi.fn().mockResolvedValue(detail),
     listSessions: vi.fn().mockResolvedValue([summary]),
+    rolloverSeason: vi.fn().mockResolvedValue(seasonRolloverResult),
     updateProgram: vi.fn().mockResolvedValue(updatedProgram),
     updateOrganizationSettings: vi.fn().mockResolvedValue({
       ...context.organization,

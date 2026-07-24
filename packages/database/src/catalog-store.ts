@@ -201,6 +201,36 @@ export interface CreateSeasonRecord {
   year: number;
 }
 
+export interface SeasonRolloverSessionInput {
+  id: string;
+  source_session_id: string;
+  target_code: string;
+}
+
+export interface SeasonRolloverRecord {
+  id: string;
+  source_season: CatalogContextRecord['seasons'][number];
+  target_season: CatalogContextRecord['seasons'][number];
+  sessions: Array<{
+    source_session_id: string;
+    target_session_id: string;
+    source_code: string;
+    target_code: string;
+    name: string;
+    starts_on: string;
+    ends_on: string;
+    status: 'DRAFT';
+  }>;
+  created_at: string;
+}
+
+export interface CreateSeasonRolloverContext extends CreateCatalogContext {
+  id: string;
+  sourceSeasonId: string;
+  targetSeason: CreateSeasonRecord;
+  sessions: SeasonRolloverSessionInput[];
+}
+
 export interface CreateCatalogContext {
   actorId: string;
   organizationId: string;
@@ -928,6 +958,162 @@ export class CatalogStore {
       } catch (error) {
         if ((error as { code?: string }).code === '23505') {
           throw new CatalogDuplicateError('A season with this year already exists');
+        }
+        throw error;
+      }
+    });
+  }
+
+  async createSeasonRollover(context: CreateSeasonRolloverContext): Promise<SeasonRolloverRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const sourceResult = await client.query<CatalogContextRecord['seasons'][number]>(
+        `SELECT id, organization_id, name, year
+         FROM seasons
+         WHERE organization_id = $1 AND id = $2`,
+        [context.organizationId, context.sourceSeasonId],
+      );
+      const sourceSeason = sourceResult.rows[0];
+      if (!sourceSeason) throw new CatalogNotFoundError('Source season not found');
+      if (sourceSeason.year === context.targetSeason.year) {
+        throw new CatalogReferenceError('Target season year must differ from the source season');
+      }
+
+      const sourceSessions = await client.query<{
+        id: string;
+        code: string;
+        name: string;
+      }>(
+        `SELECT id, code, name
+         FROM sessions
+         WHERE organization_id = $1
+           AND season_id = $2
+           AND status IN ('DRAFT', 'PUBLISHED')
+         ORDER BY starts_on, code, id
+         FOR UPDATE`,
+        [context.organizationId, context.sourceSeasonId],
+      );
+      if (sourceSessions.rows.length === 0) {
+        throw new CatalogReferenceError('Source season has no active sessions to copy');
+      }
+      const inputBySourceId = new Map(
+        context.sessions.map((session) => [session.source_session_id, session]),
+      );
+      if (
+        inputBySourceId.size !== sourceSessions.rows.length ||
+        sourceSessions.rows.some((session) => !inputBySourceId.has(session.id))
+      ) {
+        throw new CatalogConflictError('Source season changed before rollover could complete');
+      }
+
+      try {
+        const targetResult = await client.query<CatalogContextRecord['seasons'][number]>(
+          `INSERT INTO seasons (id, organization_id, name, year)
+           VALUES ($1, $2, $3, $4)
+           RETURNING id, organization_id, name, year`,
+          [
+            context.targetSeason.id,
+            context.organizationId,
+            context.targetSeason.name,
+            context.targetSeason.year,
+          ],
+        );
+        const targetSeason = targetResult.rows[0]!;
+        const yearDelta = context.targetSeason.year - sourceSeason.year;
+        const rollover = await client.query<{ created_at: Date | string }>(
+          `INSERT INTO season_rollovers (
+             id, organization_id, source_season_id, target_season_id, created_by
+           ) VALUES ($1, $2, $3, $4, $5)
+           RETURNING created_at`,
+          [context.id, context.organizationId, sourceSeason.id, targetSeason.id, context.actorId],
+        );
+        const copiedSessions: SeasonRolloverRecord['sessions'] = [];
+
+        for (const sourceSession of sourceSessions.rows) {
+          const input = inputBySourceId.get(sourceSession.id)!;
+          const copied = await client.query<{
+            ends_on: string;
+            id: string;
+            name: string;
+            starts_on: string;
+          }>(
+            `INSERT INTO sessions (
+               id, organization_id, season_id, program_id, code, name, starts_on, ends_on,
+               registration_opens_at, registration_closes_at, capacity, minimum_age,
+               maximum_age, age_as_of, currency, price_cents, deposit_cents,
+               waitlist_enabled, status
+             )
+             SELECT
+               $3, organization_id, $4, program_id, $5, name,
+               (starts_on + make_interval(years => $6))::date,
+               (ends_on + make_interval(years => $6))::date,
+               registration_opens_at + make_interval(years => $6),
+               registration_closes_at + make_interval(years => $6),
+               capacity, minimum_age, maximum_age, age_as_of, currency,
+               price_cents, deposit_cents, waitlist_enabled, 'DRAFT'
+             FROM sessions
+             WHERE organization_id = $1 AND id = $2
+             RETURNING id, name, starts_on::text, ends_on::text`,
+            [
+              context.organizationId,
+              sourceSession.id,
+              input.id,
+              targetSeason.id,
+              input.target_code,
+              yearDelta,
+            ],
+          );
+          const targetSession = copied.rows[0];
+          if (!targetSession) {
+            throw new CatalogConflictError('Source session changed before rollover could complete');
+          }
+          await client.query(
+            `INSERT INTO season_rollover_sessions (
+               organization_id, season_rollover_id, source_session_id, target_session_id
+             ) VALUES ($1, $2, $3, $4)`,
+            [context.organizationId, context.id, sourceSession.id, targetSession.id],
+          );
+          copiedSessions.push({
+            ends_on: targetSession.ends_on,
+            name: targetSession.name,
+            source_code: sourceSession.code,
+            source_session_id: sourceSession.id,
+            starts_on: targetSession.starts_on,
+            status: 'DRAFT',
+            target_code: input.target_code,
+            target_session_id: targetSession.id,
+          });
+        }
+
+        await client.query(
+          `INSERT INTO audit_events (
+             organization_id, actor_id, action, target_type, target_id, outcome,
+             request_id, details
+           ) VALUES ($1, $2, 'season.rolled_over', 'season', $3, 'success', $4, $5::jsonb)`,
+          [
+            context.organizationId,
+            context.actorId,
+            targetSeason.id,
+            context.requestId,
+            JSON.stringify({
+              copied_session_count: copiedSessions.length,
+              source_season_id: sourceSeason.id,
+              source_year: sourceSeason.year,
+              target_year: targetSeason.year,
+            }),
+          ],
+        );
+        return {
+          created_at: timestamp(rollover.rows[0]!.created_at),
+          id: context.id,
+          sessions: copiedSessions,
+          source_season: sourceSeason,
+          target_season: targetSeason,
+        };
+      } catch (error) {
+        if ((error as { code?: string }).code === '23505') {
+          throw new CatalogDuplicateError(
+            'A target season or copied session with these details already exists',
+          );
         }
         throw error;
       }

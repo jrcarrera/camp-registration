@@ -180,6 +180,33 @@ export const FamilyListResponseSchema = Type.Object(
   { additionalProperties: false, $id: 'FamilyListResponse' },
 );
 
+export const ReEnrollmentOptionSchema = Type.Object(
+  {
+    camper_id: UuidSchema,
+    camper_name: Type.String({ minLength: 1 }),
+    previous_registration_id: UuidSchema,
+    previous_session_id: UuidSchema,
+    previous_session_name: Type.String({ minLength: 1 }),
+    previous_season_name: Type.String({ minLength: 1 }),
+    target_session_id: UuidSchema,
+    target_session_name: Type.String({ minLength: 1 }),
+    target_season_name: Type.String({ minLength: 1 }),
+    starts_on: LocalDateSchema,
+    ends_on: LocalDateSchema,
+    registration_opens_at: UtcTimestampSchema,
+    registration_closes_at: UtcTimestampSchema,
+  },
+  { additionalProperties: false, $id: 'ReEnrollmentOption' },
+);
+
+export const ReEnrollmentOptionsResponseSchema = Type.Object(
+  {
+    family_id: UuidSchema,
+    options: Type.Array(ReEnrollmentOptionSchema),
+  },
+  { additionalProperties: false, $id: 'ReEnrollmentOptionsResponse' },
+);
+
 export const FamilyRegistrationCreateSchema = Type.Object(
   {
     camper_id: UuidSchema,
@@ -344,6 +371,8 @@ export type Camper = Static<typeof CamperSchema>;
 export type Contact = Static<typeof ContactSchema>;
 export type FamilyDetail = Static<typeof FamilyDetailSchema>;
 export type FamilyListResponse = Static<typeof FamilyListResponseSchema>;
+export type ReEnrollmentOption = Static<typeof ReEnrollmentOptionSchema>;
+export type ReEnrollmentOptionsResponse = Static<typeof ReEnrollmentOptionsResponseSchema>;
 export type FamilyRegistrationCreate = Static<typeof FamilyRegistrationCreateSchema>;
 export type ParentCheckoutCreate = Static<typeof ParentCheckoutCreateSchema>;
 export type FamilyRegistrationResult = Static<typeof FamilyRegistrationResultSchema>;

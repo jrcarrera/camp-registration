@@ -66,6 +66,118 @@ describe('family store', () => {
     expect(direct.rows).toEqual([]);
   });
 
+  it('returns mapped published sessions for abbreviated family re-enrollment', async () => {
+    const store = new FamilyStore(runtimeDatabase);
+    const familyId = '18bb84ea-b70c-466b-9ddf-bc8bc3440607';
+    const camperId = '8d913c3d-2e64-43e6-a272-64f04ca669b2';
+    const sourceRegistrationId = '796f8919-d260-41d0-b660-ecdb445cd755';
+    const targetSeasonId = 'c6cd2e38-a057-40fc-9415-5b72ef2295ee';
+    const targetSessionId = 'e92d0a29-ef7c-4186-a33e-bc759ea88f28';
+    const rolloverId = '47220aa4-f3c3-41f8-9158-ae1421fd00a7';
+    const sourceSessionId = '28933fbb-470e-4ad6-9a74-600efe4232e3';
+    const context = {
+      actorId: 'integration-admin',
+      organizationId,
+      requestId: 're-enrollment-options-test',
+    };
+    await store.createFamily(context, { family_name: 'Returning Family', id: familyId });
+    await store.createCamper(context, {
+      accessibility_needs: null,
+      adult_id: null,
+      birth_date: '2017-03-08',
+      cabin_preference: null,
+      email: null,
+      email_normalized: null,
+      family_id: familyId,
+      first_name: 'Avery',
+      gender: 'Female',
+      id: camperId,
+      last_name: 'Returning',
+      preferred_name: null,
+      school_grade: '4',
+    });
+
+    const admin = new Pool({ connectionString: migrationUrl });
+    const adminClient = await admin.connect();
+    await adminClient.query('BEGIN');
+    try {
+      await adminClient.query(
+        `INSERT INTO seasons (id, organization_id, name, year)
+         VALUES ($1, $2, 'Summer 2040', 2040)`,
+        [targetSeasonId, organizationId],
+      );
+      await adminClient.query(
+        `INSERT INTO sessions (
+           id, organization_id, season_id, program_id, code, name, starts_on, ends_on,
+           registration_opens_at, registration_closes_at, capacity, minimum_age,
+           maximum_age, age_as_of, currency, price_cents, deposit_cents,
+           waitlist_enabled, status
+         )
+         SELECT $3, organization_id, $1, program_id, 'DAY-2040-01', name,
+                DATE '2040-06-07', DATE '2040-06-11',
+                TIMESTAMPTZ '2039-01-15T15:00:00Z', TIMESTAMPTZ '2040-06-04T05:00:00Z',
+                capacity, minimum_age, maximum_age, age_as_of, currency,
+                price_cents, deposit_cents, waitlist_enabled, 'PUBLISHED'
+         FROM sessions WHERE organization_id = $2 AND id = $4`,
+        [targetSeasonId, organizationId, targetSessionId, sourceSessionId],
+      );
+      await adminClient.query(
+        `INSERT INTO season_rollovers (
+           id, organization_id, source_season_id, target_season_id, created_by
+         )
+         SELECT $1, $2, season_id, $3, 'integration-admin'
+         FROM sessions WHERE organization_id = $2 AND id = $4`,
+        [rolloverId, organizationId, targetSeasonId, sourceSessionId],
+      );
+      await adminClient.query(
+        `INSERT INTO season_rollover_sessions (
+           organization_id, season_rollover_id, source_session_id, target_session_id
+         ) VALUES ($1, $2, $3, $4)`,
+        [organizationId, rolloverId, sourceSessionId, targetSessionId],
+      );
+      await adminClient.query(
+        `INSERT INTO registrations (
+           id, organization_id, session_id, family_id, camper_id, status, source
+         ) VALUES ($1, $2, $3, $4, $5, 'CONFIRMED', 'PARENT')`,
+        [sourceRegistrationId, organizationId, sourceSessionId, familyId, camperId],
+      );
+      await adminClient.query('COMMIT');
+    } catch (error) {
+      await adminClient.query('ROLLBACK');
+      throw error;
+    } finally {
+      adminClient.release();
+    }
+    await admin.end();
+
+    await expect(store.listReEnrollmentOptions(organizationId, familyId)).resolves.toEqual([
+      expect.objectContaining({
+        camper_id: camperId,
+        camper_name: 'Avery Returning',
+        previous_registration_id: sourceRegistrationId,
+        previous_session_id: sourceSessionId,
+        previous_season_name: 'Summer 2027',
+        target_season_name: 'Summer 2040',
+        target_session_id: targetSessionId,
+      }),
+    ]);
+    await expect(store.listReEnrollmentOptions(otherOrganizationId, familyId)).rejects.toThrow(
+      'Family not found',
+    );
+
+    const adminWithExisting = new Pool({ connectionString: migrationUrl });
+    await adminWithExisting.query(
+      `INSERT INTO registrations (
+         id, organization_id, session_id, family_id, camper_id, status, source
+       ) VALUES (
+         '97e4ba7b-a86d-48a9-8516-f37e0f59769e', $1, $2, $3, $4, 'CONFIRMED', 'PARENT'
+       )`,
+      [organizationId, targetSessionId, familyId, camperId],
+    );
+    await adminWithExisting.end();
+    await expect(store.listReEnrollmentOptions(organizationId, familyId)).resolves.toEqual([]);
+  });
+
   it('creates and updates family records with audit events', async () => {
     const store = new FamilyStore(runtimeDatabase);
     const familyId = '0f6dcf52-c873-44df-a597-9a0a51bf5067';

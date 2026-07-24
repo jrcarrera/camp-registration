@@ -16,6 +16,7 @@ import type {
   FamilySummary,
   FamilyUpdate,
   ParentCheckoutCreate,
+  ReEnrollmentOptionsResponse,
 } from '@camp-registration/contracts';
 import type { RequestIdentity } from '@camp-registration/auth';
 import { FamilyConflictError } from '@camp-registration/database';
@@ -165,6 +166,26 @@ const checkoutCreate: ParentCheckoutCreate = {
   existing_camper_id: camperId,
   session_id: registrationCreate.session_id,
 };
+const reEnrollmentOptions: ReEnrollmentOptionsResponse = {
+  family_id: familyId,
+  options: [
+    {
+      camper_id: camperId,
+      camper_name: 'Avery Smith',
+      ends_on: '2028-06-11',
+      previous_registration_id: '68f29cf8-cc6d-41c2-9238-88d8cba6b7ae',
+      previous_season_name: 'Summer 2027',
+      previous_session_id: registrationCreate.session_id,
+      previous_session_name: 'Day Camp Week 1',
+      registration_closes_at: '2028-06-04T05:00:00Z',
+      registration_opens_at: '2028-01-15T15:00:00Z',
+      starts_on: '2028-06-07',
+      target_season_name: 'Summer 2028',
+      target_session_id: 'ed3a80d3-5147-49c7-8054-f63f4db5cba9',
+      target_session_name: 'Day Camp Week 1',
+    },
+  ],
+};
 const registrationFinancials = {
   amount_paid_cents: 0,
   balance_due_cents: 52500,
@@ -238,6 +259,10 @@ describe('family routes', () => {
 
     const listResponse = await app.inject({ method: 'GET', url: '/v1/families' });
     const detailResponse = await app.inject({ method: 'GET', url: `/v1/families/${familyId}` });
+    const reEnrollmentResponse = await app.inject({
+      method: 'GET',
+      url: `/v1/families/${familyId}/re-enrollment-options`,
+    });
     const createResponse = await app.inject({
       headers: { 'x-request-id': 'family-create-route-test' },
       method: 'POST',
@@ -255,6 +280,9 @@ describe('family routes', () => {
     expect(listResponse.json()).toEqual({ families: [summary] });
     expect(detailResponse.statusCode).toBe(200);
     expect(detailResponse.json()).toEqual(detail);
+    expect(reEnrollmentResponse.statusCode).toBe(200);
+    expect(reEnrollmentResponse.json()).toEqual(reEnrollmentOptions);
+    expect(service.getReEnrollmentOptions).toHaveBeenCalledWith(familyId);
     expect(createResponse.statusCode).toBe(201);
     expect(createResponse.json()).toEqual(detail);
     expect(service.createFamily).toHaveBeenCalledWith(familyCreate, 'family-create-route-test');
@@ -606,6 +634,23 @@ describe('family service validation', () => {
     await expect(service.getFamily(familyId)).rejects.toBeInstanceOf(FamilyAuthorizationError);
   });
 
+  it('limits re-enrollment options to linked parent families', async () => {
+    const store = {
+      adultIdentityCanAccessFamily: vi.fn().mockResolvedValue(false),
+      listReEnrollmentOptions: vi.fn().mockResolvedValue(reEnrollmentOptions.options),
+    };
+    const service = new FamilyService(store as never, parentIdentity, organizationId);
+
+    await expect(service.getReEnrollmentOptions(familyId)).rejects.toBeInstanceOf(
+      FamilyAuthorizationError,
+    );
+    expect(store.listReEnrollmentOptions).not.toHaveBeenCalled();
+
+    store.adultIdentityCanAccessFamily.mockResolvedValue(true);
+    await expect(service.getReEnrollmentOptions(familyId)).resolves.toEqual(reEnrollmentOptions);
+    expect(store.listReEnrollmentOptions).toHaveBeenCalledWith(organizationId, familyId);
+  });
+
   it('requires linked adult registration permission for parent-source registrations', async () => {
     const store = {
       adultIdentityCanRegisterFamily: vi.fn().mockResolvedValue(false),
@@ -854,6 +899,7 @@ function fakeService(): FamilyServiceApi & {
   createFamily: ReturnType<typeof vi.fn<FamilyServiceApi['createFamily']>>;
   createParentCheckout: ReturnType<typeof vi.fn<FamilyServiceApi['createParentCheckout']>>;
   createRegistration: ReturnType<typeof vi.fn<FamilyServiceApi['createRegistration']>>;
+  getReEnrollmentOptions: ReturnType<typeof vi.fn<FamilyServiceApi['getReEnrollmentOptions']>>;
   createNextWaitlistOffer: ReturnType<typeof vi.fn<FamilyServiceApi['createNextWaitlistOffer']>>;
   manageWaitlistOffer: ReturnType<typeof vi.fn<FamilyServiceApi['manageWaitlistOffer']>>;
   reorderWaitlist: ReturnType<typeof vi.fn<FamilyServiceApi['reorderWaitlist']>>;
@@ -879,6 +925,7 @@ function fakeService(): FamilyServiceApi & {
     createParentCheckout: vi.fn().mockResolvedValue(registrationResult),
     createRegistration: vi.fn().mockResolvedValue(registrationResult),
     getFamily: vi.fn().mockResolvedValue(detail),
+    getReEnrollmentOptions: vi.fn().mockResolvedValue(reEnrollmentOptions),
     listFamilies: vi.fn().mockResolvedValue([summary]),
     manageWaitlistOffer: vi.fn().mockResolvedValue(registrationResult),
     createNextWaitlistOffer: vi.fn().mockResolvedValue(registrationResult),

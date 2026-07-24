@@ -1,5 +1,5 @@
 import type { CatalogContext, SessionSummary } from '@camp-registration/contracts';
-import { AlertCircle, Plus } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Plus } from 'lucide-react';
 import Link from 'next/link';
 
 import { SeasonSelector } from '../../components/season-selector';
@@ -11,9 +11,10 @@ export const dynamic = 'force-dynamic';
 export default async function SessionsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ seasonId?: string }>;
+  searchParams?: Promise<{ rollover?: string; seasonId?: string }>;
 }) {
-  const requestedSeasonId = (await searchParams)?.seasonId;
+  const resolvedSearchParams = await searchParams;
+  const requestedSeasonId = resolvedSearchParams?.seasonId;
   let sessions: SessionSummary[] = [];
   let seasons: CatalogContext['seasons'] = [];
   let selectedSeasonId: string | null = null;
@@ -70,6 +71,13 @@ export default async function SessionsPage({
         <div className="notice noticeError" role="alert">
           <AlertCircle size={18} aria-hidden="true" />
           {errorMessage}
+        </div>
+      )}
+
+      {resolvedSearchParams?.rollover === 'success' && !errorMessage && (
+        <div className="notice noticeSuccess" role="status">
+          <CheckCircle2 size={18} aria-hidden="true" />
+          Season copied. Review every draft session before publishing registration.
         </div>
       )}
 

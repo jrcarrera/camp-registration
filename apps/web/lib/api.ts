@@ -18,6 +18,7 @@ import type {
   HealthRecordCenter,
   PricingConfiguration,
   ProblemResponse,
+  ReEnrollmentOptionsResponse,
   OperationalReportCenter,
   SessionDetail,
   SessionListResponse,
@@ -220,4 +221,11 @@ export async function getParentFamily(
   headers = getParentApiHeaders(),
 ): Promise<FamilyDetail> {
   return getJson(`/v1/families/${encodeURIComponent(familyId)}`, headers);
+}
+
+export async function getParentReEnrollmentOptions(
+  familyId: string,
+  headers = getParentApiHeaders(),
+): Promise<ReEnrollmentOptionsResponse> {
+  return getJson(`/v1/families/${encodeURIComponent(familyId)}/re-enrollment-options`, headers);
 }

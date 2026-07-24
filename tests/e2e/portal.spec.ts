@@ -132,6 +132,19 @@ test('renders the parent household cart without a family selector', async ({ pag
   await expect(page.getByRole('heading', { level: 2, name: 'Order review' })).toBeVisible();
 });
 
+test('prefills the abbreviated returning-family checkout selection', async ({ page }) => {
+  await page.goto(
+    '/portal/register?camperId=050dd1c4-ce25-5a2e-8744-ee073ccd9fd9&sessionId=06c02070-2e63-4b7b-bd93-578e54fa1ea6',
+  );
+
+  await expect(page.getByLabel('Camper for registration 1')).toHaveValue(
+    '050dd1c4-ce25-5a2e-8744-ee073ccd9fd9',
+  );
+  await expect(page.getByLabel('Session for registration 1')).toHaveValue(
+    '06c02070-2e63-4b7b-bd93-578e54fa1ea6',
+  );
+});
+
 test('checks out two household cart lines with one hosted payment', async ({ page, request }) => {
   const suffix = uniqueSuffix();
   const first = await createPortalTestSession(request, suffix, 'CART-A');

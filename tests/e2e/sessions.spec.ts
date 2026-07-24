@@ -44,6 +44,11 @@ test('opens API-backed catalog creation forms', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Create season' })).toBeVisible();
   await expect(page.getByLabel('Season name', { exact: true })).toBeVisible();
 
+  await page.goto(`/seasons/${summer2027SeasonId}/rollover`);
+  await expect(page.getByRole('heading', { level: 1, name: 'Copy Summer 2027' })).toBeVisible();
+  await expect(page.getByText(/Copied sessions start as drafts/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Create draft season' })).toBeVisible();
+
   await page.goto('/programs');
   await expect(page.getByRole('heading', { level: 1, name: 'Programs' })).toBeVisible();
   expect(await page.locator('.programsTable tbody tr').count()).toBeGreaterThanOrEqual(4);

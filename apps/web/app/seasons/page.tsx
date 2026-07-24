@@ -1,5 +1,5 @@
 import type { CatalogContext, SessionSummary } from '@camp-registration/contracts';
-import { AlertCircle, ChevronRight, Plus } from 'lucide-react';
+import { AlertCircle, ChevronRight, Copy, Plus } from 'lucide-react';
 import Link from 'next/link';
 
 import { getCatalog, getSessions } from '../../lib/api';
@@ -133,12 +133,23 @@ export default async function SeasonsPage() {
                     )}
                   </td>
                   <td className="rowAction">
-                    <Link
-                      href={`/sessions?seasonId=${season.id}`}
-                      aria-label={`View ${season.name}`}
-                    >
-                      <ChevronRight size={18} aria-hidden="true" />
-                    </Link>
+                    <div className="inlineActions">
+                      {season.scheduledCount > 0 && (
+                        <Link
+                          href={`/seasons/${season.id}/rollover`}
+                          aria-label={`Roll over ${season.name}`}
+                          title={`Roll over ${season.name}`}
+                        >
+                          <Copy size={17} aria-hidden="true" />
+                        </Link>
+                      )}
+                      <Link
+                        href={`/sessions?seasonId=${season.id}`}
+                        aria-label={`View ${season.name}`}
+                      >
+                        <ChevronRight size={18} aria-hidden="true" />
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
