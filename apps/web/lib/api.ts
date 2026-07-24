@@ -12,6 +12,7 @@ import type {
   FormTemplatesResponse,
   ParentFormObligationsResponse,
   PaymentAttemptListResponse,
+  PaymentAdjustmentCenter,
   HouseholdOrderListResponse,
   HousingInventory,
   HealthRecordCenter,
@@ -117,6 +118,10 @@ export async function getWaitlistOperations(): Promise<WaitlistOperationsStatus>
 
 export async function getPaymentAttempts(): Promise<PaymentAttemptListResponse> {
   return getJson('/v1/payments');
+}
+
+export async function getPaymentAdjustmentCenter(): Promise<PaymentAdjustmentCenter> {
+  return getJson('/v1/payment-adjustments');
 }
 
 export async function getOrders(): Promise<HouseholdOrderListResponse> {

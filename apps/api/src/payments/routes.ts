@@ -7,6 +7,9 @@ import {
   PaymentAttemptListResponseSchema,
   PaymentAttemptParamsSchema,
   PaymentAttemptSchema,
+  PaymentAdjustmentCenterSchema,
+  PaymentAdjustmentCreateSchema,
+  PaymentAdjustmentSchema,
   PaymentCompletionSchema,
   ProblemResponseSchema,
   type FamilyRegistrationParams,
@@ -17,6 +20,9 @@ import {
   type PaymentAttempt,
   type PaymentAttemptListResponse,
   type PaymentAttemptParams,
+  type PaymentAdjustment,
+  type PaymentAdjustmentCenter,
+  type PaymentAdjustmentCreate,
   type PaymentCompletion,
   type ProblemResponse,
 } from '@camp-registration/contracts';
@@ -202,6 +208,52 @@ export function registerPaymentRoutes(
       if (!paymentService) return unavailable(reply);
       try {
         return { attempts: await paymentService.listAttempts() };
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.get<{ Reply: PaymentAdjustmentCenter | ProblemResponse }>(
+    '/v1/payment-adjustments',
+    {
+      schema: {
+        description: 'List finance accounts and their immutable adjustment history.',
+        response: { 200: PaymentAdjustmentCenterSchema, ...errorResponses },
+        tags: ['payments'],
+      },
+    },
+    async (request, reply) => {
+      const paymentService = resolvePaymentService(service, request);
+      if (!paymentService) return unavailable(reply);
+      try {
+        return await paymentService.getAdjustmentCenter();
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Body: PaymentAdjustmentCreate;
+    Reply: PaymentAdjustment | ProblemResponse;
+  }>(
+    '/v1/payment-adjustments',
+    {
+      schema: {
+        body: PaymentAdjustmentCreateSchema,
+        description: 'Create an audited registration credit, charge, or provider-backed refund.',
+        response: { 201: PaymentAdjustmentSchema, ...errorResponses },
+        tags: ['payments'],
+      },
+    },
+    async (request, reply) => {
+      const paymentService = resolvePaymentService(service, request);
+      if (!paymentService) return unavailable(reply);
+      try {
+        return reply
+          .code(201)
+          .send(await paymentService.createAdjustment(request.body, request.id));
       } catch (error) {
         return sendProblem(reply, error);
       }

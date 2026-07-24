@@ -103,6 +103,7 @@ describe('payment store', () => {
       event_id: 'local:event:payment-test',
       event_type: 'local.checkout.completed',
       failure_code: null,
+      kind: 'PAYMENT' as const,
       organization_id: organizationId,
       provider: 'LOCAL' as const,
       provider_account_id: `local:${organizationId}`,
@@ -151,5 +152,83 @@ describe('payment store', () => {
     expect(receipt.rows).toEqual([
       { idempotency_key: `payment-receipt:${attemptId}`, notification_type: 'PAYMENT_RECEIPT' },
     ]);
+  });
+
+  it('records bounded credits, charges, and provider refunds in one finance account', async () => {
+    const store = new PaymentStore(database);
+    const context = { actorId: 'finance-user', organizationId, requestId: 'adjustment-test' };
+    const credit = await store.createAdjustment(context, {
+      adjustmentId: '1123e456-e89b-42d3-a456-426614174000',
+      adjustmentType: 'CREDIT',
+      amountCents: 500,
+      idempotencyKey: '2123e456-e89b-42d3-a456-426614174000',
+      paymentAttemptId: null,
+      reason: 'Reviewed family service credit',
+      registrationId,
+    });
+    expect(credit).toMatchObject({ adjustment_type: 'CREDIT', status: 'SUCCEEDED' });
+
+    await store.createAdjustment(context, {
+      adjustmentId: '3123e456-e89b-42d3-a456-426614174000',
+      adjustmentType: 'CHARGE',
+      amountCents: 200,
+      idempotencyKey: '4123e456-e89b-42d3-a456-426614174000',
+      paymentAttemptId: null,
+      reason: 'Reviewed late change fee',
+      registrationId,
+    });
+
+    const refund = await store.createAdjustment(context, {
+      adjustmentId: '5123e456-e89b-42d3-a456-426614174000',
+      adjustmentType: 'REFUND',
+      amountCents: 1000,
+      idempotencyKey: '6123e456-e89b-42d3-a456-426614174000',
+      paymentAttemptId: attemptId,
+      reason: 'Approved partial program refund',
+      registrationId,
+    });
+    expect(refund).toMatchObject({ provider: 'LOCAL', status: 'PENDING' });
+    await store.attachRefund(organizationId, refund.id, {
+      failureCode: null,
+      providerRefundId: 'local_re_adjustment_test',
+      status: 'SUCCEEDED',
+    });
+
+    const center = await store.listAdjustmentCenter(organizationId);
+    expect(center.accounts[0]).toMatchObject({
+      balance_due_cents: 14_700,
+      charge_cents: 200,
+      credit_cents: 500,
+      paid_cents: 2500,
+      refundable_cents: 1500,
+      refunded_cents: 1000,
+    });
+    expect(center.accounts[0]?.refund_sources).toEqual([
+      expect.objectContaining({
+        attempt_id: attemptId,
+        refundable_cents: 1500,
+      }),
+    ]);
+    expect(center.adjustments).toHaveLength(3);
+    const admin = new Pool({ connectionString: migrationUrl });
+    const refundNotice = await admin.query(
+      `SELECT notification_type
+       FROM notification_outbox WHERE idempotency_key=$1`,
+      [`payment-refund:${refund.id}`],
+    );
+    await admin.end();
+    expect(refundNotice.rows).toEqual([{ notification_type: 'PAYMENT_REFUND' }]);
+
+    await expect(
+      store.createAdjustment(context, {
+        adjustmentId: '7123e456-e89b-42d3-a456-426614174000',
+        adjustmentType: 'CREDIT',
+        amountCents: 20_000,
+        idempotencyKey: '8123e456-e89b-42d3-a456-426614174000',
+        paymentAttemptId: null,
+        reason: 'Invalid excessive credit',
+        registrationId,
+      }),
+    ).rejects.toThrow('cannot exceed the current balance');
   });
 });

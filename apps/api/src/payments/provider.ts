@@ -1,4 +1,9 @@
-import type { ProviderPaymentEvent, PaymentProviderName } from '@camp-registration/database';
+import type {
+  PaymentAdjustmentStatus,
+  ProviderPaymentEvent,
+  ProviderRefundEvent,
+  PaymentProviderName,
+} from '@camp-registration/database';
 
 export interface HostedCheckoutInput {
   amountCents: number;
@@ -20,14 +25,33 @@ export interface HostedCheckoutResult {
   providerCheckoutSessionId: string;
 }
 
+export interface RefundInput {
+  adjustmentId: string;
+  amountCents: number;
+  currency: 'USD';
+  organizationId: string;
+  paymentIntentId: string;
+  providerAccountId: string;
+}
+
+export interface RefundResult {
+  failureCode: string | null;
+  providerRefundId: string;
+  status: PaymentAdjustmentStatus;
+}
+
 export interface PaymentProvider {
   readonly name: PaymentProviderName;
   createHostedCheckout(input: HostedCheckoutInput): Promise<HostedCheckoutResult>;
+  createRefund(input: RefundInput): Promise<RefundResult>;
   expireHostedCheckout?(
     providerAccountId: string,
     providerCheckoutSessionId: string,
   ): Promise<void>;
-  verifyWebhook?(rawBody: Buffer, signature: string): ProviderPaymentEvent | null;
+  verifyWebhook?(
+    rawBody: Buffer,
+    signature: string,
+  ): ProviderPaymentEvent | ProviderRefundEvent | null;
 }
 
 export class LocalPaymentProvider implements PaymentProvider {
@@ -42,6 +66,14 @@ export class LocalPaymentProvider implements PaymentProvider {
         this.publicBaseUrl,
       ).toString(),
       providerCheckoutSessionId: `local_cs_${input.attemptId.replaceAll('-', '')}`,
+    };
+  }
+
+  async createRefund(input: RefundInput): Promise<RefundResult> {
+    return {
+      failureCode: null,
+      providerRefundId: `local_re_${input.adjustmentId.replaceAll('-', '')}`,
+      status: 'SUCCEEDED',
     };
   }
 

@@ -30,3 +30,4 @@ clarifications and links to superseding decisions.
 | [0022](0022-operational-reporting-expansion.md)                | Accepted | Operational reporting expansion       |
 | [0023](0023-restricted-health-records-v1.md)                   | Accepted | Restricted health records v1          |
 | [0024](0024-production-identity-and-application-sessions.md)   | Accepted | Production identity and sessions      |
+| [0025](0025-refunds-credits-and-payment-adjustments.md)        | Accepted | Refunds, credits, and adjustments     |

@@ -8,6 +8,8 @@ import type { OrderNotificationSummary } from './notification-store.js';
 
 export type PaymentProviderName = 'STRIPE' | 'LOCAL';
 export type PaymentAttemptStatus = 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED';
+export type PaymentAdjustmentType = 'CREDIT' | 'CHARGE' | 'REFUND';
+export type PaymentAdjustmentStatus = 'PENDING' | 'SUCCEEDED' | 'FAILED';
 
 export interface PaymentAttemptRecord {
   amount_cents: number;
@@ -38,6 +40,7 @@ export interface PreparedPaymentAttempt extends PaymentAttemptRecord {
 }
 
 export interface ProviderPaymentEvent {
+  kind: 'PAYMENT';
   amount_cents: number;
   attempt_id: string;
   currency: 'USD';
@@ -51,6 +54,76 @@ export interface ProviderPaymentEvent {
   provider_payment_intent_id: string | null;
   receipt_url: string | null;
   status: PaymentAttemptStatus;
+}
+
+export interface PaymentAccountRecord {
+  balance_due_cents: number;
+  camper_name: string;
+  charge_cents: number;
+  credit_cents: number;
+  family_id: string;
+  family_name: string;
+  paid_cents: number;
+  price_cents: number;
+  refundable_cents: number;
+  refund_sources: Array<{
+    amount_cents: number;
+    attempt_id: string;
+    completed_at: string;
+    provider: PaymentProviderName;
+    refundable_cents: number;
+  }>;
+  refunded_cents: number;
+  registration_id: string;
+  session_name: string;
+}
+
+export interface PaymentAdjustmentRecord {
+  adjustment_type: PaymentAdjustmentType;
+  amount_cents: number;
+  completed_at: string | null;
+  created_at: string;
+  created_by: string;
+  currency: 'USD';
+  family_id: string;
+  id: string;
+  payment_attempt_id: string | null;
+  provider: PaymentProviderName | null;
+  provider_reference: string | null;
+  reason: string;
+  registration_id: string;
+  status: PaymentAdjustmentStatus;
+}
+
+export interface PreparedPaymentAdjustment extends PaymentAdjustmentRecord {
+  organization_id: string;
+  provider_account_id: string | null;
+  provider_payment_intent_id: string | null;
+}
+
+export interface CreatePaymentAdjustmentInput {
+  adjustmentId: string;
+  adjustmentType: PaymentAdjustmentType;
+  amountCents: number;
+  idempotencyKey: string;
+  paymentAttemptId: string | null;
+  reason: string;
+  registrationId: string;
+}
+
+export interface ProviderRefundEvent {
+  adjustment_id: string;
+  amount_cents: number;
+  currency: 'USD';
+  event_id: string;
+  event_type: string;
+  failure_code: string | null;
+  kind: 'REFUND';
+  organization_id: string;
+  provider: PaymentProviderName;
+  provider_account_id: string;
+  provider_refund_id: string;
+  status: PaymentAdjustmentStatus;
 }
 
 export interface PaymentEventResult {
@@ -716,6 +789,415 @@ export class PaymentStore {
     });
   }
 
+  async listAdjustmentCenter(
+    organizationId: string,
+  ): Promise<{ accounts: PaymentAccountRecord[]; adjustments: PaymentAdjustmentRecord[] }> {
+    return this.withTenant(organizationId, async (client) => {
+      const accounts = await client.query<PaymentAccountRecord>(
+        `SELECT
+           r.id AS registration_id,
+           r.family_id,
+           f.family_name,
+           concat_ws(' ', c.first_name, c.last_name) AS camper_name,
+           s.name AS session_name,
+           r.price_cents,
+           COALESCE(ledger.paid_cents, 0)::integer AS paid_cents,
+           COALESCE(adjustments.credit_cents, 0)::integer AS credit_cents,
+           COALESCE(adjustments.charge_cents, 0)::integer AS charge_cents,
+           COALESCE(adjustments.refunded_cents, 0)::integer AS refunded_cents,
+           GREATEST(
+             COALESCE(ledger.online_cents, 0) - COALESCE(adjustments.refunded_cents, 0),
+             0
+           )::integer AS refundable_cents,
+           COALESCE(refunds.refund_sources, '[]'::jsonb) AS refund_sources,
+           GREATEST(r.price_cents - COALESCE(ledger.balance_credit_cents, 0), 0)::integer
+             AS balance_due_cents
+         FROM registrations r
+         JOIN families f
+           ON f.organization_id=r.organization_id AND f.id=r.family_id
+         JOIN campers c
+           ON c.organization_id=r.organization_id AND c.id=r.camper_id
+         JOIN sessions s
+           ON s.organization_id=r.organization_id AND s.id=r.session_id
+         LEFT JOIN LATERAL (
+           SELECT
+             COALESCE(sum(rp.amount_cents), 0)::integer AS balance_credit_cents,
+             COALESCE(sum(rp.amount_cents) FILTER (
+               WHERE rp.method NOT IN ('ACCOUNT_CREDIT', 'ADJUSTMENT_CHARGE')
+             ), 0)::integer AS paid_cents,
+             COALESCE(sum(rp.amount_cents) FILTER (WHERE rp.method='ONLINE_CARD'), 0)::integer
+               AS online_cents
+           FROM registration_payments rp
+           WHERE rp.organization_id=r.organization_id AND rp.registration_id=r.id
+         ) ledger ON true
+         LEFT JOIN LATERAL (
+           SELECT
+             COALESCE(sum(pa.amount_cents) FILTER (
+               WHERE pa.adjustment_type='CREDIT' AND pa.status='SUCCEEDED'
+             ), 0)::integer AS credit_cents,
+             COALESCE(sum(pa.amount_cents) FILTER (
+               WHERE pa.adjustment_type='CHARGE' AND pa.status='SUCCEEDED'
+             ), 0)::integer AS charge_cents,
+             COALESCE(sum(pa.amount_cents) FILTER (
+               WHERE pa.adjustment_type='REFUND' AND pa.status='SUCCEEDED'
+             ), 0)::integer AS refunded_cents
+           FROM payment_adjustments pa
+           WHERE pa.organization_id=r.organization_id AND pa.registration_id=r.id
+         ) adjustments ON true
+         LEFT JOIN LATERAL (
+           SELECT jsonb_agg(
+             jsonb_build_object(
+               'attempt_id', source.payment_attempt_id,
+               'provider', source.provider,
+               'completed_at', source.completed_at,
+               'amount_cents', source.amount_cents,
+               'refundable_cents', source.refundable_cents
+             )
+             ORDER BY source.completed_at DESC, source.payment_attempt_id DESC
+           ) AS refund_sources
+           FROM (
+             SELECT rp.payment_attempt_id, attempt.provider, attempt.completed_at,
+                    sum(rp.amount_cents)::integer AS amount_cents,
+                    GREATEST(
+                      sum(rp.amount_cents) - COALESCE((
+                        SELECT sum(pa.amount_cents)
+                        FROM payment_adjustments pa
+                        WHERE pa.organization_id=rp.organization_id
+                          AND pa.registration_id=rp.registration_id
+                          AND pa.payment_attempt_id=rp.payment_attempt_id
+                          AND pa.adjustment_type='REFUND'
+                          AND pa.status IN ('PENDING','SUCCEEDED')
+                      ), 0),
+                      0
+                    )::integer AS refundable_cents
+             FROM registration_payments rp
+             JOIN payment_attempts attempt
+               ON attempt.organization_id=rp.organization_id
+              AND attempt.id=rp.payment_attempt_id
+             WHERE rp.organization_id=r.organization_id
+               AND rp.registration_id=r.id
+               AND rp.method='ONLINE_CARD'
+               AND attempt.status='SUCCEEDED'
+             GROUP BY rp.organization_id, rp.registration_id, rp.payment_attempt_id,
+                      attempt.provider, attempt.completed_at
+           ) source
+           WHERE source.refundable_cents > 0
+         ) refunds ON true
+         WHERE r.organization_id=$1
+           AND (r.status='CONFIRMED' OR ledger.balance_credit_cents <> 0)
+         ORDER BY f.family_name, c.last_name, c.first_name, s.starts_on, s.name, r.id`,
+        [organizationId],
+      );
+      const adjustments = await client.query<PaymentAdjustmentRecord>(
+        `SELECT id, family_id, registration_id, payment_attempt_id, adjustment_type,
+                amount_cents, currency, reason, status, provider,
+                provider_refund_id AS provider_reference, created_by, created_at, completed_at
+         FROM payment_adjustments
+         WHERE organization_id=$1
+         ORDER BY created_at DESC, id DESC`,
+        [organizationId],
+      );
+      return { accounts: accounts.rows, adjustments: adjustments.rows };
+    });
+  }
+
+  async createAdjustment(
+    context: FamilyWriteContext,
+    input: CreatePaymentAdjustmentInput,
+  ): Promise<PreparedPaymentAdjustment> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const existing = await this.findAdjustmentByIdempotencyKey(
+        client,
+        context.organizationId,
+        input.idempotencyKey,
+      );
+      if (existing) {
+        this.assertAdjustmentMatches(existing, input);
+        return existing;
+      }
+
+      const registration = await client.query<{ family_id: string }>(
+        `SELECT family_id
+         FROM registrations
+         WHERE organization_id=$1 AND id=$2
+         FOR UPDATE`,
+        [context.organizationId, input.registrationId],
+      );
+      const account = registration.rows[0];
+      if (!account) throw new PaymentNotFoundError('Registration payment account not found');
+      const balance = await client.query<{ balance_due_cents: number }>(
+        `SELECT GREATEST(r.price_cents - COALESCE(sum(p.amount_cents), 0), 0)::integer
+                  AS balance_due_cents
+         FROM registrations r
+         LEFT JOIN registration_payments p
+           ON p.organization_id=r.organization_id AND p.registration_id=r.id
+         WHERE r.organization_id=$1 AND r.id=$2
+         GROUP BY r.id`,
+        [context.organizationId, input.registrationId],
+      );
+      const balanceDueCents = balance.rows[0]?.balance_due_cents ?? 0;
+
+      if (input.adjustmentType === 'CREDIT' && input.amountCents > balanceDueCents) {
+        throw new PaymentEligibilityError('A credit cannot exceed the current balance due');
+      }
+
+      let attempt:
+        | {
+            family_id: string;
+            provider: PaymentProviderName;
+            provider_account_id: string;
+            provider_payment_intent_id: string | null;
+            status: PaymentAttemptStatus;
+          }
+        | undefined;
+      if (input.adjustmentType === 'REFUND') {
+        if (!input.paymentAttemptId) {
+          throw new PaymentEligibilityError('A refund requires a successful online payment');
+        }
+        const attemptResult = await client.query<{
+          family_id: string;
+          provider: PaymentProviderName;
+          provider_account_id: string;
+          provider_payment_intent_id: string | null;
+          status: PaymentAttemptStatus;
+        }>(
+          `SELECT family_id, provider, provider_account_id, provider_payment_intent_id, status
+           FROM payment_attempts
+           WHERE organization_id=$1 AND id=$2
+           FOR UPDATE`,
+          [context.organizationId, input.paymentAttemptId],
+        );
+        attempt = attemptResult.rows[0];
+        if (!attempt || attempt.status !== 'SUCCEEDED' || !attempt.provider_payment_intent_id) {
+          throw new PaymentEligibilityError('Only a settled online payment can be refunded');
+        }
+        const refundable = await client.query<{ refundable_cents: number }>(
+          `SELECT GREATEST(
+             COALESCE(sum(rp.amount_cents), 0) - COALESCE((
+               SELECT sum(pa.amount_cents)
+               FROM payment_adjustments pa
+               WHERE pa.organization_id=$1
+                 AND pa.registration_id=$2
+                 AND pa.payment_attempt_id=$3
+                 AND pa.adjustment_type='REFUND'
+                 AND pa.status IN ('PENDING','SUCCEEDED')
+             ), 0),
+             0
+           )::integer AS refundable_cents
+           FROM registration_payments rp
+           WHERE rp.organization_id=$1
+             AND rp.registration_id=$2
+             AND rp.payment_attempt_id=$3
+             AND rp.method='ONLINE_CARD'`,
+          [context.organizationId, input.registrationId, input.paymentAttemptId],
+        );
+        if (input.amountCents > (refundable.rows[0]?.refundable_cents ?? 0)) {
+          throw new PaymentEligibilityError(
+            'The refund exceeds the unsettled amount allocated to this registration',
+          );
+        }
+      } else if (input.paymentAttemptId) {
+        throw new PaymentEligibilityError(
+          'Credits and charges cannot reference a provider payment',
+        );
+      }
+
+      const status: PaymentAdjustmentStatus =
+        input.adjustmentType === 'REFUND' ? 'PENDING' : 'SUCCEEDED';
+      const inserted = await client.query(
+        `INSERT INTO payment_adjustments (
+           id, organization_id, family_id, registration_id, payment_attempt_id,
+           adjustment_type, amount_cents, reason, status, idempotency_key,
+           provider, provider_account_id, created_by, completed_at
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+           CASE WHEN $9='SUCCEEDED' THEN transaction_timestamp() ELSE NULL END)
+         ON CONFLICT (organization_id,idempotency_key) DO NOTHING
+         RETURNING id`,
+        [
+          input.adjustmentId,
+          context.organizationId,
+          account.family_id,
+          input.registrationId,
+          input.paymentAttemptId,
+          input.adjustmentType,
+          input.amountCents,
+          input.reason.trim(),
+          status,
+          input.idempotencyKey,
+          attempt?.provider ?? null,
+          attempt?.provider_account_id ?? null,
+          context.actorId,
+        ],
+      );
+      if (inserted.rowCount === 0) {
+        const raced = await this.findAdjustmentByIdempotencyKey(
+          client,
+          context.organizationId,
+          input.idempotencyKey,
+        );
+        if (!raced) throw new PaymentIdempotencyConflictError('Payment adjustment already exists');
+        this.assertAdjustmentMatches(raced, input);
+        return raced;
+      }
+      if (input.adjustmentType !== 'REFUND') {
+        await client.query(
+          `INSERT INTO registration_payments (
+             id, organization_id, family_id, registration_id, amount_cents, method,
+             note, recorded_by
+           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [
+            randomUUID(),
+            context.organizationId,
+            account.family_id,
+            input.registrationId,
+            input.adjustmentType === 'CREDIT' ? input.amountCents : -input.amountCents,
+            input.adjustmentType === 'CREDIT' ? 'ACCOUNT_CREDIT' : 'ADJUSTMENT_CHARGE',
+            input.reason.trim(),
+            context.actorId,
+          ],
+        );
+      }
+      await client.query(
+        `INSERT INTO audit_events (
+           organization_id, actor_id, action, target_type, target_id, outcome,
+           request_id, details
+         ) VALUES ($1,$2,$3,'payment_adjustment',$4,'success',$5,$6::jsonb)`,
+        [
+          context.organizationId,
+          context.actorId,
+          input.adjustmentType === 'REFUND'
+            ? 'payment.refund_requested'
+            : 'payment.adjustment_recorded',
+          input.adjustmentId,
+          context.requestId,
+          JSON.stringify({
+            adjustment_type: input.adjustmentType,
+            amount_cents: input.amountCents,
+            reason: input.reason.trim(),
+            registration_id: input.registrationId,
+          }),
+        ],
+      );
+      return this.requireAdjustment(client, context.organizationId, input.adjustmentId);
+    });
+  }
+
+  async attachRefund(
+    organizationId: string,
+    adjustmentId: string,
+    result: {
+      failureCode: string | null;
+      providerRefundId: string;
+      status: PaymentAdjustmentStatus;
+    },
+  ): Promise<PaymentAdjustmentRecord> {
+    return this.withTenant(organizationId, async (client) => {
+      await client.query(
+        `UPDATE payment_adjustments
+         SET provider_refund_id=$3, status=$4, failure_code=$5,
+             completed_at=CASE WHEN $4='PENDING' THEN NULL ELSE transaction_timestamp() END,
+             updated_at=transaction_timestamp()
+         WHERE organization_id=$1 AND id=$2 AND adjustment_type='REFUND'`,
+        [organizationId, adjustmentId, result.providerRefundId, result.status, result.failureCode],
+      );
+      if (result.status === 'SUCCEEDED') {
+        await this.queueRefundNotification(client, organizationId, adjustmentId);
+      }
+      return this.requireAdjustment(client, organizationId, adjustmentId);
+    });
+  }
+
+  async markRefundFailed(
+    organizationId: string,
+    adjustmentId: string,
+    failureCode: string,
+  ): Promise<void> {
+    await this.withTenant(organizationId, async (client) => {
+      await client.query(
+        `UPDATE payment_adjustments
+         SET status='FAILED', failure_code=$3, completed_at=transaction_timestamp(),
+             updated_at=transaction_timestamp()
+         WHERE organization_id=$1 AND id=$2 AND status='PENDING'`,
+        [organizationId, adjustmentId, failureCode],
+      );
+    });
+  }
+
+  async applyProviderRefundEvent(event: ProviderRefundEvent): Promise<void> {
+    await this.withTenant(event.organization_id, async (client) => {
+      const adjustment = await this.requireAdjustment(
+        client,
+        event.organization_id,
+        event.adjustment_id,
+        true,
+      );
+      const valid =
+        adjustment.adjustment_type === 'REFUND' &&
+        adjustment.provider === event.provider &&
+        adjustment.provider_account_id === event.provider_account_id &&
+        adjustment.amount_cents === event.amount_cents &&
+        (!adjustment.provider_reference ||
+          adjustment.provider_reference === event.provider_refund_id);
+      const prior = await client.query(
+        `SELECT 1 FROM payment_adjustment_events
+         WHERE provider=$1 AND provider_event_id=$2`,
+        [event.provider, event.event_id],
+      );
+      if (prior.rowCount) return;
+      const outcome = valid
+        ? adjustment.status === event.status
+          ? 'IGNORED'
+          : 'APPLIED'
+        : 'REJECTED';
+      await client.query(
+        `INSERT INTO payment_adjustment_events (
+           id, organization_id, payment_adjustment_id, provider, provider_event_id,
+           event_type, outcome
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [
+          randomUUID(),
+          event.organization_id,
+          event.adjustment_id,
+          event.provider,
+          event.event_id,
+          event.event_type,
+          outcome,
+        ],
+      );
+      if (outcome !== 'APPLIED') return;
+      await client.query(
+        `UPDATE payment_adjustments
+         SET provider_refund_id=$3, status=$4, failure_code=$5,
+             completed_at=CASE WHEN $4='PENDING' THEN NULL ELSE transaction_timestamp() END,
+             updated_at=transaction_timestamp()
+         WHERE organization_id=$1 AND id=$2`,
+        [
+          event.organization_id,
+          event.adjustment_id,
+          event.provider_refund_id,
+          event.status,
+          event.failure_code,
+        ],
+      );
+      if (event.status === 'SUCCEEDED') {
+        await this.queueRefundNotification(client, event.organization_id, event.adjustment_id);
+      }
+      await client.query(
+        `INSERT INTO audit_events (
+           organization_id, actor_id, action, target_type, target_id, outcome,
+           request_id, details
+         ) VALUES ($1,'system:payment-webhook','payment.refund_reconciled',
+           'payment_adjustment',$2,'success',$3,$4::jsonb)`,
+        [
+          event.organization_id,
+          event.adjustment_id,
+          `refund-event:${event.event_id}`,
+          JSON.stringify({ event_type: event.event_type, status: event.status }),
+        ],
+      );
+    });
+  }
+
   private async orderNotificationSummary(
     client: PoolClient,
     organizationId: string,
@@ -1152,6 +1634,139 @@ export class PaymentStore {
         event.receipt_url,
       ],
     );
+  }
+
+  private async findAdjustmentByIdempotencyKey(
+    client: PoolClient,
+    organizationId: string,
+    idempotencyKey: string,
+  ): Promise<PreparedPaymentAdjustment | undefined> {
+    const result = await client.query<PreparedPaymentAdjustment>(
+      `SELECT pa.id, pa.organization_id, pa.family_id, pa.registration_id,
+              pa.payment_attempt_id, pa.adjustment_type, pa.amount_cents, pa.currency,
+              pa.reason, pa.status, pa.provider, pa.provider_account_id,
+              pa.provider_refund_id AS provider_reference, attempt.provider_payment_intent_id,
+              pa.created_by, pa.created_at, pa.completed_at
+       FROM payment_adjustments pa
+       LEFT JOIN payment_attempts attempt
+         ON attempt.organization_id=pa.organization_id AND attempt.id=pa.payment_attempt_id
+       WHERE pa.organization_id=$1 AND pa.idempotency_key=$2`,
+      [organizationId, idempotencyKey],
+    );
+    return result.rows[0];
+  }
+
+  private async queueRefundNotification(
+    client: PoolClient,
+    organizationId: string,
+    adjustmentId: string,
+  ): Promise<void> {
+    const result = await client.query<{
+      amount_cents: number;
+      camper_name: string;
+      family_id: string;
+      family_name: string;
+      provider_refund_id: string | null;
+      recipient_email: string | null;
+      registration_id: string;
+      session_id: string;
+      session_name: string;
+    }>(
+      `SELECT pa.amount_cents, pa.family_id, pa.registration_id, pa.provider_refund_id,
+              f.family_name, concat_ws(' ', c.first_name, c.last_name) AS camper_name,
+              s.id AS session_id, s.name AS session_name, recipient.email AS recipient_email
+       FROM payment_adjustments pa
+       JOIN registrations r
+         ON r.organization_id=pa.organization_id AND r.id=pa.registration_id
+       JOIN families f
+         ON f.organization_id=pa.organization_id AND f.id=pa.family_id
+       JOIN campers c
+         ON c.organization_id=r.organization_id AND c.id=r.camper_id
+       JOIN sessions s
+         ON s.organization_id=r.organization_id AND s.id=r.session_id
+       LEFT JOIN LATERAL (
+         SELECT a.email
+         FROM adults a
+         WHERE a.organization_id=pa.organization_id
+           AND a.family_id=pa.family_id
+           AND a.archived_at IS NULL
+           AND a.email IS NOT NULL
+           AND (a.account_owner OR a.can_make_payments)
+         ORDER BY a.account_owner DESC, a.created_at, a.id
+         LIMIT 1
+       ) recipient ON true
+       WHERE pa.organization_id=$1 AND pa.id=$2 AND pa.status='SUCCEEDED'`,
+      [organizationId, adjustmentId],
+    );
+    const refund = result.rows[0];
+    if (!refund?.recipient_email) return;
+    await client.query(
+      `INSERT INTO notification_outbox (
+         id, organization_id, family_id, session_id, registration_id,
+         waitlist_offer_id, notification_type, recipient_email, template_data,
+         idempotency_key
+       ) VALUES ($1,$2,$3,$4,$5,NULL,'PAYMENT_REFUND',$6,$7::jsonb,$8)
+       ON CONFLICT (organization_id,idempotency_key) DO NOTHING`,
+      [
+        randomUUID(),
+        organizationId,
+        refund.family_id,
+        refund.session_id,
+        refund.registration_id,
+        refund.recipient_email,
+        JSON.stringify({
+          amount_cents: refund.amount_cents,
+          camper_name: refund.camper_name,
+          currency: 'USD',
+          family_name: refund.family_name,
+          portal_path: '/portal',
+          provider_reference: refund.provider_refund_id,
+          session_name: refund.session_name,
+        }),
+        `payment-refund:${adjustmentId}`,
+      ],
+    );
+  }
+
+  private assertAdjustmentMatches(
+    adjustment: PreparedPaymentAdjustment,
+    input: CreatePaymentAdjustmentInput,
+  ): void {
+    if (
+      adjustment.adjustment_type !== input.adjustmentType ||
+      adjustment.amount_cents !== input.amountCents ||
+      adjustment.payment_attempt_id !== input.paymentAttemptId ||
+      adjustment.reason !== input.reason.trim() ||
+      adjustment.registration_id !== input.registrationId
+    ) {
+      throw new PaymentIdempotencyConflictError(
+        'The idempotency key was already used for another payment adjustment',
+      );
+    }
+  }
+
+  private async requireAdjustment(
+    client: PoolClient,
+    organizationId: string,
+    adjustmentId: string,
+    forUpdate = false,
+  ): Promise<PreparedPaymentAdjustment> {
+    const result = await client.query<PreparedPaymentAdjustment>(
+      `SELECT pa.id, pa.organization_id, pa.family_id, pa.registration_id,
+              pa.payment_attempt_id, pa.adjustment_type, pa.amount_cents, pa.currency,
+              pa.reason, pa.status, pa.provider, pa.provider_account_id,
+              pa.provider_refund_id AS provider_reference, attempt.provider_payment_intent_id,
+              pa.created_by, pa.created_at, pa.completed_at
+       FROM payment_adjustments pa
+       LEFT JOIN payment_attempts attempt
+         ON attempt.organization_id=pa.organization_id AND attempt.id=pa.payment_attempt_id
+       WHERE pa.organization_id=$1 AND pa.id=$2
+       ${forUpdate ? 'FOR UPDATE OF pa' : ''}`,
+      [organizationId, adjustmentId],
+    );
+    const adjustment = result.rows[0];
+    if (!adjustment) throw new PaymentNotFoundError('Payment adjustment not found');
+    return adjustment;
   }
 
   private async requireAttempt(

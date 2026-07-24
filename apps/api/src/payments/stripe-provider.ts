@@ -1,7 +1,13 @@
-import type { ProviderPaymentEvent } from '@camp-registration/database';
+import type { ProviderPaymentEvent, ProviderRefundEvent } from '@camp-registration/database';
 import Stripe from 'stripe';
 
-import type { HostedCheckoutInput, HostedCheckoutResult, PaymentProvider } from './provider.js';
+import type {
+  HostedCheckoutInput,
+  HostedCheckoutResult,
+  PaymentProvider,
+  RefundInput,
+  RefundResult,
+} from './provider.js';
 
 function paymentIntentId(session: Stripe.Checkout.Session): string | null {
   if (typeof session.payment_intent === 'string') return session.payment_intent;
@@ -78,6 +84,33 @@ export class StripePaymentProvider implements PaymentProvider {
     return { checkoutUrl: session.url, providerCheckoutSessionId: session.id };
   }
 
+  async createRefund(input: RefundInput): Promise<RefundResult> {
+    const refund = await this.stripe.refunds.create(
+      {
+        amount: input.amountCents,
+        metadata: {
+          organization_id: input.organizationId,
+          payment_adjustment_id: input.adjustmentId,
+        },
+        payment_intent: input.paymentIntentId,
+      },
+      {
+        idempotencyKey: `payment-adjustment:${input.adjustmentId}`,
+        stripeAccount: input.providerAccountId,
+      },
+    );
+    return {
+      failureCode: refund.failure_reason ?? null,
+      providerRefundId: refund.id,
+      status:
+        refund.status === 'succeeded'
+          ? 'SUCCEEDED'
+          : refund.status === 'failed' || refund.status === 'canceled'
+            ? 'FAILED'
+            : 'PENDING',
+    };
+  }
+
   async expireHostedCheckout(
     providerAccountId: string,
     providerCheckoutSessionId: string,
@@ -87,8 +120,42 @@ export class StripePaymentProvider implements PaymentProvider {
     });
   }
 
-  verifyWebhook(rawBody: Buffer, signature: string): ProviderPaymentEvent | null {
+  verifyWebhook(
+    rawBody: Buffer,
+    signature: string,
+  ): ProviderPaymentEvent | ProviderRefundEvent | null {
     const event = this.stripe.webhooks.constructEvent(rawBody, signature, this.webhookSecret);
+    if (['refund.created', 'refund.updated', 'refund.failed'].includes(event.type)) {
+      const refund = event.data.object as Stripe.Refund;
+      const adjustmentId = refund.metadata?.payment_adjustment_id;
+      const organizationId = refund.metadata?.organization_id;
+      const providerAccountId = event.account;
+      if (!adjustmentId || !organizationId || !providerAccountId) {
+        throw new Error('Stripe refund event is missing required payment metadata');
+      }
+      if (refund.currency.toUpperCase() !== 'USD') {
+        throw new Error('Stripe refund event currency does not match the registration ledger');
+      }
+      return {
+        adjustment_id: adjustmentId,
+        amount_cents: refund.amount,
+        currency: 'USD',
+        event_id: event.id,
+        event_type: event.type,
+        failure_code: refund.failure_reason ?? null,
+        kind: 'REFUND',
+        organization_id: organizationId,
+        provider: 'STRIPE',
+        provider_account_id: providerAccountId,
+        provider_refund_id: refund.id,
+        status:
+          refund.status === 'succeeded'
+            ? 'SUCCEEDED'
+            : refund.status === 'failed' || refund.status === 'canceled'
+              ? 'FAILED'
+              : 'PENDING',
+      };
+    }
     if (
       ![
         'checkout.session.completed',
@@ -117,6 +184,7 @@ export class StripePaymentProvider implements PaymentProvider {
       event_type: event.type,
       failure_code:
         event.type === 'checkout.session.async_payment_failed' ? 'async_payment_failed' : null,
+      kind: 'PAYMENT',
       organization_id: organizationId,
       provider: 'STRIPE',
       provider_account_id: providerAccountId,

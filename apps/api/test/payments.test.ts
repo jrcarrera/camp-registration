@@ -60,6 +60,27 @@ function paymentService(): PaymentServiceApi {
       currency: 'USD' as const,
       status: 'PENDING' as const,
     })),
+    createAdjustment: vi.fn(async (input) => ({
+      adjustment_type: input.adjustment_type,
+      amount_cents: input.amount_cents,
+      completed_at: '2026-07-18T12:02:00.000Z',
+      created_at: '2026-07-18T12:02:00.000Z',
+      created_by: 'finance-user',
+      currency: 'USD' as const,
+      family_id: familyId,
+      id: 'e123e456-e89b-42d3-a456-426614174000',
+      payment_attempt_id: input.payment_attempt_id ?? null,
+      provider: input.adjustment_type === 'REFUND' ? ('LOCAL' as const) : null,
+      provider_reference:
+        input.adjustment_type === 'REFUND' ? 'local_re_e123e456e89b42d3a456426614174000' : null,
+      reason: input.reason,
+      registration_id: input.registration_id,
+      status: 'SUCCEEDED' as const,
+    })),
+    getAdjustmentCenter: vi.fn(async () => ({
+      accounts: [],
+      adjustments: [],
+    })),
     getAttempt: vi.fn(async () => attempt()),
     listAttempts: vi.fn(async () => [attempt()]),
   };
@@ -113,5 +134,33 @@ describe('payment routes', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json().attempt.status).toBe('SUCCEEDED');
+  });
+
+  it('creates an audited finance adjustment', async () => {
+    const service = paymentService();
+    const app = await buildApp({ paymentService: service });
+    apps.push(app);
+    const response = await app.inject({
+      method: 'POST',
+      payload: {
+        adjustment_type: 'CREDIT',
+        amount_cents: 1000,
+        idempotency_key: idempotencyKey,
+        reason: 'Family service credit',
+        registration_id: registrationId,
+      },
+      url: '/v1/payment-adjustments',
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).toMatchObject({
+      adjustment_type: 'CREDIT',
+      amount_cents: 1000,
+      registration_id: registrationId,
+    });
+    expect(service.createAdjustment).toHaveBeenCalledWith(
+      expect.objectContaining({ adjustment_type: 'CREDIT' }),
+      expect.any(String),
+    );
   });
 });

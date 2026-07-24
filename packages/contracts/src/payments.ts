@@ -60,6 +60,87 @@ export const PaymentAttemptListResponseSchema = Type.Object(
   { additionalProperties: false, $id: 'PaymentAttemptListResponse' },
 );
 
+export const PaymentAdjustmentTypeSchema = Type.Union([
+  Type.Literal('CREDIT'),
+  Type.Literal('CHARGE'),
+  Type.Literal('REFUND'),
+]);
+export const PaymentAdjustmentStatusSchema = Type.Union([
+  Type.Literal('PENDING'),
+  Type.Literal('SUCCEEDED'),
+  Type.Literal('FAILED'),
+]);
+
+export const PaymentAccountSchema = Type.Object(
+  {
+    balance_due_cents: Type.Integer({ minimum: 0 }),
+    camper_name: Type.String({ minLength: 1 }),
+    charge_cents: Type.Integer({ minimum: 0 }),
+    credit_cents: Type.Integer({ minimum: 0 }),
+    family_id: UuidSchema,
+    family_name: Type.String({ minLength: 1 }),
+    paid_cents: Type.Integer(),
+    price_cents: Type.Integer({ minimum: 0 }),
+    refundable_cents: Type.Integer({ minimum: 0 }),
+    refund_sources: Type.Array(
+      Type.Object(
+        {
+          amount_cents: Type.Integer({ minimum: 1 }),
+          attempt_id: UuidSchema,
+          completed_at: UtcTimestampSchema,
+          provider: PaymentProviderSchema,
+          refundable_cents: Type.Integer({ minimum: 1 }),
+        },
+        { additionalProperties: false },
+      ),
+    ),
+    refunded_cents: Type.Integer({ minimum: 0 }),
+    registration_id: UuidSchema,
+    session_name: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false, $id: 'PaymentAccount' },
+);
+
+export const PaymentAdjustmentSchema = Type.Object(
+  {
+    adjustment_type: PaymentAdjustmentTypeSchema,
+    amount_cents: Type.Integer({ minimum: 1 }),
+    completed_at: Type.Union([UtcTimestampSchema, Type.Null()]),
+    created_at: UtcTimestampSchema,
+    created_by: Type.String({ minLength: 1 }),
+    currency: Type.Literal('USD'),
+    family_id: UuidSchema,
+    id: UuidSchema,
+    payment_attempt_id: Type.Union([UuidSchema, Type.Null()]),
+    provider: Type.Union([PaymentProviderSchema, Type.Null()]),
+    provider_reference: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+    reason: Type.String({ minLength: 3, maxLength: 500 }),
+    registration_id: UuidSchema,
+    status: PaymentAdjustmentStatusSchema,
+  },
+  { additionalProperties: false, $id: 'PaymentAdjustment' },
+);
+
+export const PaymentAdjustmentCreateSchema = Type.Object(
+  {
+    adjustment_type: PaymentAdjustmentTypeSchema,
+    amount_cents: Type.Integer({ minimum: 1, maximum: 10_000_000 }),
+    idempotency_key: UuidSchema,
+    payment_attempt_id: Type.Optional(Type.Union([UuidSchema, Type.Null()])),
+    reason: Type.String({ minLength: 3, maxLength: 500 }),
+    registration_id: UuidSchema,
+  },
+  { additionalProperties: false, $id: 'PaymentAdjustmentCreate' },
+);
+
+export const PaymentAdjustmentCenterSchema = Type.Object(
+  {
+    accounts: Type.Array(PaymentAccountSchema),
+    adjustments: Type.Array(PaymentAdjustmentSchema),
+  },
+  { additionalProperties: false, $id: 'PaymentAdjustmentCenter' },
+);
+
 export const PaymentAttemptParamsSchema = Type.Object(
   { attemptId: UuidSchema },
   { additionalProperties: false },
@@ -72,6 +153,12 @@ export const PaymentCompletionSchema = Type.Object(
 
 export type OnlinePaymentCheckoutCreate = Static<typeof OnlinePaymentCheckoutCreateSchema>;
 export type OnlinePaymentCheckout = Static<typeof OnlinePaymentCheckoutSchema>;
+export type PaymentAccount = Static<typeof PaymentAccountSchema>;
+export type PaymentAdjustment = Static<typeof PaymentAdjustmentSchema>;
+export type PaymentAdjustmentCenter = Static<typeof PaymentAdjustmentCenterSchema>;
+export type PaymentAdjustmentCreate = Static<typeof PaymentAdjustmentCreateSchema>;
+export type PaymentAdjustmentStatus = Static<typeof PaymentAdjustmentStatusSchema>;
+export type PaymentAdjustmentType = Static<typeof PaymentAdjustmentTypeSchema>;
 export type PaymentAttempt = Static<typeof PaymentAttemptSchema>;
 export type PaymentAttemptListResponse = Static<typeof PaymentAttemptListResponseSchema>;
 export type PaymentAttemptParams = Static<typeof PaymentAttemptParamsSchema>;

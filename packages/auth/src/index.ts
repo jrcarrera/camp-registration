@@ -2,6 +2,7 @@ export const platformRoles = [
   'parent_guardian',
   'camp_staff',
   'health_staff',
+  'finance_staff',
   'camp_admin',
   'organization_admin',
   'system_admin',

@@ -12,6 +12,7 @@ import { type FormEvent, useState } from 'react';
 const availableRoles: Array<{ label: string; value: IdentityRole }> = [
   { label: 'Camp staff', value: 'camp_staff' },
   { label: 'Health staff', value: 'health_staff' },
+  { label: 'Finance staff', value: 'finance_staff' },
   { label: 'Camp admin', value: 'camp_admin' },
 ];
 

@@ -7,6 +7,7 @@ import type {
   LifecycleNotificationTemplateData,
   OrderNotificationSummary,
   PaymentReceiptNotificationTemplateData,
+  PaymentRefundNotificationTemplateData,
   WaitlistNotificationTemplateData,
   WaitlistNotificationType,
 } from '@camp-registration/database';
@@ -164,6 +165,23 @@ export function buildWaitlistEmail(
       messageId: deterministicMessageId(record.idempotency_key),
       subject: `Payment received: ${data.session_name}`,
       text: `${data.family_name},\n\nWe received ${amount} for ${data.camper_name}'s registration in ${data.session_name}.${receiptLine}${summary}\n\nReview your camp plan: ${new URL(data.portal_path, portalBaseUrl).toString()}\n\nCamp Registration`,
+      to: record.recipient_email,
+    };
+  }
+
+  if (record.notification_type === 'PAYMENT_REFUND') {
+    const data = record.template_data as PaymentRefundNotificationTemplateData;
+    const amount = new Intl.NumberFormat('en-US', {
+      currency: data.currency,
+      style: 'currency',
+    }).format(data.amount_cents / 100);
+    const referenceLine = data.provider_reference
+      ? `\nRefund reference: ${data.provider_reference}`
+      : '';
+    return {
+      messageId: deterministicMessageId(record.idempotency_key),
+      subject: `Refund issued: ${data.session_name}`,
+      text: `${data.family_name},\n\nWe issued a ${amount} refund for ${data.camper_name}'s registration in ${data.session_name}.${referenceLine}\n\nYour bank may take several business days to post provider refunds. Review your camp plan: ${new URL(data.portal_path, portalBaseUrl).toString()}\n\nCamp Registration`,
       to: record.recipient_email,
     };
   }

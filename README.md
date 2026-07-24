@@ -10,8 +10,10 @@ order history, cancellation, and atomic individual or grouped waitlist
 workflows. Household checkout supports add-ons, automatic discounts, coupons,
 approved financial assistance, and parent-selected installment plans through
 provider-hosted payments. Staff can configure pricing, review assistance,
-inspect stuck holds, and reconcile immutable per-registration ledger
-allocations. Reusable forms and waivers, version-bound drafts,
+inspect stuck holds, reconcile immutable per-registration ledger allocations,
+and use finance-only workflows for bounded credits, charges, and partial
+provider refunds with required reasons, audit history, and family notices.
+Reusable forms and waivers, version-bound drafts,
 acknowledgements, electronic signatures, attendance check-in, scheduled queue
 advancement, transactional email delivery, and audited session roster/check-in
 CSV presets are also implemented. Operational reporting now adds nine
@@ -71,8 +73,10 @@ The local services are:
 
 Local development enables a payment-provider test adapter. It exercises the
 same attempt, redirect, reconciliation, ledger, and receipt path without asking
-for card details. Production sets `PAYMENT_PROVIDER=stripe`, platform Stripe
-secrets, and each camp's connected account ID; Checkout remains Stripe-hosted.
+for card details. It also simulates successful refunds through the same
+idempotent adjustment path. Production sets `PAYMENT_PROVIDER=stripe`, platform
+Stripe secrets, and each camp's connected account ID; Checkout and refunds
+remain behind the provider boundary.
 
 For faster host-based application development, start the supporting services
 with `pnpm infra:up`, run `pnpm db:migrate` and

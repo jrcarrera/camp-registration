@@ -6,6 +6,7 @@ export const AccountIdSchema = Type.String({ minLength: 1, maxLength: 255 });
 export const IdentityRoleSchema = Type.Union([
   Type.Literal('camp_staff'),
   Type.Literal('health_staff'),
+  Type.Literal('finance_staff'),
   Type.Literal('camp_admin'),
   Type.Literal('organization_admin'),
 ]);

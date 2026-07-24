@@ -42,6 +42,7 @@ const challengeLifetimeMs = 10 * 60 * 1000;
 const workforceRoles = new Set<IdentityRole>([
   'camp_staff',
   'health_staff',
+  'finance_staff',
   'camp_admin',
   'organization_admin',
 ]);

@@ -2,7 +2,12 @@ import type { PoolClient, QueryResult, QueryResultRow } from 'pg';
 
 import type { DatabaseClient } from './client.js';
 
-export type IdentityRole = 'camp_staff' | 'health_staff' | 'camp_admin' | 'organization_admin';
+export type IdentityRole =
+  | 'camp_staff'
+  | 'health_staff'
+  | 'finance_staff'
+  | 'camp_admin'
+  | 'organization_admin';
 
 export interface PublicOrganizationRecord {
   id: string;

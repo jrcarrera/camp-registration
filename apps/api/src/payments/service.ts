@@ -3,6 +3,9 @@ import { randomUUID } from 'node:crypto';
 import type { RequestIdentity } from '@camp-registration/auth';
 import type {
   OnlinePaymentCheckout,
+  PaymentAdjustment,
+  PaymentAdjustmentCenter,
+  PaymentAdjustmentCreate,
   PaymentAttempt,
   PaymentCompletion,
 } from '@camp-registration/contracts';
@@ -10,7 +13,8 @@ import type { PaymentStore, ProviderPaymentEvent } from '@camp-registration/data
 
 import type { PaymentProvider } from './provider.js';
 
-const staffRoles = new Set(['camp_staff', 'camp_admin', 'organization_admin']);
+const staffRoles = new Set(['camp_staff', 'finance_staff', 'camp_admin', 'organization_admin']);
+const financeRoles = new Set(['finance_staff', 'camp_admin', 'organization_admin']);
 const parentRoles = new Set(['parent_guardian']);
 
 export class PaymentAuthorizationError extends Error {}
@@ -38,6 +42,8 @@ export interface PaymentServiceApi {
     idempotencyKey: string,
     requestId: string,
   ): Promise<OnlinePaymentCheckout>;
+  createAdjustment(input: PaymentAdjustmentCreate, requestId: string): Promise<PaymentAdjustment>;
+  getAdjustmentCenter(): Promise<PaymentAdjustmentCenter>;
   getAttempt(attemptId: string): Promise<PaymentAttempt>;
   listAttempts(): Promise<PaymentAttempt[]>;
 }
@@ -52,13 +58,16 @@ export class PaymentWebhookService {
     if (!this.provider.verifyWebhook) {
       throw new PaymentProviderUnavailableError('Payment webhooks are not configured');
     }
-    let event: ProviderPaymentEvent | null;
+    let event;
     try {
       event = this.provider.verifyWebhook(rawBody, signature);
     } catch {
       throw new PaymentWebhookVerificationError('Payment webhook signature is invalid');
     }
-    return event ? this.store.applyProviderEvent(event) : null;
+    if (!event) return null;
+    return event.kind === 'REFUND'
+      ? this.store.applyProviderRefundEvent(event)
+      : this.store.applyProviderEvent(event);
   }
 }
 
@@ -83,6 +92,12 @@ export class PaymentService implements PaymentServiceApi {
   private authorizeStaff(): void {
     if (!this.hasRole(staffRoles)) {
       throw new PaymentAuthorizationError('Payment reconciliation access is not permitted');
+    }
+  }
+
+  private authorizeFinance(): void {
+    if (!this.hasRole(financeRoles)) {
+      throw new PaymentAuthorizationError('Finance adjustment access is not permitted');
     }
   }
 
@@ -248,6 +263,70 @@ export class PaymentService implements PaymentServiceApi {
     return this.store.listAttempts(this.organizationId);
   }
 
+  async getAdjustmentCenter(): Promise<PaymentAdjustmentCenter> {
+    this.authorizeFinance();
+    return this.store.listAdjustmentCenter(this.organizationId);
+  }
+
+  async createAdjustment(
+    input: PaymentAdjustmentCreate,
+    requestId: string,
+  ): Promise<PaymentAdjustment> {
+    this.authorizeFinance();
+    const adjustment = await this.store.createAdjustment(
+      {
+        actorId: this.identity.subject,
+        organizationId: this.organizationId,
+        requestId,
+      },
+      {
+        adjustmentId: randomUUID(),
+        adjustmentType: input.adjustment_type,
+        amountCents: input.amount_cents,
+        idempotencyKey: input.idempotency_key,
+        paymentAttemptId: input.payment_attempt_id ?? null,
+        reason: input.reason,
+        registrationId: input.registration_id,
+      },
+    );
+    if (input.adjustment_type !== 'REFUND' || adjustment.status === 'SUCCEEDED') {
+      return adjustment;
+    }
+    if (
+      !adjustment.provider_account_id ||
+      !adjustment.provider_payment_intent_id ||
+      adjustment.provider !== this.provider.name
+    ) {
+      await this.store.markRefundFailed(
+        this.organizationId,
+        adjustment.id,
+        'provider_configuration_mismatch',
+      );
+      throw new PaymentProviderUnavailableError(
+        'The original payment provider is not available for this refund',
+      );
+    }
+    let providerResult;
+    try {
+      providerResult = await this.provider.createRefund({
+        adjustmentId: adjustment.id,
+        amountCents: adjustment.amount_cents,
+        currency: adjustment.currency,
+        organizationId: this.organizationId,
+        paymentIntentId: adjustment.provider_payment_intent_id,
+        providerAccountId: adjustment.provider_account_id,
+      });
+    } catch {
+      await this.store.markRefundFailed(
+        this.organizationId,
+        adjustment.id,
+        'provider_request_failed',
+      );
+      throw new PaymentProviderUnavailableError('The refund provider request failed');
+    }
+    return this.store.attachRefund(this.organizationId, adjustment.id, providerResult);
+  }
+
   async getAttempt(attemptId: string): Promise<PaymentAttempt> {
     const attempt = await this.store.getAttempt(this.organizationId, attemptId);
     await this.authorizeFamilyPayment(attempt.family_id);
@@ -270,6 +349,7 @@ export class PaymentService implements PaymentServiceApi {
       event_id: `local:${attempt.id}:succeeded`,
       event_type: 'local.checkout.completed',
       failure_code: null,
+      kind: 'PAYMENT',
       organization_id: this.organizationId,
       provider: 'LOCAL',
       provider_account_id: attempt.provider_account_id,

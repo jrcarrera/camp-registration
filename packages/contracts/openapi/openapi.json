@@ -853,6 +853,12 @@
                                         {
                                           "type": "string",
                                           "enum": [
+                                            "finance_staff"
+                                          ]
+                                        },
+                                        {
+                                          "type": "string",
+                                          "enum": [
                                             "camp_admin"
                                           ]
                                         },
@@ -1462,6 +1468,12 @@
                                       "type": "string",
                                       "enum": [
                                         "health_staff"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "finance_staff"
                                       ]
                                     },
                                     {
@@ -2303,6 +2315,12 @@
                                     {
                                       "type": "string",
                                       "enum": [
+                                        "finance_staff"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
                                         "camp_admin"
                                       ]
                                     },
@@ -3026,6 +3044,12 @@
                                       "type": "string",
                                       "enum": [
                                         "health_staff"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "finance_staff"
                                       ]
                                     },
                                     {
@@ -4502,6 +4526,12 @@
                                 {
                                   "type": "string",
                                   "enum": [
+                                    "finance_staff"
+                                  ]
+                                },
+                                {
+                                  "type": "string",
+                                  "enum": [
                                     "camp_admin"
                                   ]
                                 },
@@ -4594,6 +4624,12 @@
                                   "type": "string",
                                   "enum": [
                                     "health_staff"
+                                  ]
+                                },
+                                {
+                                  "type": "string",
+                                  "enum": [
+                                    "finance_staff"
                                   ]
                                 },
                                 {
@@ -5474,6 +5510,12 @@
                           {
                             "type": "string",
                             "enum": [
+                              "finance_staff"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
                               "camp_admin"
                             ]
                           },
@@ -5751,6 +5793,12 @@
                         {
                           "type": "string",
                           "enum": [
+                            "finance_staff"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
                             "camp_admin"
                           ]
                         },
@@ -5860,6 +5908,12 @@
                             "type": "string",
                             "enum": [
                               "health_staff"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "finance_staff"
                             ]
                           },
                           {
@@ -6421,6 +6475,12 @@
                           {
                             "type": "string",
                             "enum": [
+                              "finance_staff"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
                               "camp_admin"
                             ]
                           },
@@ -6700,6 +6760,12 @@
                         {
                           "type": "string",
                           "enum": [
+                            "finance_staff"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
                             "camp_admin"
                           ]
                         },
@@ -6799,6 +6865,12 @@
                             "type": "string",
                             "enum": [
                               "health_staff"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "finance_staff"
                             ]
                           },
                           {
@@ -7690,6 +7762,12 @@
                             "type": "string",
                             "enum": [
                               "health_staff"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "finance_staff"
                             ]
                           },
                           {
@@ -58494,6 +58572,867 @@
                         },
                         "title": "PaymentAttempt"
                       }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-adjustments": {
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "description": "List finance accounts and their immutable adjustment history.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "accounts",
+                    "adjustments"
+                  ],
+                  "properties": {
+                    "accounts": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "balance_due_cents",
+                          "camper_name",
+                          "charge_cents",
+                          "credit_cents",
+                          "family_id",
+                          "family_name",
+                          "paid_cents",
+                          "price_cents",
+                          "refundable_cents",
+                          "refund_sources",
+                          "refunded_cents",
+                          "registration_id",
+                          "session_name"
+                        ],
+                        "properties": {
+                          "balance_due_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "camper_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "charge_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "credit_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "family_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "family_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "paid_cents": {
+                            "type": "integer"
+                          },
+                          "price_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "refundable_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "refund_sources": {
+                            "type": "array",
+                            "items": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "amount_cents",
+                                "attempt_id",
+                                "completed_at",
+                                "provider",
+                                "refundable_cents"
+                              ],
+                              "properties": {
+                                "amount_cents": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "attempt_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "completed_at": {
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                  "type": "string"
+                                },
+                                "provider": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "STRIPE"
+                                      ]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "LOCAL"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "refundable_cents": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          },
+                          "refunded_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "registration_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "session_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          }
+                        },
+                        "title": "PaymentAccount"
+                      }
+                    },
+                    "adjustments": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "adjustment_type",
+                          "amount_cents",
+                          "completed_at",
+                          "created_at",
+                          "created_by",
+                          "currency",
+                          "family_id",
+                          "id",
+                          "payment_attempt_id",
+                          "provider",
+                          "provider_reference",
+                          "reason",
+                          "registration_id",
+                          "status"
+                        ],
+                        "properties": {
+                          "adjustment_type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CREDIT"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CHARGE"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "REFUND"
+                                ]
+                              }
+                            ]
+                          },
+                          "amount_cents": {
+                            "minimum": 1,
+                            "type": "integer"
+                          },
+                          "completed_at": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "created_at": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                            "type": "string"
+                          },
+                          "created_by": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "currency": {
+                            "type": "string",
+                            "enum": [
+                              "USD"
+                            ]
+                          },
+                          "family_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "payment_attempt_id": {
+                            "anyOf": [
+                              {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "provider": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "STRIPE"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "LOCAL"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "provider_reference": {
+                            "anyOf": [
+                              {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "reason": {
+                            "minLength": 3,
+                            "maxLength": 500,
+                            "type": "string"
+                          },
+                          "registration_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PENDING"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "SUCCEEDED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "FAILED"
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        "title": "PaymentAdjustment"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "payments"
+        ],
+        "description": "Create an audited registration credit, charge, or provider-backed refund.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "adjustment_type",
+                  "amount_cents",
+                  "idempotency_key",
+                  "reason",
+                  "registration_id"
+                ],
+                "properties": {
+                  "adjustment_type": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CREDIT"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CHARGE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "REFUND"
+                        ]
+                      }
+                    ]
+                  },
+                  "amount_cents": {
+                    "minimum": 1,
+                    "maximum": 10000000,
+                    "type": "integer"
+                  },
+                  "idempotency_key": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "payment_attempt_id": {
+                    "anyOf": [
+                      {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "reason": {
+                    "minLength": 3,
+                    "maxLength": 500,
+                    "type": "string"
+                  },
+                  "registration_id": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "adjustment_type",
+                    "amount_cents",
+                    "completed_at",
+                    "created_at",
+                    "created_by",
+                    "currency",
+                    "family_id",
+                    "id",
+                    "payment_attempt_id",
+                    "provider",
+                    "provider_reference",
+                    "reason",
+                    "registration_id",
+                    "status"
+                  ],
+                  "properties": {
+                    "adjustment_type": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CREDIT"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CHARGE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "REFUND"
+                          ]
+                        }
+                      ]
+                    },
+                    "amount_cents": {
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "completed_at": {
+                      "anyOf": [
+                        {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "created_at": {
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                      "type": "string"
+                    },
+                    "created_by": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "enum": [
+                        "USD"
+                      ]
+                    },
+                    "family_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "payment_attempt_id": {
+                      "anyOf": [
+                        {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "provider": {
+                      "anyOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "STRIPE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "LOCAL"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "provider_reference": {
+                      "anyOf": [
+                        {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "reason": {
+                      "minLength": 3,
+                      "maxLength": 500,
+                      "type": "string"
+                    },
+                    "registration_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PENDING"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SUCCEEDED"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "FAILED"
+                          ]
+                        }
+                      ]
                     }
                   }
                 }

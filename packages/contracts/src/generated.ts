@@ -325,7 +325,7 @@ export interface paths {
                             organizations: {
                                 name: string;
                                 organization_id: string;
-                                roles: ("parent_guardian" | ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin"))[];
+                                roles: ("parent_guardian" | ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin"))[];
                                 slug: string;
                             }[];
                             platform_role: "system_admin" | null;
@@ -599,7 +599,7 @@ export interface paths {
                             organizations: {
                                 name: string;
                                 organization_id: string;
-                                roles: ("parent_guardian" | ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin"))[];
+                                roles: ("parent_guardian" | ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin"))[];
                                 slug: string;
                             }[];
                             platform_role: "system_admin" | null;
@@ -991,7 +991,7 @@ export interface paths {
                             organizations: {
                                 name: string;
                                 organization_id: string;
-                                roles: ("parent_guardian" | ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin"))[];
+                                roles: ("parent_guardian" | ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin"))[];
                                 slug: string;
                             }[];
                             platform_role: "system_admin" | null;
@@ -1279,7 +1279,7 @@ export interface paths {
                             organizations: {
                                 name: string;
                                 organization_id: string;
-                                roles: ("parent_guardian" | ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin"))[];
+                                roles: ("parent_guardian" | ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin"))[];
                                 slug: string;
                             }[];
                             platform_role: "system_admin" | null;
@@ -1941,7 +1941,7 @@ export interface paths {
                                 id: string;
                                 invitation_type: "FAMILY_ADULT" | "WORKFORCE";
                                 organization_id: string;
-                                roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                                roles: ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin")[];
                                 status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
                             }[];
                             memberships: {
@@ -1950,7 +1950,7 @@ export interface paths {
                                 email: string;
                                 id: string;
                                 organization_id: string;
-                                roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                                roles: ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin")[];
                                 status: "ACTIVE" | "DISABLED";
                                 version: number;
                             }[];
@@ -2260,7 +2260,7 @@ export interface paths {
                             id: string;
                             invitation_type: "FAMILY_ADULT" | "WORKFORCE";
                             organization_id: string;
-                            roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                            roles: ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin")[];
                             status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
                         };
                     };
@@ -2384,7 +2384,7 @@ export interface paths {
                     "application/json": {
                         /** Format: email */
                         email: string;
-                        roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                        roles: ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin")[];
                     };
                 };
             };
@@ -2404,7 +2404,7 @@ export interface paths {
                             id: string;
                             invitation_type: "FAMILY_ADULT" | "WORKFORCE";
                             organization_id: string;
-                            roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                            roles: ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin")[];
                             status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
                         };
                     };
@@ -2667,7 +2667,7 @@ export interface paths {
                             id: string;
                             invitation_type: "FAMILY_ADULT" | "WORKFORCE";
                             organization_id: string;
-                            roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                            roles: ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin")[];
                             status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
                         };
                     };
@@ -2796,7 +2796,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         reason: string;
-                        roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                        roles: ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin")[];
                         status: "ACTIVE" | "DISABLED";
                         version: number;
                     };
@@ -2815,7 +2815,7 @@ export interface paths {
                             email: string;
                             id: string;
                             organization_id: string;
-                            roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                            roles: ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin")[];
                             status: "ACTIVE" | "DISABLED";
                             version: number;
                         };
@@ -3225,7 +3225,7 @@ export interface paths {
                             id: string;
                             invitation_type: "FAMILY_ADULT" | "WORKFORCE";
                             organization_id: string;
-                            roles: ("camp_staff" | "health_staff" | "camp_admin" | "organization_admin")[];
+                            roles: ("camp_staff" | "health_staff" | "finance_staff" | "camp_admin" | "organization_admin")[];
                             status: "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
                         };
                     };
@@ -18598,6 +18598,278 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/payment-adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List finance accounts and their immutable adjustment history. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            accounts: {
+                                balance_due_cents: number;
+                                camper_name: string;
+                                charge_cents: number;
+                                credit_cents: number;
+                                family_id: string;
+                                family_name: string;
+                                paid_cents: number;
+                                price_cents: number;
+                                refundable_cents: number;
+                                refund_sources: {
+                                    amount_cents: number;
+                                    attempt_id: string;
+                                    completed_at: string;
+                                    provider: "STRIPE" | "LOCAL";
+                                    refundable_cents: number;
+                                }[];
+                                refunded_cents: number;
+                                registration_id: string;
+                                session_name: string;
+                            }[];
+                            adjustments: {
+                                adjustment_type: "CREDIT" | "CHARGE" | "REFUND";
+                                amount_cents: number;
+                                completed_at: string | null;
+                                created_at: string;
+                                created_by: string;
+                                /** @enum {string} */
+                                currency: "USD";
+                                family_id: string;
+                                id: string;
+                                payment_attempt_id: string | null;
+                                provider: ("STRIPE" | "LOCAL") | null;
+                                provider_reference: string | null;
+                                reason: string;
+                                registration_id: string;
+                                status: "PENDING" | "SUCCEEDED" | "FAILED";
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** @description Create an audited registration credit, charge, or provider-backed refund. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        adjustment_type: "CREDIT" | "CHARGE" | "REFUND";
+                        amount_cents: number;
+                        idempotency_key: string;
+                        payment_attempt_id?: string | null;
+                        reason: string;
+                        registration_id: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            adjustment_type: "CREDIT" | "CHARGE" | "REFUND";
+                            amount_cents: number;
+                            completed_at: string | null;
+                            created_at: string;
+                            created_by: string;
+                            /** @enum {string} */
+                            currency: "USD";
+                            family_id: string;
+                            id: string;
+                            payment_attempt_id: string | null;
+                            provider: ("STRIPE" | "LOCAL") | null;
+                            provider_reference: string | null;
+                            reason: string;
+                            registration_id: string;
+                            status: "PENDING" | "SUCCEEDED" | "FAILED";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;

@@ -13,6 +13,7 @@ export type WaitlistNotificationType =
 export type NotificationType =
   | WaitlistNotificationType
   | 'PAYMENT_RECEIPT'
+  | 'PAYMENT_REFUND'
   | 'ORDER_CONFIRMATION'
   | 'INSTALLMENT_DUE_SOON'
   | 'INSTALLMENT_DUE'
@@ -48,6 +49,16 @@ export interface PaymentReceiptNotificationTemplateData {
   receipt_url: string | null;
   session_name: string;
   order_summary?: OrderNotificationSummary;
+}
+
+export interface PaymentRefundNotificationTemplateData {
+  amount_cents: number;
+  camper_name: string;
+  currency: 'USD';
+  family_name: string;
+  portal_path: string;
+  provider_reference: string | null;
+  session_name: string;
 }
 
 export interface OrderNotificationLine {
@@ -99,6 +110,7 @@ export interface NotificationOutboxRecord {
   template_data:
     | WaitlistNotificationTemplateData
     | PaymentReceiptNotificationTemplateData
+    | PaymentRefundNotificationTemplateData
     | BillingNotificationTemplateData
     | IdentityNotificationTemplateData
     | LifecycleNotificationTemplateData;
@@ -108,6 +120,7 @@ interface NotificationOutboxRow extends Omit<NotificationOutboxRecord, 'template
   template_data:
     | WaitlistNotificationTemplateData
     | PaymentReceiptNotificationTemplateData
+    | PaymentRefundNotificationTemplateData
     | BillingNotificationTemplateData
     | IdentityNotificationTemplateData
     | LifecycleNotificationTemplateData;
