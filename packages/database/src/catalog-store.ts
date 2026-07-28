@@ -267,6 +267,33 @@ export interface UpdateSessionAttendanceContext {
   update: SessionAttendanceUpdateRecord;
 }
 
+export interface BulkUpdateSessionAttendanceContext {
+  action: Extract<CatalogAttendanceAction, 'CHECK_IN' | 'MARK_ABSENT'>;
+  actorId: string;
+  attendanceDate: string;
+  note: string | null;
+  organizationId: string;
+  registrationIds: string[];
+  requestId: string;
+  sessionId: string;
+}
+
+export interface SessionAttendanceDayRecord {
+  absent_count: number;
+  attendance_date: string;
+  checked_in_count: number;
+  checked_out_count: number;
+  confirmed_count: number;
+  not_marked_count: number;
+}
+
+export interface SessionAttendanceSummaryRecord {
+  days: SessionAttendanceDayRecord[];
+  ends_on: string;
+  session_id: string;
+  starts_on: string;
+}
+
 export interface ExportSessionReportContext extends CreateCatalogContext {
   preset: 'SESSION_ROSTER' | 'CHECK_IN_SHEET';
   sessionId: string;
@@ -683,9 +710,100 @@ export class CatalogStore {
     return mapSession(session, registeredCampers);
   }
 
-  async getSession(organizationId: string, sessionId: string): Promise<SessionDetailRecord | null> {
+  async getSession(
+    organizationId: string,
+    sessionId: string,
+    attendanceDate?: string,
+  ): Promise<SessionDetailRecord | null> {
     return this.withTenant(organizationId, async (client) => {
-      return this.getSessionForClient(client, organizationId, sessionId);
+      return this.getSessionForClient(client, organizationId, sessionId, attendanceDate);
+    });
+  }
+
+  async getSessionAttendanceSummary(
+    organizationId: string,
+    sessionId: string,
+  ): Promise<SessionAttendanceSummaryRecord | null> {
+    return this.withTenant(organizationId, async (client) => {
+      const session = await client.query<{ ends_on: string; starts_on: string }>(
+        `SELECT ends_on::text AS ends_on, starts_on::text AS starts_on
+         FROM sessions
+         WHERE organization_id = $1 AND id = $2`,
+        [organizationId, sessionId],
+      );
+      const bounds = session.rows[0];
+      if (!bounds) return null;
+
+      const result = await client.query<{
+        absent_count: string;
+        attendance_date: string;
+        checked_in_count: string;
+        checked_out_count: string;
+        confirmed_count: string;
+      }>(
+        `WITH session_days AS (
+           SELECT day::date AS attendance_date
+           FROM generate_series($3::date, $4::date, interval '1 day') AS day
+         ),
+         confirmed_roster AS (
+           SELECT count(*)::integer AS confirmed_count
+           FROM registrations
+           WHERE organization_id = $1
+             AND session_id = $2
+             AND status = 'CONFIRMED'
+         )
+         SELECT
+           days.attendance_date::text AS attendance_date,
+           roster.confirmed_count::text AS confirmed_count,
+           count(attendance.id) FILTER (
+             WHERE attendance.status = 'CHECKED_IN' AND registration.id IS NOT NULL
+           )::text
+             AS checked_in_count,
+           count(attendance.id) FILTER (
+             WHERE attendance.status = 'CHECKED_OUT' AND registration.id IS NOT NULL
+           )::text
+             AS checked_out_count,
+           count(attendance.id) FILTER (
+             WHERE attendance.status = 'ABSENT' AND registration.id IS NOT NULL
+           )::text
+             AS absent_count
+         FROM session_days days
+         CROSS JOIN confirmed_roster roster
+         LEFT JOIN registration_attendance attendance
+           ON attendance.organization_id = $1
+          AND attendance.session_id = $2
+          AND attendance.attendance_date = days.attendance_date
+         LEFT JOIN registrations registration
+           ON registration.organization_id = attendance.organization_id
+          AND registration.id = attendance.registration_id
+          AND registration.status = 'CONFIRMED'
+         GROUP BY days.attendance_date, roster.confirmed_count
+         ORDER BY days.attendance_date`,
+        [organizationId, sessionId, bounds.starts_on, bounds.ends_on],
+      );
+
+      return {
+        days: result.rows.map((row) => {
+          const confirmedCount = Number(row.confirmed_count);
+          const checkedInCount = Number(row.checked_in_count);
+          const checkedOutCount = Number(row.checked_out_count);
+          const absentCount = Number(row.absent_count);
+          return {
+            absent_count: absentCount,
+            attendance_date: row.attendance_date,
+            checked_in_count: checkedInCount,
+            checked_out_count: checkedOutCount,
+            confirmed_count: confirmedCount,
+            not_marked_count: Math.max(
+              confirmedCount - checkedInCount - checkedOutCount - absentCount,
+              0,
+            ),
+          };
+        }),
+        ends_on: bounds.ends_on,
+        session_id: sessionId,
+        starts_on: bounds.starts_on,
+      };
     });
   }
 
@@ -1412,6 +1530,135 @@ export class CatalogStore {
       if (!updated) {
         throw new CatalogNotFoundError('Updated session not found');
       }
+      return updated;
+    });
+  }
+
+  async bulkUpdateSessionAttendance(
+    context: BulkUpdateSessionAttendanceContext,
+  ): Promise<SessionDetailRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const sessionResult = await client.query<{ ends_on: string; starts_on: string }>(
+        `SELECT ends_on::text AS ends_on, starts_on::text AS starts_on
+         FROM sessions
+         WHERE organization_id = $1 AND id = $2
+         FOR UPDATE`,
+        [context.organizationId, context.sessionId],
+      );
+      const session = sessionResult.rows[0];
+      if (!session) throw new CatalogNotFoundError('Session not found');
+      if (context.attendanceDate < session.starts_on || context.attendanceDate > session.ends_on) {
+        throw new CatalogReferenceError('Attendance date must fall within the session dates');
+      }
+
+      const registrations = await client.query<{ id: string }>(
+        `SELECT id
+         FROM registrations
+         WHERE organization_id = $1
+           AND session_id = $2
+           AND id = ANY($3::uuid[])
+           AND status = 'CONFIRMED'
+         FOR UPDATE`,
+        [context.organizationId, context.sessionId, context.registrationIds],
+      );
+      if (registrations.rowCount !== context.registrationIds.length) {
+        throw new CatalogReferenceError(
+          'Bulk attendance is limited to confirmed registrations in this session',
+        );
+      }
+
+      const existing = await client.query<{ registration_id: string }>(
+        `SELECT registration_id
+         FROM registration_attendance
+         WHERE organization_id = $1
+           AND session_id = $2
+           AND attendance_date = $3::date
+           AND registration_id = ANY($4::uuid[])
+         FOR UPDATE`,
+        [
+          context.organizationId,
+          context.sessionId,
+          context.attendanceDate,
+          context.registrationIds,
+        ],
+      );
+      if ((existing.rowCount ?? 0) > 0) {
+        throw new CatalogConflictError(
+          'One or more selected campers already have attendance for this date',
+        );
+      }
+
+      const recordIds = context.registrationIds.map(() => randomUUID());
+      const status = context.action === 'CHECK_IN' ? 'CHECKED_IN' : 'ABSENT';
+      await client.query(
+        `INSERT INTO registration_attendance (
+           id,
+           organization_id,
+           session_id,
+           family_id,
+           registration_id,
+           attendance_date,
+           status,
+           checked_in_at,
+           note,
+           recorded_by
+         )
+         SELECT
+           selected.record_id,
+           $1,
+           $2,
+           registration.family_id,
+           registration.id,
+           $5::date,
+           $6,
+           CASE WHEN $6 = 'CHECKED_IN' THEN transaction_timestamp() ELSE NULL END,
+           $7,
+           $8
+         FROM unnest($3::uuid[], $4::uuid[]) AS selected(record_id, registration_id)
+         JOIN registrations registration
+           ON registration.organization_id = $1
+          AND registration.session_id = $2
+          AND registration.id = selected.registration_id`,
+        [
+          context.organizationId,
+          context.sessionId,
+          recordIds,
+          context.registrationIds,
+          context.attendanceDate,
+          status,
+          context.note,
+          context.actorId,
+        ],
+      );
+
+      await client.query(
+        `INSERT INTO audit_events (
+           organization_id, actor_id, action, target_type, target_id, outcome,
+           request_id, details
+         ) VALUES (
+           $1, $2, 'attendance.bulk_updated', 'session', $3, 'success', $4, $5::jsonb
+         )`,
+        [
+          context.organizationId,
+          context.actorId,
+          context.sessionId,
+          context.requestId,
+          JSON.stringify({
+            action: context.action,
+            attendance_date: context.attendanceDate,
+            registration_count: context.registrationIds.length,
+            status,
+          }),
+        ],
+      );
+
+      const updated = await this.getSessionForClient(
+        client,
+        context.organizationId,
+        context.sessionId,
+        context.attendanceDate,
+      );
+      if (!updated) throw new CatalogNotFoundError('Updated session not found');
       return updated;
     });
   }

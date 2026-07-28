@@ -806,6 +806,42 @@ What is not implemented yet:
 - Registration cancellation is implemented as a status change to `CANCELLED`;
   refund rules and cancellation fees are not implemented yet.
 
+## Daily Attendance And Bulk Roll Call
+
+The check-in desk loads a private session projection for a selected local date
+and a summary covering every day from the session start through end. Summary
+counts are based on the current confirmed roster; each selected-day projection
+joins the matching `registration_attendance` row or returns `NOT_MARKED`.
+
+Staff can check in or mark absent selected unmarked campers as one transaction.
+The store locks the session and registrations, verifies tenant/session/status
+ownership and the date boundary, rejects any existing daily record, inserts the
+complete batch, and records one aggregate audit event. Individual checkout
+continues through the existing path because it must validate a currently
+authorized pickup person.
+
+```mermaid
+sequenceDiagram
+    participant Staff as Camp staff
+    participant Web as Daily roll-call workspace
+    participant API as Catalog API
+    participant DB as PostgreSQL with tenant RLS
+
+    Staff->>Web: Select session date
+    Web->>API: GET selected-date session and daily summary
+    API->>DB: Read current confirmed roster and dated attendance
+    DB-->>Web: Per-camper state and full-session totals
+    Staff->>Web: Select unmarked campers and bulk action
+    Web->>API: POST atomic bulk check-in or absence
+    API->>DB: Lock and validate all selected registrations
+    alt Any camper is invalid or already marked
+        DB-->>Web: 400 or 409; no records changed
+    else Complete valid selection
+        DB->>DB: Insert daily records and attendance.bulk_updated audit
+        DB-->>Web: Updated selected-date session
+    end
+```
+
 ## Error Flow
 
 All domain routes use a shared `ProblemResponse` shape:
@@ -894,6 +930,7 @@ Current writes append audit rows for:
 - `report.view_created`
 - `report.view_updated`
 - `report.view_deleted`
+- `report.season_comparison_viewed`
 
 Audit event details intentionally contain metadata such as changed field names,
 registration status, source, session id, camper id, or program code. They do not
@@ -924,6 +961,13 @@ waitlist, readiness, attendance, pickup, and camper-label presets. Filters can b
 saved as tenant-owned optimistic-versioned views. Staff can export UTF-8 CSV or
 native XLSX and use the authenticated preview for print layouts. The original
 single-session CSV endpoint remains available for compatibility.
+
+Finance staff and administrators can also select any two tenant-owned seasons.
+The API aggregates enrollment, capacity, booked tuition, actual cash, succeeded
+refunds, outstanding balance, and returning campers directly from current
+registration and ledger history under RLS. It audits the selected season ids and
+returns a private, non-cacheable response; it does not persist a parallel
+analytics snapshot.
 
 The reporting projection includes operational form counts and only a boolean
 support-note indicator. It excludes form responses, support-note text, clinical
@@ -1057,7 +1101,7 @@ Seed data:
 | Versioned forms and electronic waivers    | Implemented with session assignments and parent signing       |
 | Provider-hosted deposit payments          | Implemented with Stripe and local adapters                    |
 | Signed webhook reconciliation             | Implemented with idempotent, ordered ledger application       |
-| Restricted health forms and medical data  | Not implemented                                               |
+| Restricted health forms and medical data  | Implemented with encrypted records and projection-only queues |
 | Transactional waitlist email              | Implemented with SMTP, issue visibility, and replay           |
 | File uploads/object storage               | Not implemented                                               |
 | Cognito authentication boundary           | Implemented with disabled-by-default Terraform                |
@@ -1070,6 +1114,7 @@ Seed data:
 | Multi-camper atomic checkout              | Implemented with one household order and payment              |
 | Session housing and bed assignment        | Implemented with age and bunk-buddy placement                 |
 | Operational reporting and saved presets   | Implemented with CSV, XLSX, print layouts, filters, and audit |
+| Season performance comparison             | Implemented with enrollment, finance, retention, and audit    |
 | Lifecycle communication center            | Implemented with templates, audiences, schedules, and replay  |
 
 ## Session Housing and Bunk-Buddy Flow

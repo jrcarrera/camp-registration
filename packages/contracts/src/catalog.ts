@@ -99,6 +99,10 @@ export const AttendanceActionSchema = Type.Union([
   Type.Literal('CHECK_OUT'),
   Type.Literal('MARK_ABSENT'),
 ]);
+export const BulkAttendanceActionSchema = Type.Union([
+  Type.Literal('CHECK_IN'),
+  Type.Literal('MARK_ABSENT'),
+]);
 
 export const WaitlistOfferStatusSchema = Type.Union([
   Type.Literal('PENDING'),
@@ -360,6 +364,49 @@ export const SessionAttendanceUpdateSchema = Type.Object(
   { additionalProperties: false, $id: 'SessionAttendanceUpdate' },
 );
 
+export const SessionAttendanceDateQuerySchema = Type.Object(
+  {
+    attendance_date: Type.Optional(LocalDateSchema),
+  },
+  { additionalProperties: false, $id: 'SessionAttendanceDateQuery' },
+);
+
+export const SessionBulkAttendanceUpdateSchema = Type.Object(
+  {
+    action: BulkAttendanceActionSchema,
+    attendance_date: LocalDateSchema,
+    note: Type.Optional(Type.Union([Type.String({ minLength: 1, maxLength: 500 }), Type.Null()])),
+    registration_ids: Type.Array(UuidSchema, {
+      maxItems: 500,
+      minItems: 1,
+      uniqueItems: true,
+    }),
+  },
+  { additionalProperties: false, $id: 'SessionBulkAttendanceUpdate' },
+);
+
+export const SessionAttendanceDaySchema = Type.Object(
+  {
+    absent_count: Type.Integer({ minimum: 0 }),
+    attendance_date: LocalDateSchema,
+    checked_in_count: Type.Integer({ minimum: 0 }),
+    checked_out_count: Type.Integer({ minimum: 0 }),
+    confirmed_count: Type.Integer({ minimum: 0 }),
+    not_marked_count: Type.Integer({ minimum: 0 }),
+  },
+  { additionalProperties: false, $id: 'SessionAttendanceDay' },
+);
+
+export const SessionAttendanceSummarySchema = Type.Object(
+  {
+    days: Type.Array(SessionAttendanceDaySchema),
+    ends_on: LocalDateSchema,
+    session_id: UuidSchema,
+    starts_on: LocalDateSchema,
+  },
+  { additionalProperties: false, $id: 'SessionAttendanceSummary' },
+);
+
 export const SessionCreateSchema = Type.Object(
   {
     season_id: UuidSchema,
@@ -488,6 +535,7 @@ export type RegistrationStatus = Static<typeof RegistrationStatusSchema>;
 export type RegistrationSource = Static<typeof RegistrationSourceSchema>;
 export type AttendanceAction = Static<typeof AttendanceActionSchema>;
 export type AttendanceStatus = Static<typeof AttendanceStatusSchema>;
+export type BulkAttendanceAction = Static<typeof BulkAttendanceActionSchema>;
 export type WaitlistOffer = Static<typeof WaitlistOfferSchema>;
 export type WaitlistOfferDurationHours = Static<typeof WaitlistOfferDurationHoursSchema>;
 export type WaitlistOfferCreate = Static<typeof WaitlistOfferCreateSchema>;
@@ -501,6 +549,10 @@ export type SessionDetail = Static<typeof SessionDetailSchema>;
 export type SessionListResponse = Static<typeof SessionListResponseSchema>;
 export type SessionUpdate = Static<typeof SessionUpdateSchema>;
 export type SessionAttendanceUpdate = Static<typeof SessionAttendanceUpdateSchema>;
+export type SessionAttendanceDateQuery = Static<typeof SessionAttendanceDateQuerySchema>;
+export type SessionBulkAttendanceUpdate = Static<typeof SessionBulkAttendanceUpdateSchema>;
+export type SessionAttendanceDay = Static<typeof SessionAttendanceDaySchema>;
+export type SessionAttendanceSummary = Static<typeof SessionAttendanceSummarySchema>;
 export type SessionCreate = Static<typeof SessionCreateSchema>;
 export type SeasonCreate = Static<typeof SeasonCreateSchema>;
 export type SeasonParams = Static<typeof SeasonParamsSchema>;

@@ -86,6 +86,34 @@ export interface OperationalReportRowRecord {
   support_note_on_file: boolean;
 }
 
+export interface SeasonPerformanceRecord {
+  cancelled_registrations: number;
+  capacity: number;
+  confirmed_registrations: number;
+  net_collected_cents: number;
+  outstanding_balance_cents: number;
+  payments_collected_cents: number;
+  refunds_cents: number;
+  season_id: string;
+  season_name: string;
+  session_count: number;
+  tuition_booked_cents: number;
+  unique_confirmed_campers: number;
+  waitlisted_registrations: number;
+  year: number;
+}
+
+export interface SeasonComparisonOptionRecord {
+  id: string;
+  name: string;
+  year: number;
+}
+
+export interface SeasonComparisonRecord {
+  returning_campers: number;
+  seasons: SeasonPerformanceRecord[];
+}
+
 export class OperationalReportNotFoundError extends Error {}
 export class OperationalReportConflictError extends Error {}
 
@@ -111,6 +139,21 @@ interface ReportRow extends Omit<
   registered_at: Date;
   session_ends_on: Date | string;
   session_starts_on: Date | string;
+}
+
+interface SeasonPerformanceRow extends Omit<
+  SeasonPerformanceRecord,
+  | 'net_collected_cents'
+  | 'outstanding_balance_cents'
+  | 'payments_collected_cents'
+  | 'refunds_cents'
+  | 'tuition_booked_cents'
+> {
+  net_collected_cents: number | string;
+  outstanding_balance_cents: number | string;
+  payments_collected_cents: number | string;
+  refunds_cents: number | string;
+  tuition_booked_cents: number | string;
 }
 
 function date(value: Date | string): string {
@@ -139,6 +182,17 @@ function mapReportRow(row: ReportRow): OperationalReportRowRecord {
     registered_at: row.registered_at.toISOString(),
     session_ends_on: date(row.session_ends_on),
     session_starts_on: date(row.session_starts_on),
+  };
+}
+
+function mapSeasonPerformance(row: SeasonPerformanceRow): SeasonPerformanceRecord {
+  return {
+    ...row,
+    net_collected_cents: Number(row.net_collected_cents),
+    outstanding_balance_cents: Number(row.outstanding_balance_cents),
+    payments_collected_cents: Number(row.payments_collected_cents),
+    refunds_cents: Number(row.refunds_cents),
+    tuition_booked_cents: Number(row.tuition_booked_cents),
   };
 }
 
@@ -174,6 +228,173 @@ export class ReportingStore {
         [organizationId],
       );
       return result.rows.map(mapView);
+    });
+  }
+
+  async listSeasonComparisonOptions(
+    organizationId: string,
+  ): Promise<SeasonComparisonOptionRecord[]> {
+    return this.withTenant(organizationId, async (client) => {
+      const result = await client.query<SeasonComparisonOptionRecord>(
+        `SELECT id, name, year
+         FROM seasons
+         WHERE organization_id = $1
+         ORDER BY year DESC, lower(name), id`,
+        [organizationId],
+      );
+      return result.rows;
+    });
+  }
+
+  async compareSeasons(
+    context: OperationalReportContext,
+    primarySeasonId: string,
+    comparisonSeasonId: string,
+  ): Promise<SeasonComparisonRecord> {
+    return this.withTenant(context.organizationId, async (client) => {
+      const result = await client.query<SeasonPerformanceRow>(
+        `WITH requested_seasons AS (
+           SELECT id, name, year
+           FROM seasons
+           WHERE organization_id = $1
+             AND id = ANY($2::uuid[])
+         ),
+         session_metrics AS (
+           SELECT
+             requested.id AS season_id,
+             count(session.id) FILTER (WHERE session.status <> 'CANCELLED')::integer
+               AS session_count,
+             COALESCE(
+               sum(session.capacity) FILTER (WHERE session.status <> 'CANCELLED'),
+               0
+             )::integer AS capacity
+           FROM requested_seasons requested
+           LEFT JOIN sessions session
+             ON session.organization_id = $1
+            AND session.season_id = requested.id
+           GROUP BY requested.id
+         ),
+         registration_ledger AS (
+           SELECT
+             session.season_id,
+             registration.id,
+             registration.camper_id,
+             registration.status,
+             registration.price_cents,
+             COALESCE(ledger.balance_credit_cents, 0)::bigint AS balance_credit_cents,
+             GREATEST(COALESCE(ledger.payments_collected_cents, 0), 0)::bigint
+               AS payments_collected_cents,
+             COALESCE(refunds.refunds_cents, 0)::bigint AS refunds_cents
+           FROM registrations registration
+           JOIN sessions session
+             ON session.organization_id = registration.organization_id
+            AND session.id = registration.session_id
+           JOIN requested_seasons requested ON requested.id = session.season_id
+           LEFT JOIN LATERAL (
+             SELECT
+               COALESCE(sum(payment.amount_cents), 0)::bigint AS balance_credit_cents,
+               COALESCE(sum(payment.amount_cents) FILTER (
+                 WHERE payment.method IN (
+                   'OFFLINE_CASH', 'OFFLINE_CHECK', 'OFFLINE_CARD', 'ONLINE_CARD', 'OTHER'
+                 )
+               ), 0)::bigint AS payments_collected_cents
+             FROM registration_payments payment
+             WHERE payment.organization_id = registration.organization_id
+               AND payment.registration_id = registration.id
+           ) ledger ON true
+           LEFT JOIN LATERAL (
+             SELECT COALESCE(sum(adjustment.amount_cents), 0)::bigint AS refunds_cents
+             FROM payment_adjustments adjustment
+             WHERE adjustment.organization_id = registration.organization_id
+               AND adjustment.registration_id = registration.id
+               AND adjustment.adjustment_type = 'REFUND'
+               AND adjustment.status = 'SUCCEEDED'
+           ) refunds ON true
+           WHERE registration.organization_id = $1
+         ),
+         registration_metrics AS (
+           SELECT
+             requested.id AS season_id,
+             count(ledger.id) FILTER (WHERE ledger.status = 'CONFIRMED')::integer
+               AS confirmed_registrations,
+             count(ledger.id) FILTER (WHERE ledger.status = 'WAITLISTED')::integer
+               AS waitlisted_registrations,
+             count(ledger.id) FILTER (WHERE ledger.status = 'CANCELLED')::integer
+               AS cancelled_registrations,
+             count(DISTINCT ledger.camper_id) FILTER (WHERE ledger.status = 'CONFIRMED')::integer
+               AS unique_confirmed_campers,
+             COALESCE(
+               sum(ledger.price_cents) FILTER (WHERE ledger.status = 'CONFIRMED'),
+               0
+             )::bigint AS tuition_booked_cents,
+             COALESCE(sum(ledger.payments_collected_cents), 0)::bigint
+               AS payments_collected_cents,
+             COALESCE(sum(ledger.refunds_cents), 0)::bigint AS refunds_cents,
+             COALESCE(
+               sum(
+                 GREATEST(ledger.price_cents - ledger.balance_credit_cents, 0)
+               ) FILTER (WHERE ledger.status = 'CONFIRMED'),
+               0
+             )::bigint AS outstanding_balance_cents
+           FROM requested_seasons requested
+           LEFT JOIN registration_ledger ledger ON ledger.season_id = requested.id
+           GROUP BY requested.id
+         )
+         SELECT
+           requested.id AS season_id,
+           requested.name AS season_name,
+           requested.year,
+           sessions.session_count,
+           sessions.capacity,
+           registrations.confirmed_registrations,
+           registrations.waitlisted_registrations,
+           registrations.cancelled_registrations,
+           registrations.unique_confirmed_campers,
+           registrations.tuition_booked_cents,
+           registrations.payments_collected_cents,
+           registrations.refunds_cents,
+           registrations.payments_collected_cents - registrations.refunds_cents
+             AS net_collected_cents,
+           registrations.outstanding_balance_cents
+         FROM requested_seasons requested
+         JOIN session_metrics sessions ON sessions.season_id = requested.id
+         JOIN registration_metrics registrations ON registrations.season_id = requested.id
+         ORDER BY requested.year DESC, requested.name, requested.id`,
+        [context.organizationId, [primarySeasonId, comparisonSeasonId]],
+      );
+
+      const returning = await client.query<{ returning_campers: number }>(
+        `SELECT count(DISTINCT primary_registration.camper_id)::integer AS returning_campers
+         FROM registrations primary_registration
+         JOIN sessions primary_session
+           ON primary_session.organization_id = primary_registration.organization_id
+          AND primary_session.id = primary_registration.session_id
+         WHERE primary_registration.organization_id = $1
+           AND primary_session.season_id = $2
+           AND primary_registration.status = 'CONFIRMED'
+           AND EXISTS (
+             SELECT 1
+             FROM registrations comparison_registration
+             JOIN sessions comparison_session
+               ON comparison_session.organization_id = comparison_registration.organization_id
+              AND comparison_session.id = comparison_registration.session_id
+             WHERE comparison_registration.organization_id = primary_registration.organization_id
+               AND comparison_registration.camper_id = primary_registration.camper_id
+               AND comparison_registration.status = 'CONFIRMED'
+               AND comparison_session.season_id = $3
+           )`,
+        [context.organizationId, primarySeasonId, comparisonSeasonId],
+      );
+
+      await this.audit(client, context, 'report.season_comparison_viewed', context.organizationId, {
+        comparison_season_id: comparisonSeasonId,
+        primary_season_id: primarySeasonId,
+      });
+
+      return {
+        returning_campers: returning.rows[0]?.returning_campers ?? 0,
+        seasons: result.rows.map(mapSeasonPerformance),
+      };
     });
   }
 

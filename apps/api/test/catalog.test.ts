@@ -8,6 +8,7 @@ import type {
   SeasonFixture,
   SeasonRolloverCreate,
   SeasonRolloverResult,
+  SessionAttendanceSummary,
   SessionAttendanceUpdate,
   SessionCreate,
   SessionDetail,
@@ -64,6 +65,22 @@ const detail: SessionDetail = {
   registration_closes_at: '2027-06-04T05:00:00Z',
   registration_opens_at: '2027-01-15T15:00:00Z',
   waitlist_enabled: true,
+};
+
+const attendanceSummary: SessionAttendanceSummary = {
+  days: [
+    {
+      absent_count: 0,
+      attendance_date: '2027-06-07',
+      checked_in_count: 0,
+      checked_out_count: 0,
+      confirmed_count: 0,
+      not_marked_count: 0,
+    },
+  ],
+  ends_on: detail.ends_on,
+  session_id: sessionId,
+  starts_on: detail.starts_on,
 };
 
 const context: CatalogContext = {
@@ -311,6 +328,64 @@ describe('catalog routes', () => {
     );
   });
 
+  it('loads a selected attendance day and the private multi-day summary', async () => {
+    const service = fakeService();
+    const app = await buildApp({ catalogService: service });
+    applications.push(app);
+
+    const dayResponse = await app.inject({
+      method: 'GET',
+      url: `/v1/sessions/${sessionId}?attendance_date=2027-06-08`,
+    });
+    const summaryResponse = await app.inject({
+      method: 'GET',
+      url: `/v1/sessions/${sessionId}/attendance`,
+    });
+
+    expect(dayResponse.statusCode).toBe(200);
+    expect(dayResponse.headers['cache-control']).toBe('private, no-store');
+    expect(service.getSession).toHaveBeenCalledWith(sessionId, '2027-06-08');
+    expect(summaryResponse.statusCode).toBe(200);
+    expect(summaryResponse.headers['cache-control']).toBe('private, no-store');
+    expect(summaryResponse.json()).toEqual(attendanceSummary);
+    expect(service.getSessionAttendanceSummary).toHaveBeenCalledWith(sessionId);
+  });
+
+  it('records an atomic bulk roll call with a private response', async () => {
+    const service = fakeService();
+    const app = await buildApp({ catalogService: service });
+    applications.push(app);
+    const registrationIds = [
+      '7fd94448-0fda-4a31-a2e7-f4a445289c7a',
+      '8ad93689-8b38-4ff0-9940-42c90b9541e1',
+    ];
+
+    const response = await app.inject({
+      headers: { 'x-request-id': 'attendance-bulk-test' },
+      method: 'POST',
+      payload: {
+        action: 'MARK_ABSENT',
+        attendance_date: '2027-06-08',
+        note: 'Weather closure',
+        registration_ids: registrationIds,
+      },
+      url: `/v1/sessions/${sessionId}/attendance/bulk`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['cache-control']).toBe('private, no-store');
+    expect(service.bulkUpdateSessionAttendance).toHaveBeenCalledWith(
+      sessionId,
+      {
+        action: 'MARK_ABSENT',
+        attendance_date: '2027-06-08',
+        note: 'Weather closure',
+        registration_ids: registrationIds,
+      },
+      'attendance-bulk-test',
+    );
+  });
+
   it('updates a program and passes the request id to the service', async () => {
     const service = fakeService();
     const app = await buildApp({ catalogService: service });
@@ -481,6 +556,60 @@ describe('catalog service validation', () => {
     expect(store.updateSessionAttendance).not.toHaveBeenCalled();
   });
 
+  it('normalizes bulk roll call input and keeps attendance staff-only', async () => {
+    const store = {
+      bulkUpdateSessionAttendance: vi.fn().mockResolvedValue(detail),
+      getSessionAttendanceSummary: vi.fn().mockResolvedValue(attendanceSummary),
+    } as unknown as CatalogStore;
+    const staffService = new CatalogService(
+      store,
+      {
+        ...localIdentity,
+        memberships: [{ campIds: [], organizationId, roles: ['camp_staff'] }],
+      },
+      organizationId,
+    );
+    const registrationId = '7fd94448-0fda-4a31-a2e7-f4a445289c7a';
+
+    await expect(
+      staffService.bulkUpdateSessionAttendance(
+        sessionId,
+        {
+          action: 'CHECK_IN',
+          attendance_date: '2027-06-08',
+          note: '  North gate  ',
+          registration_ids: [registrationId],
+        },
+        'bulk-service-test',
+      ),
+    ).resolves.toEqual(detail);
+    expect(store.bulkUpdateSessionAttendance).toHaveBeenCalledWith({
+      action: 'CHECK_IN',
+      actorId: localIdentity.subject,
+      attendanceDate: '2027-06-08',
+      note: 'North gate',
+      organizationId,
+      registrationIds: [registrationId],
+      requestId: 'bulk-service-test',
+      sessionId,
+    });
+    await expect(staffService.getSessionAttendanceSummary(sessionId)).resolves.toEqual(
+      attendanceSummary,
+    );
+
+    const parentService = new CatalogService(
+      store,
+      {
+        ...localIdentity,
+        memberships: [{ campIds: [], organizationId, roles: ['parent_guardian'] }],
+      },
+      organizationId,
+    );
+    await expect(parentService.getSessionAttendanceSummary(sessionId)).rejects.toMatchObject({
+      message: 'Catalog access is not permitted',
+    });
+  });
+
   it('derives draft rollover mappings and keeps rollover admin-only', async () => {
     const store = {
       createSeasonRollover: vi.fn().mockResolvedValue(seasonRolloverResult),
@@ -537,6 +666,9 @@ const localIdentity: RequestIdentity = {
 };
 
 function fakeService(): CatalogServiceApi & {
+  bulkUpdateSessionAttendance: ReturnType<
+    typeof vi.fn<CatalogServiceApi['bulkUpdateSessionAttendance']>
+  >;
   createProgram: ReturnType<typeof vi.fn<CatalogServiceApi['createProgram']>>;
   createSeason: ReturnType<typeof vi.fn<CatalogServiceApi['createSeason']>>;
   createSession: ReturnType<typeof vi.fn<CatalogServiceApi['createSession']>>;
@@ -549,6 +681,7 @@ function fakeService(): CatalogServiceApi & {
   updateSession: ReturnType<typeof vi.fn<CatalogServiceApi['updateSession']>>;
 } {
   return {
+    bulkUpdateSessionAttendance: vi.fn().mockResolvedValue(detail),
     createProgram: vi.fn().mockResolvedValue(createdProgram),
     createSeason: vi.fn().mockResolvedValue(createdSeason),
     createSession: vi.fn().mockResolvedValue({
@@ -569,6 +702,7 @@ function fakeService(): CatalogServiceApi & {
     }),
     getContext: vi.fn().mockResolvedValue(context),
     getSession: vi.fn().mockResolvedValue(detail),
+    getSessionAttendanceSummary: vi.fn().mockResolvedValue(attendanceSummary),
     listSessions: vi.fn().mockResolvedValue([summary]),
     rolloverSeason: vi.fn().mockResolvedValue(seasonRolloverResult),
     updateProgram: vi.fn().mockResolvedValue(updatedProgram),

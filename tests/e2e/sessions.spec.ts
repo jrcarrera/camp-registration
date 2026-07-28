@@ -103,10 +103,60 @@ test('keeps session management within the mobile viewport', async ({ page }) => 
   });
 });
 
+test('offers responsive multi-day roll call and bulk selection', async ({ page }) => {
+  await page.goto('/sessions/06c02070-2e63-4b7b-bd93-578e54fa1ea6/check-in');
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Check-in desk' })).toBeVisible();
+  await expect(page.getByText('Daily attendance', { exact: true })).toBeVisible();
+  const attendanceDate = page.getByLabel('Attendance date');
+  await expect(attendanceDate).toHaveValue('2027-07-04');
+  await expect(page.getByRole('button', { name: /Sun, Jul 4.*marked/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+
+  await attendanceDate.fill('2027-07-05');
+  await expect(page.getByRole('heading', { level: 2, name: 'Mon, Jul 5' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Mon, Jul 5.*marked/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+
+  await page.getByRole('button', { name: 'Select unmarked in view' }).click();
+  await expect(page.getByText(/[1-9]\d* selected/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Check in selected' })).toBeEnabled();
+  await page.getByRole('button', { name: /Not marked 140/ }).click();
+  await expect(page.getByText('0 selected')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Check in selected' })).toBeDisabled();
+
+  const layout = await page.evaluate(() => ({
+    documentWidth: document.documentElement.scrollWidth,
+    viewportWidth: window.innerWidth,
+  }));
+  expect(layout.documentWidth).toBe(layout.viewportWidth);
+});
+
 test('offers responsive operational report presets', async ({ page }) => {
   await page.goto('/reports');
 
   await expect(page.getByRole('heading', { level: 1, name: 'Reports and exports' })).toBeVisible();
+  const comparison = page.getByRole('region', { name: 'Compare seasons' });
+  await expect(comparison).toBeVisible();
+  await expect(comparison.getByRole('combobox', { name: 'Primary season' })).toHaveValue(
+    'fc94ef27-1fa6-466b-b877-312c27d00a7c',
+  );
+  await expect(comparison.getByText('compared with Summer 2027')).toBeVisible();
+  await expect(comparison.getByText('Confirmed enrollment')).toBeVisible();
+  await expect(comparison.getByText('Net cash collected')).toBeVisible();
+  await comparison
+    .getByRole('combobox', { name: 'Primary season' })
+    .selectOption(summer2027SeasonId);
+  await comparison
+    .getByRole('combobox', { name: 'Compare with' })
+    .selectOption('fc94ef27-1fa6-466b-b877-312c27d00a7c');
+  await comparison.getByRole('button', { name: 'Update comparison' }).click();
+  await expect(comparison.getByText('Season comparison updated.')).toBeVisible();
+  await expect(comparison.getByText('compared with Winter 2028')).toBeVisible();
   await expect(
     page.getByRole('heading', { level: 2, name: 'Build an operational report' }),
   ).toBeVisible();

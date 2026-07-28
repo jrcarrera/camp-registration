@@ -8,6 +8,8 @@ import type {
   OperationalReportView,
   OperationalReportViewInput,
   OperationalReportViewUpdate,
+  SeasonComparison,
+  SeasonComparisonOptions,
   SessionReportPreset,
 } from '@camp-registration/contracts';
 import {
@@ -23,6 +25,7 @@ import { xlsx } from './xlsx.js';
 
 const reportRoles = new Set(['camp_staff', 'camp_admin', 'organization_admin']);
 const adminRoles = new Set(['camp_admin', 'organization_admin']);
+const comparisonRoles = new Set(['finance_staff', 'camp_admin', 'organization_admin']);
 
 export class ReportsAuthorizationError extends Error {}
 export class ReportsUnavailableError extends Error {}
@@ -56,6 +59,12 @@ export interface ReportsServiceApi {
     requestId: string,
   ): Promise<SessionReportExport>;
   getCenter(): Promise<OperationalReportCenter>;
+  compareSeasons(
+    primarySeasonId: string,
+    comparisonSeasonId: string,
+    requestId: string,
+  ): Promise<SeasonComparison>;
+  getSeasonComparisonOptions(): Promise<SeasonComparisonOptions>;
   previewReport(
     preset: OperationalReportPreset,
     filters: OperationalReportFilters,
@@ -71,7 +80,14 @@ export interface ReportsServiceApi {
 type LegacyReportsStore = Pick<CatalogStore, 'exportSessionReport'>;
 type OperationalReportsStore = Pick<
   ReportingStore,
-  'createView' | 'deleteView' | 'listRows' | 'listViews' | 'recordExport' | 'updateView'
+  | 'compareSeasons'
+  | 'createView'
+  | 'deleteView'
+  | 'listRows'
+  | 'listSeasonComparisonOptions'
+  | 'listViews'
+  | 'recordExport'
+  | 'updateView'
 >;
 
 interface ReportDefinition {
@@ -294,6 +310,14 @@ function validateFilters(filters: OperationalReportFilters): void {
   }
 }
 
+function basisPointChange(primary: number, comparison: number) {
+  return {
+    amount: primary - comparison,
+    basis_points:
+      comparison === 0 ? null : Math.round(((primary - comparison) * 10_000) / comparison),
+  };
+}
+
 export class ReportsService implements ReportsServiceApi {
   private readonly membership;
 
@@ -318,6 +342,18 @@ export class ReportsService implements ReportsServiceApi {
     this.authorize();
     if (!this.operationalStore)
       throw new ReportsUnavailableError('Expanded reporting is unavailable');
+    return this.operationalStore;
+  }
+
+  private comparisonOperations(): OperationalReportsStore {
+    if (!this.membership?.roles.some((role) => comparisonRoles.has(role))) {
+      throw new ReportsAuthorizationError(
+        'Season performance comparison requires finance or administrator access',
+      );
+    }
+    if (!this.operationalStore) {
+      throw new ReportsUnavailableError('Expanded reporting is unavailable');
+    }
     return this.operationalStore;
   }
 
@@ -353,6 +389,73 @@ export class ReportsService implements ReportsServiceApi {
   async getCenter(): Promise<OperationalReportCenter> {
     const views = await this.operations().listViews(this.organizationId);
     return { saved_views: views.map((view) => this.view(view)) };
+  }
+
+  async getSeasonComparisonOptions(): Promise<SeasonComparisonOptions> {
+    return {
+      seasons: await this.comparisonOperations().listSeasonComparisonOptions(this.organizationId),
+    };
+  }
+
+  async compareSeasons(
+    primarySeasonId: string,
+    comparisonSeasonId: string,
+    requestId: string,
+  ): Promise<SeasonComparison> {
+    if (primarySeasonId === comparisonSeasonId) {
+      throw new ReportsValidationError('Choose two different seasons to compare');
+    }
+    const comparison = await this.comparisonOperations().compareSeasons(
+      reportContext(this.identity, this.organizationId, requestId),
+      primarySeasonId,
+      comparisonSeasonId,
+    );
+    const primaryRecord = comparison.seasons.find((season) => season.season_id === primarySeasonId);
+    const comparisonRecord = comparison.seasons.find(
+      (season) => season.season_id === comparisonSeasonId,
+    );
+    if (!primaryRecord || !comparisonRecord) {
+      throw new CatalogNotFoundError('One or both seasons were not found');
+    }
+    const primary = {
+      ...primaryRecord,
+      capacity_fill_basis_points:
+        primaryRecord.capacity === 0
+          ? null
+          : Math.round((primaryRecord.confirmed_registrations * 10_000) / primaryRecord.capacity),
+    };
+    const baseline = {
+      ...comparisonRecord,
+      capacity_fill_basis_points:
+        comparisonRecord.capacity === 0
+          ? null
+          : Math.round(
+              (comparisonRecord.confirmed_registrations * 10_000) / comparisonRecord.capacity,
+            ),
+    };
+    return {
+      changes: {
+        confirmed_registrations: basisPointChange(
+          primary.confirmed_registrations,
+          baseline.confirmed_registrations,
+        ),
+        net_collected_cents: basisPointChange(
+          primary.net_collected_cents,
+          baseline.net_collected_cents,
+        ),
+        tuition_booked_cents: basisPointChange(
+          primary.tuition_booked_cents,
+          baseline.tuition_booked_cents,
+        ),
+      },
+      comparison: baseline,
+      primary,
+      returning_campers: comparison.returning_campers,
+      returning_rate_basis_points:
+        primary.unique_confirmed_campers === 0
+          ? null
+          : Math.round((comparison.returning_campers * 10_000) / primary.unique_confirmed_campers),
+    };
   }
 
   async previewReport(

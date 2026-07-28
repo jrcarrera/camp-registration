@@ -8,8 +8,12 @@ import { ReportsService } from '../src/reports/service.js';
 
 const organizationId = 'a60b272f-b028-4f1a-b666-3ef3cffd9827';
 const sessionId = '28933fbb-470e-4ad6-9a74-600efe4232e3';
+const primarySeasonId = 'fc94ef27-1fa6-466b-b877-312c27d00a7c';
+const comparisonSeasonId = 'd5d8a8b7-c4ff-43be-a849-60cbd5914c85';
 
-function identity(role: 'camp_admin' | 'camp_staff' | 'parent_guardian'): RequestIdentity {
+function identity(
+  role: 'camp_admin' | 'camp_staff' | 'finance_staff' | 'parent_guardian',
+): RequestIdentity {
   return {
     email: 'operator@example.test',
     emailVerified: true,
@@ -139,6 +143,43 @@ function operationalRow(
 
 function operationalStore() {
   return {
+    compareSeasons: vi.fn().mockResolvedValue({
+      returning_campers: 72,
+      seasons: [
+        {
+          cancelled_registrations: 4,
+          capacity: 120,
+          confirmed_registrations: 100,
+          net_collected_cents: 800_000,
+          outstanding_balance_cents: 200_000,
+          payments_collected_cents: 850_000,
+          refunds_cents: 50_000,
+          season_id: primarySeasonId,
+          season_name: 'Winter 2028',
+          session_count: 1,
+          tuition_booked_cents: 1_000_000,
+          unique_confirmed_campers: 90,
+          waitlisted_registrations: 32,
+          year: 2028,
+        },
+        {
+          cancelled_registrations: 2,
+          capacity: 100,
+          confirmed_registrations: 80,
+          net_collected_cents: 600_000,
+          outstanding_balance_cents: 150_000,
+          payments_collected_cents: 600_000,
+          refunds_cents: 0,
+          season_id: comparisonSeasonId,
+          season_name: 'Summer 2027',
+          session_count: 1,
+          tuition_booked_cents: 750_000,
+          unique_confirmed_campers: 80,
+          waitlisted_registrations: 10,
+          year: 2027,
+        },
+      ],
+    }),
     createView: vi.fn(),
     deleteView: vi.fn(),
     listRows: vi.fn().mockResolvedValue([
@@ -149,6 +190,10 @@ function operationalStore() {
         registration_status: 'WAITLISTED',
       }),
     ]),
+    listSeasonComparisonOptions: vi.fn().mockResolvedValue([
+      { id: primarySeasonId, name: 'Winter 2028', year: 2028 },
+      { id: comparisonSeasonId, name: 'Summer 2027', year: 2027 },
+    ]),
     listViews: vi.fn().mockResolvedValue([]),
     recordExport: vi.fn().mockResolvedValue(undefined),
     updateView: vi.fn(),
@@ -156,6 +201,100 @@ function operationalStore() {
 }
 
 describe('operational reports API', () => {
+  it('compares season enrollment and financial performance with a private response', async () => {
+    const expanded = operationalStore();
+    const service = new ReportsService(
+      { exportSessionReport: vi.fn() } as never,
+      identity('finance_staff'),
+      organizationId,
+      expanded as never,
+    );
+    const app = await buildApp({ reportsService: service });
+
+    const response = await app.inject({
+      headers: { 'x-request-id': 'season-comparison-test' },
+      method: 'GET',
+      url:
+        `/v1/reports/season-comparison?primary_season_id=${primarySeasonId}` +
+        `&comparison_season_id=${comparisonSeasonId}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['cache-control']).toBe('private, no-store');
+    expect(response.json()).toMatchObject({
+      changes: {
+        confirmed_registrations: { amount: 20, basis_points: 2500 },
+        net_collected_cents: { amount: 200_000, basis_points: 3333 },
+      },
+      primary: {
+        capacity_fill_basis_points: 8333,
+        season_name: 'Winter 2028',
+      },
+      returning_campers: 72,
+      returning_rate_basis_points: 8000,
+    });
+    expect(expanded.compareSeasons).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: 'report-operator',
+        organizationId,
+        requestId: 'season-comparison-test',
+      }),
+      primarySeasonId,
+      comparisonSeasonId,
+    );
+    const options = await app.inject({
+      method: 'GET',
+      url: '/v1/reports/season-comparison/options',
+    });
+    expect(options.statusCode).toBe(200);
+    expect(options.headers['cache-control']).toBe('private, no-store');
+    expect(options.json()).toEqual({
+      seasons: [
+        { id: primarySeasonId, name: 'Winter 2028', year: 2028 },
+        { id: comparisonSeasonId, name: 'Summer 2027', year: 2027 },
+      ],
+    });
+    await app.close();
+  });
+
+  it('rejects season comparison for ordinary staff and identical seasons', async () => {
+    const expanded = operationalStore();
+    const staffApp = await buildApp({
+      reportsService: new ReportsService(
+        { exportSessionReport: vi.fn() } as never,
+        identity('camp_staff'),
+        organizationId,
+        expanded as never,
+      ),
+    });
+    const forbidden = await staffApp.inject({
+      method: 'GET',
+      url:
+        `/v1/reports/season-comparison?primary_season_id=${primarySeasonId}` +
+        `&comparison_season_id=${comparisonSeasonId}`,
+    });
+    expect(forbidden.statusCode).toBe(403);
+    await staffApp.close();
+
+    const adminApp = await buildApp({
+      reportsService: new ReportsService(
+        { exportSessionReport: vi.fn() } as never,
+        identity('camp_admin'),
+        organizationId,
+        expanded as never,
+      ),
+    });
+    const invalid = await adminApp.inject({
+      method: 'GET',
+      url:
+        `/v1/reports/season-comparison?primary_season_id=${primarySeasonId}` +
+        `&comparison_season_id=${primarySeasonId}`,
+    });
+    expect(invalid.statusCode).toBe(400);
+    expect(expanded.compareSeasons).toHaveBeenCalledTimes(0);
+    await adminApp.close();
+  });
+
   it('downloads an audited roster CSV and neutralizes spreadsheet formulas', async () => {
     const store = { exportSessionReport: vi.fn().mockResolvedValue(session) };
     const service = new ReportsService(store as never, identity('camp_staff'), organizationId);

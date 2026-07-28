@@ -1109,6 +1109,99 @@ tbody tr + tr td {
   padding-bottom: 64px;
 }
 
+.attendanceCalendar {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #ccd7d1;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #f8fbf9 0%, #eef6f2 100%);
+}
+
+.attendanceCalendarHeading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.attendanceCalendarHeading h2 {
+  margin: 4px 0;
+  color: #1c2c25;
+  font-size: 24px;
+}
+
+.attendanceCalendarHeading p {
+  margin: 0;
+  color: #53615b;
+  font-size: 13px;
+}
+
+.attendanceCalendarHeading .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.attendanceCalendarHeading label,
+.attendanceBulkBar label {
+  display: grid;
+  gap: 5px;
+  color: #53615b;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.attendanceCalendarHeading input,
+.attendanceBulkBar input {
+  min-height: 40px;
+  padding: 7px 10px;
+  border: 1px solid #b8c5bf;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #1f2c27;
+  font: inherit;
+  text-transform: none;
+}
+
+.attendanceDayStrip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 7px;
+  scrollbar-width: thin;
+}
+
+.attendanceDayButton {
+  min-width: 132px;
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid #c5d0cb;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #53615b;
+  cursor: pointer;
+  text-align: left;
+}
+
+.attendanceDayButton strong {
+  color: #26352e;
+  font-size: 13px;
+}
+
+.attendanceDayButton span {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.attendanceDayButton[data-active='true'] {
+  border-color: #146b4d;
+  box-shadow: inset 0 -3px 0 #146b4d;
+  background: #eaf3ee;
+}
+
 .checkInSummaryGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1252,6 +1345,61 @@ tbody tr + tr td {
   color: #2a6f97;
 }
 
+.attendanceBulkBar {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(260px, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+  padding: 14px;
+  border: 1px solid #cdd8d3;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.attendanceBulkSelection,
+.attendanceBulkActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attendanceBulkSelection strong {
+  margin-right: 3px;
+  color: #26352e;
+  font-size: 13px;
+}
+
+.attendanceBulkSelection button {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #146b4d;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.attendanceBulkSelection button:disabled {
+  color: #89938e;
+  cursor: default;
+}
+
+.attendanceBulkActions {
+  justify-content: flex-end;
+}
+
+.attendanceSelectCamper {
+  display: grid;
+  place-items: center;
+}
+
+.attendanceSelectCamper input {
+  width: 18px;
+  height: 18px;
+  accent-color: #146b4d;
+}
+
 .checkInQueue {
   display: grid;
   gap: 10px;
@@ -1290,6 +1438,10 @@ tbody tr + tr td {
   grid-template-columns: auto minmax(0, 1fr);
   gap: 8px 12px;
   align-items: center;
+}
+
+.checkInCamperIdentity:has(.attendanceSelectCamper) {
+  grid-template-columns: auto auto minmax(0, 1fr);
 }
 
 .checkInCamperIdentity h2 {
@@ -3304,6 +3456,106 @@ tbody tr + tr td {
   gap: 20px;
 }
 
+.seasonComparison {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.seasonComparison .sectionHeading > svg {
+  color: #146b4d;
+}
+
+.seasonComparisonControls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.seasonComparisonControls .buttonSecondary {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.seasonComparisonContext {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: #66736d;
+}
+
+.seasonComparisonContext strong {
+  color: #26332d;
+  font-size: 18px;
+}
+
+.seasonMetricGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.seasonMetricCard {
+  display: grid;
+  gap: 6px;
+  padding: 15px;
+  border: 1px solid #d5dcd8;
+  border-radius: 6px;
+  background: #f8faf9;
+}
+
+.seasonMetricCard > span {
+  color: #66736d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.seasonMetricCard > strong {
+  color: #173c2e;
+  font-size: clamp(20px, 2vw, 28px);
+}
+
+.seasonMetricCard > small {
+  color: #66736d;
+  line-height: 1.4;
+}
+
+.seasonComparisonDetails {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border-block: 1px solid #e1e6e3;
+}
+
+.seasonComparisonDetails > div {
+  padding: 13px;
+  border-right: 1px solid #e1e6e3;
+}
+
+.seasonComparisonDetails > div:last-child {
+  border-right: 0;
+}
+
+.seasonComparisonDetails dt {
+  color: #66736d;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.seasonComparisonDetails dd {
+  margin: 5px 0 0;
+  font-weight: 700;
+}
+
+.seasonComparisonDisclosure {
+  margin: 0;
+  color: #66736d;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .savedReportGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4912,6 +5164,19 @@ tbody tr + tr td {
   .reportControls .buttonPrimary {
     width: 100%;
   }
+
+  .seasonMetricGrid,
+  .seasonComparisonDetails {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .seasonComparisonDetails > div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .seasonComparisonDetails > div:nth-child(-n + 2) {
+    border-bottom: 1px solid #e1e6e3;
+  }
 }
 
 @media (max-width: 620px) {
@@ -4949,6 +5214,30 @@ tbody tr + tr td {
 
   .reportPresetGrid {
     grid-template-columns: 1fr;
+  }
+
+  .seasonComparisonControls,
+  .seasonMetricGrid,
+  .seasonComparisonDetails {
+    grid-template-columns: 1fr;
+  }
+
+  .seasonComparisonControls .buttonSecondary {
+    width: 100%;
+  }
+
+  .seasonComparisonContext {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .seasonComparisonDetails > div {
+    border-right: 0;
+    border-bottom: 1px solid #e1e6e3;
+  }
+
+  .seasonComparisonDetails > div:last-child {
+    border-bottom: 0;
   }
 
   .cartActions,
@@ -5155,6 +5444,16 @@ tbody tr + tr td {
     align-items: stretch;
   }
 
+  .attendanceCalendarHeading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .attendanceCalendarHeading label,
+  .attendanceCalendarHeading input {
+    width: 100%;
+  }
+
   .checkInSummaryGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -5188,6 +5487,19 @@ tbody tr + tr td {
 
   .checkInDeskIntro {
     align-items: flex-start;
+  }
+
+  .attendanceBulkBar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .attendanceBulkActions {
+    justify-content: stretch;
+  }
+
+  .attendanceBulkActions button {
+    flex: 1 1 180px;
   }
 
   .checkInCamperRow {

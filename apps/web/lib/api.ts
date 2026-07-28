@@ -20,6 +20,9 @@ import type {
   ProblemResponse,
   ReEnrollmentOptionsResponse,
   OperationalReportCenter,
+  SeasonComparison,
+  SeasonComparisonOptions,
+  SessionAttendanceSummary,
   SessionDetail,
   SessionListResponse,
   SessionHousing,
@@ -103,6 +106,21 @@ export async function getCommunications(): Promise<CommunicationsCenter> {
 
 export async function getReports(): Promise<OperationalReportCenter> {
   return getJson('/v1/reports');
+}
+
+export async function getSeasonComparison(
+  primarySeasonId: string,
+  comparisonSeasonId: string,
+): Promise<SeasonComparison> {
+  const query = new URLSearchParams({
+    comparison_season_id: comparisonSeasonId,
+    primary_season_id: primarySeasonId,
+  });
+  return getJson(`/v1/reports/season-comparison?${query}`);
+}
+
+export async function getSeasonComparisonOptions(): Promise<SeasonComparisonOptions> {
+  return getJson('/v1/reports/season-comparison/options');
 }
 
 export async function getParentCatalog(headers = getParentApiHeaders()): Promise<CatalogContext> {
@@ -191,8 +209,20 @@ export async function getParentSessions(
   return getJson('/v1/sessions', headers);
 }
 
-export async function getSession(sessionId: string): Promise<SessionDetail> {
-  return getJson(`/v1/sessions/${encodeURIComponent(sessionId)}`);
+export async function getSession(
+  sessionId: string,
+  attendanceDate?: string,
+): Promise<SessionDetail> {
+  const query = attendanceDate
+    ? `?${new URLSearchParams({ attendance_date: attendanceDate })}`
+    : '';
+  return getJson(`/v1/sessions/${encodeURIComponent(sessionId)}${query}`);
+}
+
+export async function getSessionAttendanceSummary(
+  sessionId: string,
+): Promise<SessionAttendanceSummary> {
+  return getJson(`/v1/sessions/${encodeURIComponent(sessionId)}/attendance`);
 }
 
 export async function getParentSession(

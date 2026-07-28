@@ -3,11 +3,14 @@
 import type {
   ProblemResponse,
   RegisteredCamper,
+  SessionAttendanceSummary,
   SessionAttendanceUpdate,
+  SessionBulkAttendanceUpdate,
   SessionDetail,
 } from '@camp-registration/contracts';
 import {
   AlertCircle,
+  CalendarDays,
   CheckCircle2,
   Clock3,
   LogOut,
@@ -72,9 +75,19 @@ function timeLabel(value: string | null, timeZone: string): string | null {
   }).format(new Date(value));
 }
 
+function dateLabel(value: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+    weekday: 'short',
+  }).format(new Date(`${value}T00:00:00Z`));
+}
+
 async function updateAttendance(
   camper: RegisteredCamper,
   sessionId: string,
+  attendanceDate: string,
   action: SessionAttendanceUpdate['action'],
   note: string,
   pickupName: string,
@@ -85,6 +98,7 @@ async function updateAttendance(
       {
         body: JSON.stringify({
           action,
+          attendance_date: attendanceDate,
           note: note.trim() || null,
           pickup_name: action === 'CHECK_OUT' ? pickupName : null,
         }),
@@ -98,14 +112,57 @@ async function updateAttendance(
   }
 }
 
-export function SessionCheckInDesk({ session }: { session: SessionDetail }) {
+async function loadAttendance(
+  sessionId: string,
+  attendanceDate: string,
+): Promise<ProblemResponse | SessionDetail> {
+  try {
+    const query = new URLSearchParams({ attendance_date: attendanceDate });
+    const response = await fetch(`/api/v1/sessions/${sessionId}?${query}`);
+    return (await response.json()) as ProblemResponse | SessionDetail;
+  } catch {
+    return { code: 'request_failed', message: 'Attendance could not be loaded.' };
+  }
+}
+
+async function updateBulkAttendance(
+  sessionId: string,
+  update: SessionBulkAttendanceUpdate,
+): Promise<ProblemResponse | SessionDetail> {
+  try {
+    const response = await fetch(`/api/v1/sessions/${sessionId}/attendance/bulk`, {
+      body: JSON.stringify(update),
+      headers: { 'content-type': 'application/json' },
+      method: 'POST',
+    });
+    return (await response.json()) as ProblemResponse | SessionDetail;
+  } catch {
+    return { code: 'request_failed', message: 'Bulk attendance could not be updated.' };
+  }
+}
+
+export function SessionCheckInDesk({
+  initialAttendanceDate,
+  initialSummary,
+  session,
+}: {
+  initialAttendanceDate: string;
+  initialSummary: SessionAttendanceSummary;
+  session: SessionDetail;
+}) {
   const [campers, setCampers] = useState(session.registered_campers);
+  const [attendanceDate, setAttendanceDate] = useState(initialAttendanceDate);
+  const [summary, setSummary] = useState(initialSummary);
   const [filter, setFilter] = useState<AttendanceFilter>('ALL');
   const [query, setQuery] = useState('');
   const [notes, setNotes] = useState(() => initialNotes(session.registered_campers));
   const [pickupNames, setPickupNames] = useState(() => initialPickups(session.registered_campers));
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [message, setMessage] = useState<DeskMessage | null>(null);
+  const [selectedRegistrationIds, setSelectedRegistrationIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [bulkNote, setBulkNote] = useState('');
 
   const confirmedCampers = useMemo(
     () => campers.filter((camper) => camper.status === 'CONFIRMED'),
@@ -143,11 +200,88 @@ export function SessionCheckInDesk({ session }: { session: SessionDetail }) {
       return matchesFilter && (!normalizedQuery || searchableText.includes(normalizedQuery));
     });
   }, [confirmedCampers, filter, query]);
+  const visibleUnmarkedIds = visibleCampers
+    .filter((camper) => camper.attendance_status === 'NOT_MARKED')
+    .map((camper) => camper.registration_id);
 
   const syncCampers = (updatedCampers: RegisteredCamper[]) => {
     setCampers(updatedCampers);
     setNotes(initialNotes(updatedCampers));
     setPickupNames(initialPickups(updatedCampers));
+    setSelectedRegistrationIds(new Set());
+    const confirmed = updatedCampers.filter((camper) => camper.status === 'CONFIRMED');
+    const nextCounts = confirmed.reduce(
+      (total, camper) => {
+        total[camper.attendance_status] += 1;
+        return total;
+      },
+      {
+        ABSENT: 0,
+        CHECKED_IN: 0,
+        CHECKED_OUT: 0,
+        NOT_MARKED: 0,
+      } satisfies Record<RegisteredCamper['attendance_status'], number>,
+    );
+    setSummary((current) => ({
+      ...current,
+      days: current.days.map((day) =>
+        day.attendance_date === attendanceDate
+          ? {
+              absent_count: nextCounts.ABSENT,
+              attendance_date: attendanceDate,
+              checked_in_count: nextCounts.CHECKED_IN,
+              checked_out_count: nextCounts.CHECKED_OUT,
+              confirmed_count: confirmed.length,
+              not_marked_count: nextCounts.NOT_MARKED,
+            }
+          : day,
+      ),
+    }));
+  };
+
+  const selectAttendanceDate = async (nextDate: string): Promise<void> => {
+    if (nextDate === attendanceDate || pendingKey) return;
+    setPendingKey('date');
+    setMessage(null);
+    const result = await loadAttendance(session.id, nextDate);
+    if (isProblem(result)) {
+      setPendingKey(null);
+      setMessage({ text: result.message, tone: 'error' });
+      return;
+    }
+    setAttendanceDate(nextDate);
+    setCampers(result.registered_campers);
+    setNotes(initialNotes(result.registered_campers));
+    setPickupNames(initialPickups(result.registered_campers));
+    setSelectedRegistrationIds(new Set());
+    setPendingKey(null);
+  };
+
+  const submitBulk = async (action: SessionBulkAttendanceUpdate['action']): Promise<void> => {
+    if (selectedRegistrationIds.size === 0) return;
+    setPendingKey(`bulk:${action}`);
+    setMessage(null);
+    const result = await updateBulkAttendance(session.id, {
+      action,
+      attendance_date: attendanceDate,
+      note: bulkNote.trim() || null,
+      registration_ids: [...selectedRegistrationIds],
+    });
+    if (isProblem(result)) {
+      setPendingKey(null);
+      setMessage({ text: result.message, tone: 'error' });
+      return;
+    }
+    const updatedCount = selectedRegistrationIds.size;
+    syncCampers(result.registered_campers);
+    setBulkNote('');
+    setPendingKey(null);
+    setMessage({
+      text: `${updatedCount} ${updatedCount === 1 ? 'camper' : 'campers'} ${
+        action === 'CHECK_IN' ? 'checked in' : 'marked absent'
+      }.`,
+      tone: 'success',
+    });
   };
 
   const submit = async (
@@ -160,6 +294,7 @@ export function SessionCheckInDesk({ session }: { session: SessionDetail }) {
     const result = await updateAttendance(
       camper,
       session.id,
+      attendanceDate,
       action,
       notes[camper.registration_id] ?? '',
       pickupNames[camper.registration_id] ?? '',
@@ -179,6 +314,51 @@ export function SessionCheckInDesk({ session }: { session: SessionDetail }) {
 
   return (
     <section className="checkInDesk" aria-labelledby="check-in-desk-heading">
+      <div className="attendanceCalendar">
+        <div className="attendanceCalendarHeading">
+          <div>
+            <span className="eyebrow">
+              <CalendarDays size={15} aria-hidden="true" />
+              Daily attendance
+            </span>
+            <h2>{dateLabel(attendanceDate)}</h2>
+            <p>Select a session day to review its roll call and pickup history.</p>
+          </div>
+          <label>
+            Attendance date
+            <input
+              type="date"
+              min={summary.starts_on}
+              max={summary.ends_on}
+              value={attendanceDate}
+              disabled={pendingKey !== null}
+              onChange={(event) => void selectAttendanceDate(event.target.value)}
+            />
+          </label>
+        </div>
+        <div className="attendanceDayStrip" aria-label="Session attendance days">
+          {summary.days.map((day) => {
+            const markedCount = day.checked_in_count + day.checked_out_count + day.absent_count;
+            return (
+              <button
+                className="attendanceDayButton"
+                data-active={day.attendance_date === attendanceDate}
+                key={day.attendance_date}
+                type="button"
+                disabled={pendingKey !== null}
+                aria-pressed={day.attendance_date === attendanceDate}
+                onClick={() => void selectAttendanceDate(day.attendance_date)}
+              >
+                <strong>{dateLabel(day.attendance_date)}</strong>
+                <span>
+                  {markedCount}/{day.confirmed_count} marked
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="checkInSummaryGrid" aria-label="Check-in summary">
         <div className="checkInSummaryTile">
           <span>Needs action</span>
@@ -210,7 +390,10 @@ export function SessionCheckInDesk({ session }: { session: SessionDetail }) {
             value={query}
             type="search"
             placeholder="Search camper, family, grade, or pickup"
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setSelectedRegistrationIds(new Set());
+            }}
           />
         </label>
         <div className="checkInFilters" aria-label="Attendance filters">
@@ -221,7 +404,10 @@ export function SessionCheckInDesk({ session }: { session: SessionDetail }) {
                 className="checkInFilterButton"
                 type="button"
                 aria-pressed={filter === filterValue}
-                onClick={() => setFilter(filterValue)}
+                onClick={() => {
+                  setFilter(filterValue);
+                  setSelectedRegistrationIds(new Set());
+                }}
               >
                 {filterLabels[filterValue]}
                 <span>{filterValue === 'ALL' ? confirmedCampers.length : counts[filterValue]}</span>
@@ -237,6 +423,56 @@ export function SessionCheckInDesk({ session }: { session: SessionDetail }) {
           {confirmedCampers.length} confirmed campers are available for check-in
           {waitlistedCount > 0 ? `; ${waitlistedCount} waitlisted campers stay on the roster` : ''}.
         </span>
+      </div>
+
+      <div className="attendanceBulkBar" aria-label="Bulk roll call">
+        <div className="attendanceBulkSelection">
+          <strong>{selectedRegistrationIds.size} selected</strong>
+          <button
+            type="button"
+            disabled={pendingKey !== null || visibleUnmarkedIds.length === 0}
+            onClick={() => setSelectedRegistrationIds(new Set(visibleUnmarkedIds))}
+          >
+            Select unmarked in view
+          </button>
+          <button
+            type="button"
+            disabled={pendingKey !== null || selectedRegistrationIds.size === 0}
+            onClick={() => setSelectedRegistrationIds(new Set())}
+          >
+            Clear
+          </button>
+        </div>
+        <label>
+          Shared note
+          <input
+            value={bulkNote}
+            maxLength={500}
+            placeholder="Optional note for selected campers"
+            disabled={pendingKey !== null}
+            onChange={(event) => setBulkNote(event.target.value)}
+          />
+        </label>
+        <div className="attendanceBulkActions">
+          <button
+            className="buttonPrimary"
+            type="button"
+            disabled={pendingKey !== null || selectedRegistrationIds.size === 0}
+            onClick={() => void submitBulk('CHECK_IN')}
+          >
+            <UserCheck size={17} aria-hidden="true" />
+            {pendingKey === 'bulk:CHECK_IN' ? 'Checking in...' : 'Check in selected'}
+          </button>
+          <button
+            className="buttonSecondary"
+            type="button"
+            disabled={pendingKey !== null || selectedRegistrationIds.size === 0}
+            onClick={() => void submitBulk('MARK_ABSENT')}
+          >
+            <UserX size={17} aria-hidden="true" />
+            {pendingKey === 'bulk:MARK_ABSENT' ? 'Marking...' : 'Mark absent'}
+          </button>
+        </div>
       </div>
 
       {message && (
@@ -278,6 +514,24 @@ export function SessionCheckInDesk({ session }: { session: SessionDetail }) {
                 key={camper.registration_id}
               >
                 <div className="checkInCamperIdentity">
+                  {camper.attendance_status === 'NOT_MARKED' && (
+                    <label className="attendanceSelectCamper">
+                      <span className="srOnly">Select {camperName(camper)}</span>
+                      <input
+                        type="checkbox"
+                        checked={selectedRegistrationIds.has(camper.registration_id)}
+                        disabled={pendingKey !== null}
+                        onChange={(event) =>
+                          setSelectedRegistrationIds((current) => {
+                            const next = new Set(current);
+                            if (event.target.checked) next.add(camper.registration_id);
+                            else next.delete(camper.registration_id);
+                            return next;
+                          })
+                        }
+                      />
+                    </label>
+                  )}
                   <span
                     className={`attendanceStatus attendanceStatus${camper.attendance_status.toLowerCase()}`}
                   >

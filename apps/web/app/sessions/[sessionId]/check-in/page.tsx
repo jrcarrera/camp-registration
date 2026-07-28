@@ -3,9 +3,16 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { SessionCheckInDesk } from '../../../../components/session-check-in-desk';
-import { ApiError, getSession } from '../../../../lib/api';
+import { ApiError, getSession, getSessionAttendanceSummary } from '../../../../lib/api';
 
 export const dynamic = 'force-dynamic';
+
+function initialAttendanceDate(startsOn: string, endsOn: string): string {
+  const today = new Date().toISOString().slice(0, 10);
+  if (today < startsOn) return startsOn;
+  if (today > endsOn) return endsOn;
+  return today;
+}
 
 export default async function CheckInDeskPage({
   params,
@@ -15,7 +22,9 @@ export default async function CheckInDeskPage({
   const { sessionId } = await params;
 
   try {
-    const session = await getSession(sessionId);
+    const summary = await getSessionAttendanceSummary(sessionId);
+    const attendanceDate = initialAttendanceDate(summary.starts_on, summary.ends_on);
+    const session = await getSession(sessionId, attendanceDate);
 
     return (
       <>
@@ -28,7 +37,7 @@ export default async function CheckInDeskPage({
             <p className="contextLabel">{session.code}</p>
             <h1 id="check-in-desk-heading">Check-in desk</h1>
             <p className="pageDescription">
-              Fast attendance and pickup workflow for {session.name}.
+              Daily roll call, attendance history, and pickup for {session.name}.
             </p>
           </div>
           <Link className="buttonSecondary" href={`/sessions/${session.id}`}>
@@ -36,7 +45,11 @@ export default async function CheckInDeskPage({
             Session setup
           </Link>
         </header>
-        <SessionCheckInDesk session={session} />
+        <SessionCheckInDesk
+          initialAttendanceDate={attendanceDate}
+          initialSummary={summary}
+          session={session}
+        />
       </>
     );
   } catch (error) {

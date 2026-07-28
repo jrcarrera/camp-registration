@@ -12,7 +12,9 @@ import type {
   SeasonFixture,
   SeasonRolloverCreate,
   SeasonRolloverResult,
+  SessionAttendanceSummary,
   SessionAttendanceUpdate,
+  SessionBulkAttendanceUpdate,
   SessionCreate,
   SessionDetail,
   SessionSummary,
@@ -48,7 +50,8 @@ export interface CatalogServiceApi {
     requestId: string,
   ): Promise<OrganizationFixture>;
   listSessions(): Promise<SessionSummary[]>;
-  getSession(sessionId: string): Promise<SessionDetail>;
+  getSession(sessionId: string, attendanceDate?: string): Promise<SessionDetail>;
+  getSessionAttendanceSummary(sessionId: string): Promise<SessionAttendanceSummary>;
   createProgram(program: ProgramCreate, requestId: string): Promise<ProgramFixture>;
   updateProgram(
     programId: string,
@@ -66,6 +69,11 @@ export interface CatalogServiceApi {
     sessionId: string,
     registrationId: string,
     update: SessionAttendanceUpdate,
+    requestId: string,
+  ): Promise<SessionDetail>;
+  bulkUpdateSessionAttendance(
+    sessionId: string,
+    update: SessionBulkAttendanceUpdate,
     requestId: string,
   ): Promise<SessionDetail>;
   updateSession(
@@ -218,11 +226,24 @@ export class CatalogService implements CatalogServiceApi {
     return this.store.listSessions(this.organizationId);
   }
 
-  async getSession(sessionId: string): Promise<SessionDetail> {
+  async getSession(sessionId: string, attendanceDate?: string): Promise<SessionDetail> {
     this.authorize(readRoles);
-    const session = await this.store.getSession(this.organizationId, sessionId);
+    if (attendanceDate && !isRealDate(attendanceDate)) {
+      throw new CatalogValidationError(
+        { attendance_date: 'Enter a valid attendance date.' },
+        'Attendance date is invalid',
+      );
+    }
+    const session = await this.store.getSession(this.organizationId, sessionId, attendanceDate);
     if (!session) throw new CatalogNotFoundError('Session not found');
     return session;
+  }
+
+  async getSessionAttendanceSummary(sessionId: string): Promise<SessionAttendanceSummary> {
+    this.authorize(attendanceRoles);
+    const summary = await this.store.getSessionAttendanceSummary(this.organizationId, sessionId);
+    if (!summary) throw new CatalogNotFoundError('Session not found');
+    return summary;
   }
 
   async createProgram(program: ProgramCreate, requestId: string): Promise<ProgramFixture> {
@@ -364,6 +385,35 @@ export class CatalogService implements CatalogServiceApi {
         note: cleanOptionalText(update.note),
         pickup_name: cleanOptionalText(update.pickup_name),
       },
+    });
+  }
+
+  async bulkUpdateSessionAttendance(
+    sessionId: string,
+    update: SessionBulkAttendanceUpdate,
+    requestId: string,
+  ): Promise<SessionDetail> {
+    this.authorize(attendanceRoles);
+    const fieldErrors: Record<string, string> = {};
+    if (!isRealDate(update.attendance_date)) {
+      fieldErrors.attendance_date = 'Enter a valid attendance date.';
+    }
+    const note = cleanOptionalText(update.note);
+    if (note && note.length > 500) {
+      fieldErrors.note = 'Attendance note must be 500 characters or fewer.';
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      throw new CatalogValidationError(fieldErrors, 'Bulk attendance details are invalid');
+    }
+    return this.store.bulkUpdateSessionAttendance({
+      action: update.action,
+      actorId: this.identity.subject,
+      attendanceDate: update.attendance_date,
+      note,
+      organizationId: this.organizationId,
+      registrationIds: update.registration_ids,
+      requestId,
+      sessionId,
     });
   }
 

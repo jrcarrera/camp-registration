@@ -395,6 +395,57 @@ describe('catalog store', () => {
       pickup_name: 'Morgan Pickup',
     });
 
+    const bulkUpdated = await store.bulkUpdateSessionAttendance({
+      action: 'MARK_ABSENT',
+      actorId: 'integration-admin',
+      attendanceDate: '2027-07-05',
+      note: 'Family reported absence.',
+      organizationId,
+      registrationIds: [registrationId],
+      requestId: 'attendance-bulk-request',
+      sessionId,
+    });
+    expect(
+      bulkUpdated.registered_campers.find((camper) => camper.registration_id === registrationId),
+    ).toMatchObject({
+      attendance_date: '2027-07-05',
+      attendance_note: 'Family reported absence.',
+      attendance_status: 'ABSENT',
+    });
+    await expect(
+      store.bulkUpdateSessionAttendance({
+        action: 'CHECK_IN',
+        actorId: 'integration-admin',
+        attendanceDate: '2027-07-05',
+        note: null,
+        organizationId,
+        registrationIds: [registrationId],
+        requestId: 'attendance-bulk-conflict-request',
+        sessionId,
+      }),
+    ).rejects.toBeInstanceOf(CatalogConflictError);
+
+    const attendanceSummary = await store.getSessionAttendanceSummary(organizationId, sessionId);
+    expect(attendanceSummary).toMatchObject({
+      ends_on: '2027-07-10',
+      session_id: sessionId,
+      starts_on: '2027-07-04',
+    });
+    expect(
+      attendanceSummary?.days.find((day) => day.attendance_date === '2027-07-04'),
+    ).toMatchObject({
+      checked_out_count: 1,
+      confirmed_count: 1,
+      not_marked_count: 0,
+    });
+    expect(
+      attendanceSummary?.days.find((day) => day.attendance_date === '2027-07-05'),
+    ).toMatchObject({
+      absent_count: 1,
+      confirmed_count: 1,
+      not_marked_count: 0,
+    });
+
     const audit = new Pool({ connectionString: migrationUrl });
     const attendanceAudit = await audit.query<{
       action: string;
@@ -408,8 +459,6 @@ describe('catalog store', () => {
        ORDER BY occurred_at`,
       [organizationId, registrationId],
     );
-    await audit.end();
-
     expect(attendanceAudit.rows).toEqual([
       expect.objectContaining({
         action: 'attendance.updated',
@@ -427,6 +476,28 @@ describe('catalog store', () => {
           status: 'CHECKED_OUT',
         }),
       }),
+    ]);
+    const bulkAudit = await audit.query<{
+      action: string;
+      details: { action: string; attendance_date: string; registration_count: number };
+    }>(
+      `SELECT action, details
+       FROM audit_events
+       WHERE organization_id = $1
+         AND target_id = $2
+         AND action = 'attendance.bulk_updated'`,
+      [organizationId, sessionId],
+    );
+    await audit.end();
+    expect(bulkAudit.rows).toEqual([
+      {
+        action: 'attendance.bulk_updated',
+        details: expect.objectContaining({
+          action: 'MARK_ABSENT',
+          attendance_date: '2027-07-05',
+          registration_count: 1,
+        }),
+      },
     ]);
   });
 

@@ -9,6 +9,9 @@ import {
   OperationalReportViewSchema,
   OperationalReportViewUpdateSchema,
   ProblemResponseSchema,
+  SeasonComparisonOptionsSchema,
+  SeasonComparisonQuerySchema,
+  SeasonComparisonSchema,
   SessionReportParamsSchema,
   SessionReportQuerySchema,
   XlsxReportSchema,
@@ -18,6 +21,7 @@ import {
   type OperationalReportViewParams,
   type OperationalReportViewUpdate,
   type ProblemResponse,
+  type SeasonComparisonQuery,
   type SessionReportParams,
   type SessionReportQuery,
 } from '@camp-registration/contracts';
@@ -108,6 +112,65 @@ export function registerReportsRoutes(app: FastifyInstance, service: ReportsServ
       if (!reports) return unavailable(reply);
       try {
         return await reports.getCenter();
+      } catch (error) {
+        return problem(reply, error);
+      }
+    },
+  );
+
+  app.get<{ Querystring: SeasonComparisonQuery }>(
+    '/v1/reports/season-comparison',
+    {
+      schema: {
+        description:
+          'Compare tenant-scoped enrollment and financial performance across two seasons.',
+        querystring: SeasonComparisonQuerySchema,
+        response: {
+          200: SeasonComparisonSchema,
+          400: ProblemResponseSchema,
+          403: ProblemResponseSchema,
+          404: ProblemResponseSchema,
+          503: ProblemResponseSchema,
+        },
+        tags: ['reports'],
+      },
+    },
+    async (request, reply) => {
+      const reports = resolveReportsService(service, request);
+      if (!reports) return unavailable(reply);
+      try {
+        const comparison = await reports.compareSeasons(
+          request.query.primary_season_id,
+          request.query.comparison_season_id,
+          request.id,
+        );
+        return reply.header('cache-control', 'private, no-store').send(comparison);
+      } catch (error) {
+        return problem(reply, error);
+      }
+    },
+  );
+
+  app.get(
+    '/v1/reports/season-comparison/options',
+    {
+      schema: {
+        description: 'List tenant-owned seasons available for financial comparison.',
+        response: {
+          200: SeasonComparisonOptionsSchema,
+          403: ProblemResponseSchema,
+          503: ProblemResponseSchema,
+        },
+        tags: ['reports'],
+      },
+    },
+    async (request, reply) => {
+      const reports = resolveReportsService(service, request);
+      if (!reports) return unavailable(reply);
+      try {
+        return reply
+          .header('cache-control', 'private, no-store')
+          .send(await reports.getSeasonComparisonOptions());
       } catch (error) {
         return problem(reply, error);
       }

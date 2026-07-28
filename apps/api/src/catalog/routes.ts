@@ -12,7 +12,10 @@ import {
   SeasonParamsSchema,
   SeasonRolloverCreateSchema,
   SeasonRolloverResultSchema,
+  SessionAttendanceDateQuerySchema,
+  SessionAttendanceSummarySchema,
   SessionAttendanceUpdateSchema,
+  SessionBulkAttendanceUpdateSchema,
   SessionCreateSchema,
   SessionDetailSchema,
   SessionListResponseSchema,
@@ -32,7 +35,10 @@ import {
   type SeasonParams,
   type SeasonRolloverCreate,
   type SeasonRolloverResult,
+  type SessionAttendanceDateQuery,
+  type SessionAttendanceSummary,
   type SessionAttendanceUpdate,
+  type SessionBulkAttendanceUpdate,
   type SessionDetail,
   type SessionCreate,
   type SessionListResponse,
@@ -86,7 +92,12 @@ function sendProblem(reply: FastifyReply, error: unknown) {
     return reply.code(404).send({ code: 'not_found', message: error.message });
   }
   if (error instanceof CatalogConflictError) {
-    return reply.code(409).send({ code: 'version_conflict', message: error.message });
+    return reply.code(409).send({
+      code: error.message.startsWith('One or more selected campers')
+        ? 'attendance_conflict'
+        : 'version_conflict',
+      message: error.message,
+    });
   }
   if (error instanceof CatalogDuplicateError) {
     const code = error.message.startsWith('A season')
@@ -351,12 +362,17 @@ export function registerCatalogRoutes(app: FastifyInstance, service: CatalogServ
     },
   );
 
-  app.get<{ Params: SessionParams; Reply: SessionDetail | ProblemResponse }>(
+  app.get<{
+    Params: SessionParams;
+    Querystring: SessionAttendanceDateQuery;
+    Reply: SessionDetail | ProblemResponse;
+  }>(
     '/v1/sessions/:sessionId',
     {
       schema: {
         description: 'Session details for editing.',
         params: SessionParamsSchema,
+        querystring: SessionAttendanceDateQuerySchema,
         response: { 200: SessionDetailSchema, ...errorResponses },
         tags: ['sessions'],
       },
@@ -370,7 +386,78 @@ export function registerCatalogRoutes(app: FastifyInstance, service: CatalogServ
         });
       }
       try {
-        return await catalogService.getSession(request.params.sessionId);
+        if (request.query.attendance_date) {
+          reply.header('cache-control', 'private, no-store');
+        }
+        return await catalogService.getSession(
+          request.params.sessionId,
+          request.query.attendance_date,
+        );
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.get<{ Params: SessionParams; Reply: SessionAttendanceSummary | ProblemResponse }>(
+    '/v1/sessions/:sessionId/attendance',
+    {
+      schema: {
+        description:
+          'Daily attendance totals across the session date range for the current confirmed roster.',
+        params: SessionParamsSchema,
+        response: { 200: SessionAttendanceSummarySchema, ...errorResponses },
+        tags: ['attendance', 'sessions'],
+      },
+    },
+    async (request, reply) => {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        reply.header('cache-control', 'private, no-store');
+        return await catalogService.getSessionAttendanceSummary(request.params.sessionId);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.post<{
+    Body: SessionBulkAttendanceUpdate;
+    Params: SessionParams;
+    Reply: SessionDetail | ProblemResponse;
+  }>(
+    '/v1/sessions/:sessionId/attendance/bulk',
+    {
+      schema: {
+        body: SessionBulkAttendanceUpdateSchema,
+        description:
+          'Atomically check in or mark absent selected confirmed campers who are not yet marked.',
+        params: SessionParamsSchema,
+        response: { 200: SessionDetailSchema, ...errorResponses },
+        tags: ['attendance', 'sessions'],
+      },
+    },
+    async (request, reply) => {
+      const catalogService = resolveCatalogService(service, request);
+      if (!catalogService) {
+        return reply.code(503).send({
+          code: 'catalog_unavailable',
+          message: 'Catalog dependencies are not configured.',
+        });
+      }
+      try {
+        reply.header('cache-control', 'private, no-store');
+        return await catalogService.bulkUpdateSessionAttendance(
+          request.params.sessionId,
+          request.body,
+          request.id,
+        );
       } catch (error) {
         return sendProblem(reply, error);
       }
@@ -401,6 +488,7 @@ export function registerCatalogRoutes(app: FastifyInstance, service: CatalogServ
         });
       }
       try {
+        reply.header('cache-control', 'private, no-store');
         return await catalogService.updateSessionAttendance(
           request.params.sessionId,
           request.params.registrationId,

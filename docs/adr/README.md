@@ -32,3 +32,5 @@ clarifications and links to superseding decisions.
 | [0024](0024-production-identity-and-application-sessions.md)   | Accepted | Production identity and sessions      |
 | [0025](0025-refunds-credits-and-payment-adjustments.md)        | Accepted | Refunds, credits, and adjustments     |
 | [0026](0026-season-rollover-and-re-enrollment.md)              | Accepted | Season rollover and re-enrollment     |
+| [0027](0027-season-performance-comparison.md)                  | Accepted | Season performance comparison         |
+| [0028](0028-daily-attendance-and-bulk-roll-call.md)            | Accepted | Daily attendance and bulk roll call   |

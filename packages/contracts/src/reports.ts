@@ -144,11 +144,87 @@ export const SessionReportQuerySchema = Type.Object(
   { additionalProperties: false, $id: 'SessionReportQuery' },
 );
 
+export const SeasonComparisonQuerySchema = Type.Object(
+  {
+    comparison_season_id: UuidSchema,
+    primary_season_id: UuidSchema,
+  },
+  { additionalProperties: false, $id: 'SeasonComparisonQuery' },
+);
+
+export const SeasonComparisonOptionSchema = Type.Object(
+  {
+    id: UuidSchema,
+    name: Type.String({ minLength: 1 }),
+    year: Type.Integer({ minimum: 2000, maximum: 2200 }),
+  },
+  { additionalProperties: false },
+);
+
+export const SeasonComparisonOptionsSchema = Type.Object(
+  {
+    seasons: Type.Array(SeasonComparisonOptionSchema),
+  },
+  { additionalProperties: false, $id: 'SeasonComparisonOptions' },
+);
+
+export const SeasonPerformanceSnapshotSchema = Type.Object(
+  {
+    cancelled_registrations: Type.Integer({ minimum: 0 }),
+    capacity: Type.Integer({ minimum: 0 }),
+    capacity_fill_basis_points: Type.Union([Type.Integer({ minimum: 0 }), Type.Null()]),
+    confirmed_registrations: Type.Integer({ minimum: 0 }),
+    net_collected_cents: Type.Integer(),
+    outstanding_balance_cents: Type.Integer({ minimum: 0 }),
+    payments_collected_cents: Type.Integer({ minimum: 0 }),
+    refunds_cents: Type.Integer({ minimum: 0 }),
+    season_id: UuidSchema,
+    season_name: Type.String({ minLength: 1 }),
+    session_count: Type.Integer({ minimum: 0 }),
+    tuition_booked_cents: Type.Integer({ minimum: 0 }),
+    unique_confirmed_campers: Type.Integer({ minimum: 0 }),
+    waitlisted_registrations: Type.Integer({ minimum: 0 }),
+    year: Type.Integer({ minimum: 2000, maximum: 2200 }),
+  },
+  { additionalProperties: false },
+);
+
+export const SeasonMetricChangeSchema = Type.Object(
+  {
+    amount: Type.Integer(),
+    basis_points: Type.Union([Type.Integer(), Type.Null()]),
+  },
+  { additionalProperties: false },
+);
+
+export const SeasonComparisonSchema = Type.Object(
+  {
+    changes: Type.Object(
+      {
+        confirmed_registrations: SeasonMetricChangeSchema,
+        net_collected_cents: SeasonMetricChangeSchema,
+        tuition_booked_cents: SeasonMetricChangeSchema,
+      },
+      { additionalProperties: false },
+    ),
+    comparison: SeasonPerformanceSnapshotSchema,
+    primary: SeasonPerformanceSnapshotSchema,
+    returning_campers: Type.Integer({ minimum: 0 }),
+    returning_rate_basis_points: Type.Union([Type.Integer({ minimum: 0 }), Type.Null()]),
+  },
+  { additionalProperties: false, $id: 'SeasonComparison' },
+);
+
 export const CsvReportSchema = Type.String({ $id: 'CsvReport' });
 
 export type SessionReportParams = Static<typeof SessionReportParamsSchema>;
 export type SessionReportPreset = Static<typeof SessionReportPresetSchema>;
 export type SessionReportQuery = Static<typeof SessionReportQuerySchema>;
+export type SeasonComparison = Static<typeof SeasonComparisonSchema>;
+export type SeasonComparisonOption = Static<typeof SeasonComparisonOptionSchema>;
+export type SeasonComparisonOptions = Static<typeof SeasonComparisonOptionsSchema>;
+export type SeasonComparisonQuery = Static<typeof SeasonComparisonQuerySchema>;
+export type SeasonPerformanceSnapshot = Static<typeof SeasonPerformanceSnapshotSchema>;
 export type OperationalReportCenter = Static<typeof OperationalReportCenterSchema>;
 export type OperationalReportDefaultFormat = Static<typeof OperationalReportDefaultFormatSchema>;
 export type OperationalReportExportFormat = Static<typeof OperationalReportExportFormatSchema>;
