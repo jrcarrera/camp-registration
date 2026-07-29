@@ -5883,6 +5883,248 @@ tbody tr + tr td {
   }
 }
 
+.incidentWorkspace {
+  display: grid;
+  gap: 18px;
+}
+
+.incidentForm {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.incidentCandidateField,
+.incidentNarrativeField {
+  grid-column: span 2;
+}
+
+.incidentForm > button {
+  align-self: end;
+  justify-self: start;
+}
+
+.incidentCenterGrid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.5fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.incidentList,
+.incidentDetail {
+  min-width: 0;
+}
+
+.incidentFilters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(110px, 0.4fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.incidentSummaryStack {
+  display: grid;
+  gap: 8px;
+  max-height: 720px;
+  overflow: auto;
+}
+
+.incidentSummaryButton {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d7e0dc;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #23312b;
+  text-align: left;
+  cursor: pointer;
+}
+
+.incidentSummaryButton:hover,
+.incidentSummaryButton.selected {
+  border-color: #58816d;
+  background: #f3f8f5;
+}
+
+.incidentSummaryButton span:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.incidentSummaryButton small {
+  color: #62736b;
+}
+
+.incidentSummaryButton > small {
+  grid-column: 1 / -1;
+}
+
+.incidentMetadata {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.incidentMetadata div {
+  padding: 11px 12px;
+  border: 1px solid #e0e6e3;
+  border-radius: 7px;
+  background: #f8faf9;
+}
+
+.incidentMetadata dt {
+  color: #65766e;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.incidentMetadata dd {
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+
+.incidentNarrative {
+  display: grid;
+  gap: 5px;
+  padding: 16px;
+  border: 1px solid #e0e6e3;
+  border-radius: 7px;
+  background: #ffffff;
+}
+
+.incidentNarrative h3,
+.incidentTimeline h3 {
+  margin: 8px 0 0;
+  font-size: 0.92rem;
+}
+
+.incidentNarrative h3:first-child {
+  margin-top: 0;
+}
+
+.incidentNarrative p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.incidentTimeline {
+  margin-top: 18px;
+}
+
+.incidentTimeline ol {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.incidentTimeline li {
+  padding: 13px;
+  border-left: 3px solid #799584;
+  background: #f6f9f7;
+}
+
+.incidentTimeline li p {
+  margin: 8px 0 5px;
+  white-space: pre-wrap;
+}
+
+.incidentTimeline li small {
+  color: #66766f;
+}
+
+.incidentActions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #e0e6e3;
+}
+
+.incidentGuardianAction {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #d9e2dd;
+  border-radius: 7px;
+  background: #f7faf8;
+}
+
+.incidentGuardianAction h3 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.incidentGuardianFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.incidentGuardianNote {
+  grid-column: 1 / -1;
+}
+
+.incidentGuardianAction > button {
+  justify-self: start;
+}
+
+@media (max-width: 980px) {
+  .incidentForm {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .incidentCenterGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .incidentSummaryStack {
+    max-height: 420px;
+  }
+}
+
+@media (max-width: 620px) {
+  .incidentForm,
+  .incidentFilters,
+  .incidentMetadata,
+  .incidentActions {
+    grid-template-columns: 1fr;
+  }
+
+  .incidentGuardianFields {
+    grid-template-columns: 1fr;
+  }
+
+  .incidentGuardianNote {
+    grid-column: auto;
+  }
+
+  .incidentCandidateField,
+  .incidentNarrativeField {
+    grid-column: auto;
+  }
+
+  .incidentForm > button,
+  .incidentActions > button {
+    width: 100%;
+  }
+
+  .incidentGuardianAction > button {
+    width: 100%;
+  }
+}
+
 @media print {
   @page {
     margin: 0.45in;

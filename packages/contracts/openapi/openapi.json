@@ -47337,6 +47337,2723 @@
         }
       }
     },
+    "/v1/health-incidents": {
+      "get": {
+        "tags": [
+          "restricted health incidents"
+        ],
+        "description": "List restricted incident projections and confirmed camper/session choices for authorized health staff.",
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "query",
+            "name": "session_id",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "OPEN"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "RESOLVED"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "candidates",
+                    "incidents",
+                    "timezone"
+                  ],
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "camper_id",
+                          "camper_name",
+                          "family_name",
+                          "session_id",
+                          "session_name"
+                        ],
+                        "properties": {
+                          "camper_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "camper_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "family_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "session_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "session_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "incidents": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "camper_id",
+                          "camper_name",
+                          "created_at",
+                          "guardian_notification_status",
+                          "id",
+                          "incident_type",
+                          "occurred_at",
+                          "resolved_at",
+                          "session_id",
+                          "session_name",
+                          "severity",
+                          "status",
+                          "version"
+                        ],
+                        "properties": {
+                          "camper_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "camper_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "created_at": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                            "type": "string"
+                          },
+                          "guardian_notification_status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NOT_REQUIRED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PENDING"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NOTIFIED"
+                                ]
+                              }
+                            ]
+                          },
+                          "id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "incident_type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "INJURY"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ILLNESS"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "SAFETY"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "BEHAVIORAL"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "OTHER"
+                                ]
+                              }
+                            ]
+                          },
+                          "occurred_at": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                            "type": "string"
+                          },
+                          "resolved_at": {
+                            "anyOf": [
+                              {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "session_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "session_name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "severity": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "MINOR"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "MODERATE"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "SERIOUS"
+                                ]
+                              }
+                            ]
+                          },
+                          "status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "OPEN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "RESOLVED"
+                                ]
+                              }
+                            ]
+                          },
+                          "version": {
+                            "minimum": 1,
+                            "type": "integer"
+                          }
+                        },
+                        "title": "HealthIncidentSummary"
+                      }
+                    },
+                    "timezone": {
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "restricted health incidents"
+        ],
+        "description": "Create an immutable incident report with application-encrypted narrative details.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "camper_id",
+                  "care_given",
+                  "guardian_notification_status",
+                  "incident_type",
+                  "location",
+                  "occurred_at",
+                  "session_id",
+                  "severity",
+                  "summary"
+                ],
+                "properties": {
+                  "camper_id": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "care_given": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  "guardian_notification_status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "NOT_REQUIRED"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PENDING"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "NOTIFIED"
+                        ]
+                      }
+                    ]
+                  },
+                  "guardian_notified_at": {
+                    "anyOf": [
+                      {
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "guardian_notified_to": {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  "incident_type": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "INJURY"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ILLNESS"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SAFETY"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "BEHAVIORAL"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "OTHER"
+                        ]
+                      }
+                    ]
+                  },
+                  "location": {
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  "occurred_at": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                    "type": "string"
+                  },
+                  "session_id": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "severity": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "MINOR"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "MODERATE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SERIOUS"
+                        ]
+                      }
+                    ]
+                  },
+                  "summary": {
+                    "minLength": 1,
+                    "maxLength": 4000,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "camper_id",
+                        "camper_name",
+                        "created_at",
+                        "guardian_notification_status",
+                        "id",
+                        "incident_type",
+                        "occurred_at",
+                        "resolved_at",
+                        "session_id",
+                        "session_name",
+                        "severity",
+                        "status",
+                        "version"
+                      ],
+                      "properties": {
+                        "camper_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "camper_name": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        "guardian_notification_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NOT_REQUIRED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "PENDING"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NOTIFIED"
+                              ]
+                            }
+                          ]
+                        },
+                        "id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "incident_type": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "INJURY"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ILLNESS"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SAFETY"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "BEHAVIORAL"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "OTHER"
+                              ]
+                            }
+                          ]
+                        },
+                        "occurred_at": {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        "resolved_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "session_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "session_name": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "severity": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MINOR"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MODERATE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SERIOUS"
+                              ]
+                            }
+                          ]
+                        },
+                        "status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "OPEN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "RESOLVED"
+                              ]
+                            }
+                          ]
+                        },
+                        "version": {
+                          "minimum": 1,
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "care_given",
+                        "entries",
+                        "guardian_notified_at",
+                        "guardian_notified_to",
+                        "location",
+                        "summary"
+                      ],
+                      "properties": {
+                        "care_given": {
+                          "maxLength": 4000,
+                          "type": "string"
+                        },
+                        "entries": {
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "created_at",
+                              "created_by",
+                              "entry_type",
+                              "guardian_notified_at",
+                              "guardian_notified_to",
+                              "id",
+                              "note"
+                            ],
+                            "properties": {
+                              "created_at": {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              "created_by": {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "entry_type": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "FOLLOW_UP"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "GUARDIAN_NOTIFICATION"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "RESOLUTION"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "guardian_notified_at": {
+                                "anyOf": [
+                                  {
+                                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "guardian_notified_to": {
+                                "maxLength": 200,
+                                "type": "string"
+                              },
+                              "id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "note": {
+                                "maxLength": 4000,
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "guardian_notified_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "guardian_notified_to": {
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "location": {
+                          "minLength": 1,
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "summary": {
+                          "minLength": 1,
+                          "maxLength": 4000,
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/health-incidents/{incidentId}": {
+      "get": {
+        "tags": [
+          "restricted health incidents"
+        ],
+        "description": "Decrypt one incident and its append-only timeline after authorization.",
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "incidentId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "camper_id",
+                        "camper_name",
+                        "created_at",
+                        "guardian_notification_status",
+                        "id",
+                        "incident_type",
+                        "occurred_at",
+                        "resolved_at",
+                        "session_id",
+                        "session_name",
+                        "severity",
+                        "status",
+                        "version"
+                      ],
+                      "properties": {
+                        "camper_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "camper_name": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        "guardian_notification_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NOT_REQUIRED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "PENDING"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NOTIFIED"
+                              ]
+                            }
+                          ]
+                        },
+                        "id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "incident_type": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "INJURY"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ILLNESS"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SAFETY"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "BEHAVIORAL"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "OTHER"
+                              ]
+                            }
+                          ]
+                        },
+                        "occurred_at": {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        "resolved_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "session_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "session_name": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "severity": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MINOR"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MODERATE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SERIOUS"
+                              ]
+                            }
+                          ]
+                        },
+                        "status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "OPEN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "RESOLVED"
+                              ]
+                            }
+                          ]
+                        },
+                        "version": {
+                          "minimum": 1,
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "care_given",
+                        "entries",
+                        "guardian_notified_at",
+                        "guardian_notified_to",
+                        "location",
+                        "summary"
+                      ],
+                      "properties": {
+                        "care_given": {
+                          "maxLength": 4000,
+                          "type": "string"
+                        },
+                        "entries": {
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "created_at",
+                              "created_by",
+                              "entry_type",
+                              "guardian_notified_at",
+                              "guardian_notified_to",
+                              "id",
+                              "note"
+                            ],
+                            "properties": {
+                              "created_at": {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              "created_by": {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "entry_type": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "FOLLOW_UP"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "GUARDIAN_NOTIFICATION"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "RESOLUTION"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "guardian_notified_at": {
+                                "anyOf": [
+                                  {
+                                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "guardian_notified_to": {
+                                "maxLength": 200,
+                                "type": "string"
+                              },
+                              "id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "note": {
+                                "maxLength": 4000,
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "guardian_notified_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "guardian_notified_to": {
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "location": {
+                          "minLength": 1,
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "summary": {
+                          "minLength": 1,
+                          "maxLength": 4000,
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/health-incidents/{incidentId}/notes": {
+      "post": {
+        "tags": [
+          "restricted health incidents"
+        ],
+        "description": "Append an encrypted follow-up note to an open incident.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "note",
+                  "version"
+                ],
+                "properties": {
+                  "note": {
+                    "minLength": 1,
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  "version": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "incidentId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "camper_id",
+                        "camper_name",
+                        "created_at",
+                        "guardian_notification_status",
+                        "id",
+                        "incident_type",
+                        "occurred_at",
+                        "resolved_at",
+                        "session_id",
+                        "session_name",
+                        "severity",
+                        "status",
+                        "version"
+                      ],
+                      "properties": {
+                        "camper_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "camper_name": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        "guardian_notification_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NOT_REQUIRED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "PENDING"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NOTIFIED"
+                              ]
+                            }
+                          ]
+                        },
+                        "id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "incident_type": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "INJURY"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ILLNESS"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SAFETY"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "BEHAVIORAL"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "OTHER"
+                              ]
+                            }
+                          ]
+                        },
+                        "occurred_at": {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        "resolved_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "session_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "session_name": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "severity": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MINOR"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MODERATE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SERIOUS"
+                              ]
+                            }
+                          ]
+                        },
+                        "status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "OPEN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "RESOLVED"
+                              ]
+                            }
+                          ]
+                        },
+                        "version": {
+                          "minimum": 1,
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "care_given",
+                        "entries",
+                        "guardian_notified_at",
+                        "guardian_notified_to",
+                        "location",
+                        "summary"
+                      ],
+                      "properties": {
+                        "care_given": {
+                          "maxLength": 4000,
+                          "type": "string"
+                        },
+                        "entries": {
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "created_at",
+                              "created_by",
+                              "entry_type",
+                              "guardian_notified_at",
+                              "guardian_notified_to",
+                              "id",
+                              "note"
+                            ],
+                            "properties": {
+                              "created_at": {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              "created_by": {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "entry_type": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "FOLLOW_UP"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "GUARDIAN_NOTIFICATION"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "RESOLUTION"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "guardian_notified_at": {
+                                "anyOf": [
+                                  {
+                                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "guardian_notified_to": {
+                                "maxLength": 200,
+                                "type": "string"
+                              },
+                              "id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "note": {
+                                "maxLength": 4000,
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "guardian_notified_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "guardian_notified_to": {
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "location": {
+                          "minLength": 1,
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "summary": {
+                          "minLength": 1,
+                          "maxLength": 4000,
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/health-incidents/{incidentId}/resolve": {
+      "post": {
+        "tags": [
+          "restricted health incidents"
+        ],
+        "description": "Resolve an open incident with an append-only encrypted resolution entry.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "resolution",
+                  "version"
+                ],
+                "properties": {
+                  "resolution": {
+                    "minLength": 1,
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  "version": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "incidentId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "camper_id",
+                        "camper_name",
+                        "created_at",
+                        "guardian_notification_status",
+                        "id",
+                        "incident_type",
+                        "occurred_at",
+                        "resolved_at",
+                        "session_id",
+                        "session_name",
+                        "severity",
+                        "status",
+                        "version"
+                      ],
+                      "properties": {
+                        "camper_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "camper_name": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        "guardian_notification_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NOT_REQUIRED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "PENDING"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NOTIFIED"
+                              ]
+                            }
+                          ]
+                        },
+                        "id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "incident_type": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "INJURY"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ILLNESS"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SAFETY"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "BEHAVIORAL"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "OTHER"
+                              ]
+                            }
+                          ]
+                        },
+                        "occurred_at": {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        "resolved_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "session_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "session_name": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "severity": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MINOR"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MODERATE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SERIOUS"
+                              ]
+                            }
+                          ]
+                        },
+                        "status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "OPEN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "RESOLVED"
+                              ]
+                            }
+                          ]
+                        },
+                        "version": {
+                          "minimum": 1,
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "care_given",
+                        "entries",
+                        "guardian_notified_at",
+                        "guardian_notified_to",
+                        "location",
+                        "summary"
+                      ],
+                      "properties": {
+                        "care_given": {
+                          "maxLength": 4000,
+                          "type": "string"
+                        },
+                        "entries": {
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "created_at",
+                              "created_by",
+                              "entry_type",
+                              "guardian_notified_at",
+                              "guardian_notified_to",
+                              "id",
+                              "note"
+                            ],
+                            "properties": {
+                              "created_at": {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              "created_by": {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "entry_type": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "FOLLOW_UP"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "GUARDIAN_NOTIFICATION"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "RESOLUTION"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "guardian_notified_at": {
+                                "anyOf": [
+                                  {
+                                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "guardian_notified_to": {
+                                "maxLength": 200,
+                                "type": "string"
+                              },
+                              "id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "note": {
+                                "maxLength": 4000,
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "guardian_notified_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "guardian_notified_to": {
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "location": {
+                          "minLength": 1,
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "summary": {
+                          "minLength": 1,
+                          "maxLength": 4000,
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/health-incidents/{incidentId}/guardian-notifications": {
+      "post": {
+        "tags": [
+          "restricted health incidents"
+        ],
+        "description": "Append encrypted guardian notification details and update the operational notification state.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "guardian_notified_at",
+                  "guardian_notified_to",
+                  "version"
+                ],
+                "properties": {
+                  "guardian_notified_at": {
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                    "type": "string"
+                  },
+                  "guardian_notified_to": {
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  "note": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  "version": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "incidentId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "allOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "camper_id",
+                        "camper_name",
+                        "created_at",
+                        "guardian_notification_status",
+                        "id",
+                        "incident_type",
+                        "occurred_at",
+                        "resolved_at",
+                        "session_id",
+                        "session_name",
+                        "severity",
+                        "status",
+                        "version"
+                      ],
+                      "properties": {
+                        "camper_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "camper_name": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        "guardian_notification_status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NOT_REQUIRED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "PENDING"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NOTIFIED"
+                              ]
+                            }
+                          ]
+                        },
+                        "id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "incident_type": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "INJURY"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ILLNESS"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SAFETY"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "BEHAVIORAL"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "OTHER"
+                              ]
+                            }
+                          ]
+                        },
+                        "occurred_at": {
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                          "type": "string"
+                        },
+                        "resolved_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "session_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "session_name": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "severity": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MINOR"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MODERATE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "SERIOUS"
+                              ]
+                            }
+                          ]
+                        },
+                        "status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "OPEN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "RESOLVED"
+                              ]
+                            }
+                          ]
+                        },
+                        "version": {
+                          "minimum": 1,
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "care_given",
+                        "entries",
+                        "guardian_notified_at",
+                        "guardian_notified_to",
+                        "location",
+                        "summary"
+                      ],
+                      "properties": {
+                        "care_given": {
+                          "maxLength": 4000,
+                          "type": "string"
+                        },
+                        "entries": {
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "created_at",
+                              "created_by",
+                              "entry_type",
+                              "guardian_notified_at",
+                              "guardian_notified_to",
+                              "id",
+                              "note"
+                            ],
+                            "properties": {
+                              "created_at": {
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                "type": "string"
+                              },
+                              "created_by": {
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "entry_type": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "FOLLOW_UP"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "GUARDIAN_NOTIFICATION"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "RESOLUTION"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "guardian_notified_at": {
+                                "anyOf": [
+                                  {
+                                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "guardian_notified_to": {
+                                "maxLength": 200,
+                                "type": "string"
+                              },
+                              "id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "note": {
+                                "maxLength": 4000,
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "guardian_notified_at": {
+                          "anyOf": [
+                            {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "guardian_notified_to": {
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "location": {
+                          "minLength": 1,
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "summary": {
+                          "minLength": 1,
+                          "maxLength": 4000,
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/operations/waitlist": {
       "get": {
         "tags": [

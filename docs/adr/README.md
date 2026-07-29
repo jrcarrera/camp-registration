@@ -34,3 +34,4 @@ clarifications and links to superseding decisions.
 | [0026](0026-season-rollover-and-re-enrollment.md)              | Accepted | Season rollover and re-enrollment     |
 | [0027](0027-season-performance-comparison.md)                  | Accepted | Season performance comparison         |
 | [0028](0028-daily-attendance-and-bulk-roll-call.md)            | Accepted | Daily attendance and bulk roll call   |
+| [0029](0029-encrypted-incident-and-injury-log.md)              | Accepted | Encrypted incident and injury log     |

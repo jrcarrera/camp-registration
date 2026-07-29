@@ -1102,6 +1102,7 @@ Seed data:
 | Provider-hosted deposit payments          | Implemented with Stripe and local adapters                    |
 | Signed webhook reconciliation             | Implemented with idempotent, ordered ledger application       |
 | Restricted health forms and medical data  | Implemented with encrypted records and projection-only queues |
+| Incident and injury log                   | Implemented with encrypted append-only timelines and MFA      |
 | Transactional waitlist email              | Implemented with SMTP, issue visibility, and replay           |
 | File uploads/object storage               | Not implemented                                               |
 | Cognito authentication boundary           | Implemented with disabled-by-default Terraform                |
@@ -1116,6 +1117,30 @@ Seed data:
 | Operational reporting and saved presets   | Implemented with CSV, XLSX, print layouts, filters, and audit |
 | Season performance comparison             | Implemented with enrollment, finance, retention, and audit    |
 | Lifecycle communication center            | Implemented with templates, audiences, schedules, and replay  |
+
+## Incident and Injury Log Flow
+
+```mermaid
+flowchart LR
+    Staff["Health staff with MFA"] -->|"select confirmed camper and session"| API["Restricted incident API"]
+    API --> Auth["role, MFA, tenant, and registration checks"]
+    Auth --> Encrypt["AES-256-GCM narrative encryption"]
+    Encrypt --> Header["projection-only incident header"]
+    Encrypt --> Detail["encrypted immutable narrative"]
+    Staff -->|"append follow-up"| Entry["encrypted append-only entry"]
+    Staff -->|"resolve with current version"| Resolve["atomic resolution entry and closed state"]
+    Header --> Center["restricted incident center"]
+    Detail --> Read["separately audited detail read"]
+    Entry --> Read
+    API --> Audit["content-free audit events"]
+```
+
+Only health staff, camp administrators, and organization administrators with
+verified MFA can use the incident workspace. The center returns type, severity,
+state, and time projections; location, narrative, care, guardian details,
+follow-ups, and resolution text remain encrypted until an authorized detail
+read. A stale follow-up or resolution fails rather than overwriting a
+concurrent action.
 
 ## Session Housing and Bunk-Buddy Flow
 

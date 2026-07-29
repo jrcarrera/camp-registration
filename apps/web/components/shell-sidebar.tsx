@@ -17,6 +17,7 @@ import {
   UserRoundCog,
   TableProperties,
   ShieldCheck,
+  ShieldAlert,
   TentTree,
   Users,
   Tags,
@@ -48,6 +49,7 @@ const adminNavigation: NavigationItem[] = [
   { href: '/financial-assistance', icon: HandCoins, label: 'Assistance' },
   { href: '/payments', icon: CircleDollarSign, label: 'Payments' },
   { href: '/health-records', icon: HeartPulse, label: 'Health' },
+  { href: '/health-incidents', icon: ShieldAlert, label: 'Incidents' },
 ];
 
 const portalNavigation: NavigationItem[] = [

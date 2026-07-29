@@ -26,6 +26,10 @@ Restricted Health Records v1 adds application-encrypted camper health
 aggregates, minimum readiness projections, a dedicated health role, linked-parent
 updates, staff review, constrained break-glass access, and audited private CSV
 exports without exposing health contents to ordinary profiles or reports.
+The incident and injury log extends that boundary with confirmed-session
+linkage, encrypted immutable narratives, append-only follow-up and resolution
+entries, MFA-only health access, private responses, and content-free audit
+events.
 Production identity uses application-owned opaque sessions behind a
 provider-neutral boundary. Amazon Cognito is the first production adapter;
 local development uses deterministic email, password, and authenticator
@@ -48,7 +52,7 @@ availability, pricing, or payment checks.
 - Downstream analytics, custom report builders, and scheduled report delivery
 - Parent portal enhancements and administrative dashboard
 - Social sign-in, passkeys, and custom authentication domains
-- Medication administration, incident workflows, and clinical print projections
+- Medication administration, incident correction workflows, and clinical print projections
 
 ## Local Development
 

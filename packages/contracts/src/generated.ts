@@ -14557,6 +14557,770 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/health-incidents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List restricted incident projections and confirmed camper/session choices for authorized health staff. */
+        get: {
+            parameters: {
+                query?: {
+                    session_id?: string;
+                    status?: "OPEN" | "RESOLVED";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            candidates: {
+                                camper_id: string;
+                                camper_name: string;
+                                family_name: string;
+                                session_id: string;
+                                session_name: string;
+                            }[];
+                            incidents: {
+                                camper_id: string;
+                                camper_name: string;
+                                created_at: string;
+                                guardian_notification_status: "NOT_REQUIRED" | "PENDING" | "NOTIFIED";
+                                id: string;
+                                incident_type: "INJURY" | "ILLNESS" | "SAFETY" | "BEHAVIORAL" | "OTHER";
+                                occurred_at: string;
+                                resolved_at: string | null;
+                                session_id: string;
+                                session_name: string;
+                                severity: "MINOR" | "MODERATE" | "SERIOUS";
+                                status: "OPEN" | "RESOLVED";
+                                version: number;
+                            }[];
+                            timezone: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** @description Create an immutable incident report with application-encrypted narrative details. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        camper_id: string;
+                        care_given: string;
+                        guardian_notification_status: "NOT_REQUIRED" | "PENDING" | "NOTIFIED";
+                        guardian_notified_at?: string | null;
+                        guardian_notified_to?: string;
+                        incident_type: "INJURY" | "ILLNESS" | "SAFETY" | "BEHAVIORAL" | "OTHER";
+                        location: string;
+                        occurred_at: string;
+                        session_id: string;
+                        severity: "MINOR" | "MODERATE" | "SERIOUS";
+                        summary: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            camper_id: string;
+                            camper_name: string;
+                            created_at: string;
+                            guardian_notification_status: "NOT_REQUIRED" | "PENDING" | "NOTIFIED";
+                            id: string;
+                            incident_type: "INJURY" | "ILLNESS" | "SAFETY" | "BEHAVIORAL" | "OTHER";
+                            occurred_at: string;
+                            resolved_at: string | null;
+                            session_id: string;
+                            session_name: string;
+                            severity: "MINOR" | "MODERATE" | "SERIOUS";
+                            status: "OPEN" | "RESOLVED";
+                            version: number;
+                        } & {
+                            care_given: string;
+                            entries: {
+                                created_at: string;
+                                created_by: string;
+                                entry_type: "FOLLOW_UP" | "GUARDIAN_NOTIFICATION" | "RESOLUTION";
+                                guardian_notified_at: string | null;
+                                guardian_notified_to: string;
+                                id: string;
+                                note: string;
+                            }[];
+                            guardian_notified_at: string | null;
+                            guardian_notified_to: string;
+                            location: string;
+                            summary: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/health-incidents/{incidentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Decrypt one incident and its append-only timeline after authorization. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    incidentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            camper_id: string;
+                            camper_name: string;
+                            created_at: string;
+                            guardian_notification_status: "NOT_REQUIRED" | "PENDING" | "NOTIFIED";
+                            id: string;
+                            incident_type: "INJURY" | "ILLNESS" | "SAFETY" | "BEHAVIORAL" | "OTHER";
+                            occurred_at: string;
+                            resolved_at: string | null;
+                            session_id: string;
+                            session_name: string;
+                            severity: "MINOR" | "MODERATE" | "SERIOUS";
+                            status: "OPEN" | "RESOLVED";
+                            version: number;
+                        } & {
+                            care_given: string;
+                            entries: {
+                                created_at: string;
+                                created_by: string;
+                                entry_type: "FOLLOW_UP" | "GUARDIAN_NOTIFICATION" | "RESOLUTION";
+                                guardian_notified_at: string | null;
+                                guardian_notified_to: string;
+                                id: string;
+                                note: string;
+                            }[];
+                            guardian_notified_at: string | null;
+                            guardian_notified_to: string;
+                            location: string;
+                            summary: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/health-incidents/{incidentId}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Append an encrypted follow-up note to an open incident. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    incidentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        note: string;
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            camper_id: string;
+                            camper_name: string;
+                            created_at: string;
+                            guardian_notification_status: "NOT_REQUIRED" | "PENDING" | "NOTIFIED";
+                            id: string;
+                            incident_type: "INJURY" | "ILLNESS" | "SAFETY" | "BEHAVIORAL" | "OTHER";
+                            occurred_at: string;
+                            resolved_at: string | null;
+                            session_id: string;
+                            session_name: string;
+                            severity: "MINOR" | "MODERATE" | "SERIOUS";
+                            status: "OPEN" | "RESOLVED";
+                            version: number;
+                        } & {
+                            care_given: string;
+                            entries: {
+                                created_at: string;
+                                created_by: string;
+                                entry_type: "FOLLOW_UP" | "GUARDIAN_NOTIFICATION" | "RESOLUTION";
+                                guardian_notified_at: string | null;
+                                guardian_notified_to: string;
+                                id: string;
+                                note: string;
+                            }[];
+                            guardian_notified_at: string | null;
+                            guardian_notified_to: string;
+                            location: string;
+                            summary: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/health-incidents/{incidentId}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Resolve an open incident with an append-only encrypted resolution entry. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    incidentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        resolution: string;
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            camper_id: string;
+                            camper_name: string;
+                            created_at: string;
+                            guardian_notification_status: "NOT_REQUIRED" | "PENDING" | "NOTIFIED";
+                            id: string;
+                            incident_type: "INJURY" | "ILLNESS" | "SAFETY" | "BEHAVIORAL" | "OTHER";
+                            occurred_at: string;
+                            resolved_at: string | null;
+                            session_id: string;
+                            session_name: string;
+                            severity: "MINOR" | "MODERATE" | "SERIOUS";
+                            status: "OPEN" | "RESOLVED";
+                            version: number;
+                        } & {
+                            care_given: string;
+                            entries: {
+                                created_at: string;
+                                created_by: string;
+                                entry_type: "FOLLOW_UP" | "GUARDIAN_NOTIFICATION" | "RESOLUTION";
+                                guardian_notified_at: string | null;
+                                guardian_notified_to: string;
+                                id: string;
+                                note: string;
+                            }[];
+                            guardian_notified_at: string | null;
+                            guardian_notified_to: string;
+                            location: string;
+                            summary: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/health-incidents/{incidentId}/guardian-notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Append encrypted guardian notification details and update the operational notification state. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    incidentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        guardian_notified_at: string;
+                        guardian_notified_to: string;
+                        note?: string;
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            camper_id: string;
+                            camper_name: string;
+                            created_at: string;
+                            guardian_notification_status: "NOT_REQUIRED" | "PENDING" | "NOTIFIED";
+                            id: string;
+                            incident_type: "INJURY" | "ILLNESS" | "SAFETY" | "BEHAVIORAL" | "OTHER";
+                            occurred_at: string;
+                            resolved_at: string | null;
+                            session_id: string;
+                            session_name: string;
+                            severity: "MINOR" | "MODERATE" | "SERIOUS";
+                            status: "OPEN" | "RESOLVED";
+                            version: number;
+                        } & {
+                            care_given: string;
+                            entries: {
+                                created_at: string;
+                                created_by: string;
+                                entry_type: "FOLLOW_UP" | "GUARDIAN_NOTIFICATION" | "RESOLUTION";
+                                guardian_notified_at: string | null;
+                                guardian_notified_to: string;
+                                id: string;
+                                note: string;
+                            }[];
+                            guardian_notified_at: string | null;
+                            guardian_notified_to: string;
+                            location: string;
+                            summary: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/operations/waitlist": {
         parameters: {
             query?: never;

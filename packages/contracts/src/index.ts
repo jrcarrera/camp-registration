@@ -5,6 +5,7 @@ export * from './forms.js';
 export * from './generated.js';
 export * from './health.js';
 export * from './health-records.js';
+export * from './health-incidents.js';
 export * from './housing.js';
 export * from './identity.js';
 export * from './operations.js';

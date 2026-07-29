@@ -15,6 +15,7 @@ import type {
   PaymentAdjustmentCenter,
   HouseholdOrderListResponse,
   HousingInventory,
+  HealthIncidentCenter,
   HealthRecordCenter,
   PricingConfiguration,
   ProblemResponse,
@@ -157,6 +158,10 @@ export async function getHousing(): Promise<HousingInventory> {
 
 export async function getHealthRecords(): Promise<HealthRecordCenter> {
   return getJson('/v1/health-records');
+}
+
+export async function getHealthIncidents(): Promise<HealthIncidentCenter> {
+  return getJson('/v1/health-incidents');
 }
 
 export async function getParentHealthRecords(
