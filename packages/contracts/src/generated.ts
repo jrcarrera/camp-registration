@@ -15321,6 +15321,518 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/medication-administration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List encrypted medication orders, scheduled doses, and append-only administration records for an authorized health round. */
+        get: {
+            parameters: {
+                query?: {
+                    date?: string;
+                    session_id?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            administrations: {
+                                administered_at: string;
+                                administered_by: string;
+                                id: string;
+                                note: string;
+                                order_id: string;
+                                outcome: "GIVEN" | "REFUSED" | "HELD" | "MISSED";
+                                scheduled_for: string | null;
+                            }[];
+                            candidates: {
+                                camper_id: string;
+                                camper_name: string;
+                                family_name: string;
+                                session_id: string;
+                                session_name: string;
+                            }[];
+                            date: string;
+                            orders: {
+                                administration_times: string[];
+                                camper_id: string;
+                                camper_name: string;
+                                created_at: string;
+                                discontinued_at: string | null;
+                                dose: string;
+                                ends_on: string;
+                                id: string;
+                                instructions: string;
+                                medication_name: string;
+                                schedule_type: "SCHEDULED" | "PRN";
+                                session_id: string;
+                                session_name: string;
+                                starts_on: string;
+                                status: "ACTIVE" | "DISCONTINUED";
+                                version: number;
+                            }[];
+                            scheduled_doses: {
+                                administration: {
+                                    administered_at: string;
+                                    administered_by: string;
+                                    id: string;
+                                    note: string;
+                                    order_id: string;
+                                    outcome: "GIVEN" | "REFUSED" | "HELD" | "MISSED";
+                                    scheduled_for: string | null;
+                                } | null;
+                                order_id: string;
+                                scheduled_for: string;
+                            }[];
+                            timezone: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/medication-administration/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Create an encrypted scheduled or as-needed medication order for a confirmed camper. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        administration_times: string[];
+                        camper_id: string;
+                        dose: string;
+                        ends_on: string;
+                        instructions: string;
+                        medication_name: string;
+                        schedule_type: "SCHEDULED" | "PRN";
+                        session_id: string;
+                        starts_on: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            administration_times: string[];
+                            camper_id: string;
+                            camper_name: string;
+                            created_at: string;
+                            discontinued_at: string | null;
+                            dose: string;
+                            ends_on: string;
+                            id: string;
+                            instructions: string;
+                            medication_name: string;
+                            schedule_type: "SCHEDULED" | "PRN";
+                            session_id: string;
+                            session_name: string;
+                            starts_on: string;
+                            status: "ACTIVE" | "DISCONTINUED";
+                            version: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/medication-administration/orders/{orderId}/administrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Append an encrypted administration or exception record to an active medication order. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    orderId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        administered_at: string;
+                        note: string;
+                        outcome: "GIVEN" | "REFUSED" | "HELD" | "MISSED";
+                        scheduled_for?: string | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            administered_at: string;
+                            administered_by: string;
+                            id: string;
+                            note: string;
+                            order_id: string;
+                            outcome: "GIVEN" | "REFUSED" | "HELD" | "MISSED";
+                            scheduled_for: string | null;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/medication-administration/orders/{orderId}/discontinue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Discontinue an active medication order while preserving its administration history. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    orderId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            administration_times: string[];
+                            camper_id: string;
+                            camper_name: string;
+                            created_at: string;
+                            discontinued_at: string | null;
+                            dose: string;
+                            ends_on: string;
+                            id: string;
+                            instructions: string;
+                            medication_name: string;
+                            schedule_type: "SCHEDULED" | "PRN";
+                            session_id: string;
+                            session_name: string;
+                            starts_on: string;
+                            status: "ACTIVE" | "DISCONTINUED";
+                            version: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/operations/waitlist": {
         parameters: {
             query?: never;

@@ -8,6 +8,7 @@ export * from './health-records.js';
 export * from './health-incidents.js';
 export * from './housing.js';
 export * from './identity.js';
+export * from './medication-administration.js';
 export * from './operations.js';
 export * from './orders.js';
 export * from './payments.js';

@@ -11,6 +11,7 @@ import {
   HandCoins,
   House,
   MessagesSquare,
+  Pill,
   BedDouble,
   Library,
   Settings,
@@ -50,6 +51,7 @@ const adminNavigation: NavigationItem[] = [
   { href: '/payments', icon: CircleDollarSign, label: 'Payments' },
   { href: '/health-records', icon: HeartPulse, label: 'Health' },
   { href: '/health-incidents', icon: ShieldAlert, label: 'Incidents' },
+  { href: '/medication-administration', icon: Pill, label: 'Medications' },
 ];
 
 const portalNavigation: NavigationItem[] = [

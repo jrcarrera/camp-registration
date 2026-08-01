@@ -18,6 +18,7 @@ import {
   HousingStore,
   HealthIncidentStore,
   HealthRecordStore,
+  MedicationAdministrationStore,
   OrderStore,
   PaymentStore,
   PricingStore,
@@ -50,6 +51,11 @@ import {
   HealthIncidentService,
   type HealthIncidentServiceApi,
 } from './health-incidents/service.js';
+import { registerMedicationAdministrationRoutes } from './medication-administration/routes.js';
+import {
+  MedicationAdministrationService,
+  type MedicationAdministrationServiceApi,
+} from './medication-administration/service.js';
 import { OperationsService, type OperationsServiceApi } from './operations/service.js';
 import { registerOrderRoutes } from './orders/routes.js';
 import { OrderService, type OrderServiceApi } from './orders/service.js';
@@ -77,6 +83,7 @@ export interface BuildAppOptions {
   healthEncryptionProvider?: HealthEncryptionProvider;
   healthIncidentService?: HealthIncidentServiceApi;
   healthRecordService?: HealthRecordServiceApi;
+  medicationAdministrationService?: MedicationAdministrationServiceApi;
   identity?: RequestIdentity;
   identityService?: IdentityService;
   logger?: boolean | FastifyBaseLogger;
@@ -358,6 +365,26 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         }
       : undefined);
   registerHealthIncidentRoutes(app, healthIncidentService);
+
+  const medicationAdministrationStore = options.database
+    ? new MedicationAdministrationStore(options.database)
+    : undefined;
+  const medicationAdministrationService =
+    options.medicationAdministrationService ??
+    (medicationAdministrationStore && options.healthEncryptionProvider
+      ? (request: FastifyRequest) => {
+          const context = resolveRequestContext(request);
+          return context
+            ? new MedicationAdministrationService(
+                medicationAdministrationStore,
+                options.healthEncryptionProvider!,
+                context.identity,
+                context.organizationId,
+              )
+            : undefined;
+        }
+      : undefined);
+  registerMedicationAdministrationRoutes(app, medicationAdministrationService);
 
   const operationsStore = options.database
     ? new WaitlistOperationsStore(options.database)

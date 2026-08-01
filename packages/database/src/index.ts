@@ -7,6 +7,7 @@ export * from './housing-store.js';
 export * from './health-record-store.js';
 export * from './health-incident-store.js';
 export * from './identity-store.js';
+export * from './medication-administration-store.js';
 export * from './migrate.js';
 export * from './notification-store.js';
 export * from './order-store.js';
