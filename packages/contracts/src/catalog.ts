@@ -22,6 +22,16 @@ export const OrganizationFixtureSchema = Type.Object(
     slug: Type.String({ minLength: 1, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }),
     name: Type.String({ minLength: 1 }),
     self_service_signup_enabled: Type.Boolean(),
+    public_catalog_enabled: Type.Boolean(),
+    public_tagline: Type.Union([Type.String({ minLength: 1, maxLength: 120 }), Type.Null()]),
+    public_description: Type.Union([Type.String({ minLength: 1, maxLength: 1500 }), Type.Null()]),
+    brand_primary_color: Type.String({ pattern: '^#[0-9A-Fa-f]{6}$' }),
+    brand_logo_url: Type.Union([Type.String({ format: 'uri', maxLength: 2048 }), Type.Null()]),
+    public_website_url: Type.Union([Type.String({ format: 'uri', maxLength: 2048 }), Type.Null()]),
+    public_contact_email: Type.Union([
+      Type.String({ format: 'email', maxLength: 320 }),
+      Type.Null(),
+    ]),
     stripe_connected_account_id: Type.Union([
       Type.String({ minLength: 6, pattern: '^acct_[A-Za-z0-9]+$' }),
       Type.Null(),
@@ -139,6 +149,23 @@ export const OrganizationSettingsUpdateSchema = Type.Object(
       Type.Union([Type.String({ maxLength: 255, pattern: '^acct_[A-Za-z0-9]+$' }), Type.Null()]),
     ),
     self_service_signup_enabled: Type.Boolean(),
+    public_catalog_enabled: Type.Optional(Type.Boolean()),
+    public_tagline: Type.Optional(
+      Type.Union([Type.String({ minLength: 1, maxLength: 120 }), Type.Null()]),
+    ),
+    public_description: Type.Optional(
+      Type.Union([Type.String({ minLength: 1, maxLength: 1500 }), Type.Null()]),
+    ),
+    brand_primary_color: Type.Optional(Type.String({ pattern: '^#[0-9A-Fa-f]{6}$' })),
+    brand_logo_url: Type.Optional(
+      Type.Union([Type.String({ format: 'uri', maxLength: 2048 }), Type.Null()]),
+    ),
+    public_website_url: Type.Optional(
+      Type.Union([Type.String({ format: 'uri', maxLength: 2048 }), Type.Null()]),
+    ),
+    public_contact_email: Type.Optional(
+      Type.Union([Type.String({ format: 'email', maxLength: 320 }), Type.Null()]),
+    ),
     waitlist_offer_duration_hours: WaitlistOfferDurationHoursSchema,
   },
   { additionalProperties: false, $id: 'OrganizationSettingsUpdate' },

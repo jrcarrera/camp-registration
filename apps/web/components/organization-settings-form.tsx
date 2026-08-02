@@ -28,6 +28,13 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
   );
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [catalogEnabled, setCatalogEnabled] = useState(organization.public_catalog_enabled);
+  const [tagline, setTagline] = useState(organization.public_tagline ?? '');
+  const [description, setDescription] = useState(organization.public_description ?? '');
+  const [color, setColor] = useState(organization.brand_primary_color);
+  const [logoUrl, setLogoUrl] = useState(organization.brand_logo_url ?? '');
+  const [websiteUrl, setWebsiteUrl] = useState(organization.public_website_url ?? '');
+  const [contactEmail, setContactEmail] = useState(organization.public_contact_email ?? '');
 
   async function save() {
     setSaving(true);
@@ -37,6 +44,13 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
       const response = await fetch('/api/v1/organization/settings', {
         body: JSON.stringify({
           self_service_signup_enabled: signupEnabled,
+          public_catalog_enabled: catalogEnabled,
+          public_tagline: tagline.trim() || null,
+          public_description: description.trim() || null,
+          brand_primary_color: color,
+          brand_logo_url: logoUrl.trim() || null,
+          public_website_url: websiteUrl.trim() || null,
+          public_contact_email: contactEmail.trim() || null,
           stripe_connected_account_id: stripeAccountId.trim() || null,
           waitlist_offer_duration_hours: durationHours,
         }),
@@ -54,6 +68,13 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
       setSavedStripeAccountId(updated.stripe_connected_account_id ?? '');
       setSignupEnabled(updated.self_service_signup_enabled);
       setSavedSignupEnabled(updated.self_service_signup_enabled);
+      setCatalogEnabled(updated.public_catalog_enabled);
+      setTagline(updated.public_tagline ?? '');
+      setDescription(updated.public_description ?? '');
+      setColor(updated.brand_primary_color);
+      setLogoUrl(updated.brand_logo_url ?? '');
+      setWebsiteUrl(updated.public_website_url ?? '');
+      setContactEmail(updated.public_contact_email ?? '');
       setMessage('Organization settings saved.');
     } catch (caught) {
       setError(
@@ -98,6 +119,84 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
             .
           </p>
         </div>
+      </section>
+      <section className="editorSection" aria-labelledby="public-catalog-heading">
+        <div className="editorSectionHeading">
+          <h2 id="public-catalog-heading">Public catalog</h2>
+          <p>
+            These presentation details are public when the catalog is enabled. Family-account
+            approval remains separate.
+          </p>
+        </div>
+        <label className="checkRow">
+          <input
+            checked={catalogEnabled}
+            disabled={saving}
+            onChange={(event) => setCatalogEnabled(event.target.checked)}
+            type="checkbox"
+          />
+          <span>Publish the public catalog</span>
+        </label>
+        <div className="organizationSettingsFields">
+          <label className="formField">
+            <span>Tagline ({tagline.length}/120)</span>
+            <input
+              disabled={saving}
+              maxLength={120}
+              onChange={(event) => setTagline(event.target.value)}
+              value={tagline}
+            />
+          </label>
+          <label className="formField">
+            <span>Description ({description.length}/1500)</span>
+            <textarea
+              disabled={saving}
+              maxLength={1500}
+              onChange={(event) => setDescription(event.target.value)}
+              value={description}
+            />
+          </label>
+          <label className="formField">
+            <span>Brand color</span>
+            <input
+              disabled={saving}
+              onChange={(event) => setColor(event.target.value)}
+              pattern="^#[0-9A-Fa-f]{6}$"
+              value={color}
+            />
+          </label>
+          <label className="formField">
+            <span>Logo URL (HTTPS only)</span>
+            <input
+              disabled={saving}
+              onChange={(event) => setLogoUrl(event.target.value)}
+              type="url"
+              value={logoUrl}
+            />
+          </label>
+          <label className="formField">
+            <span>Website URL</span>
+            <input
+              disabled={saving}
+              onChange={(event) => setWebsiteUrl(event.target.value)}
+              type="url"
+              value={websiteUrl}
+            />
+          </label>
+          <label className="formField">
+            <span>Public contact email</span>
+            <input
+              disabled={saving}
+              onChange={(event) => setContactEmail(event.target.value)}
+              type="email"
+              value={contactEmail}
+            />
+          </label>
+        </div>
+        <p className="settingsPolicySummary">
+          Preview: <a href={`/o/${organization.slug}/preview`}>Open staff preview</a>. This works
+          while publication is disabled and is available only to staff.
+        </p>
       </section>
       <section className="editorSection" aria-labelledby="family-signup-heading">
         <div className="editorSectionHeading">

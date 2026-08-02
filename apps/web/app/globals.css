@@ -4381,6 +4381,85 @@ tbody tr + tr td {
   gap: 20px;
 }
 
+.publicCatalog {
+  width: min(100%, 1100px);
+  display: grid;
+  gap: 20px;
+  color: #173629;
+}
+.publicCatalogHeader {
+  display: flex;
+  align-items: start;
+  gap: 18px;
+  padding: 28px;
+  border-radius: 14px;
+  background: #fff;
+  border-top: 5px solid var(--catalog-brand, #166534);
+}
+.publicCatalogHeader h1,
+.publicCatalogHeader p {
+  margin: 0 0 8px;
+}
+.publicCatalogLogo {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+.publicTagline {
+  font-weight: 700;
+  color: var(--catalog-brand, #166534);
+}
+.publicLinks,
+.publicActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.publicNotice,
+.publicEmpty {
+  padding: 14px;
+  border-radius: 8px;
+  background: #e8f2ed;
+}
+.publicFilters,
+.publicSessionGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+.publicFilters button {
+  align-self: end;
+}
+.publicResults {
+  margin: 0;
+}
+.publicSessionCard {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid #dce5e0;
+  border-radius: 12px;
+  background: #fff;
+}
+.publicSessionCard h2,
+.publicSessionCard p {
+  margin: 0;
+}
+@media (max-width: 360px) {
+  .authWorkspace {
+    padding: 16px 10px;
+  }
+  .publicCatalogHeader {
+    padding: 16px;
+    flex-direction: column;
+  }
+  .publicFilters,
+  .publicSessionGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .authHeader {
   display: grid;
   justify-items: start;

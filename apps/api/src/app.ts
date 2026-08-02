@@ -163,7 +163,8 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         path === '/ready' ||
         path.startsWith('/docs') ||
         path.startsWith('/v1/webhooks/') ||
-        (request.method === 'GET' && /^\/v1\/public\/organizations\/[^/]+$/.test(path)) ||
+        (request.method === 'GET' &&
+          /^\/v1\/public\/organizations\/[^/]+(?:\/catalog)?$/.test(path)) ||
         (request.method === 'POST' &&
           (path === '/v1/auth/challenges' ||
             /^\/v1\/auth\/challenges\/[^/]+\/respond$/.test(path) ||

@@ -6,6 +6,13 @@
       "slug": "test-camp",
       "name": "Test Camp",
       "self_service_signup_enabled": true,
+      "public_catalog_enabled": false,
+      "public_tagline": null,
+      "public_description": null,
+      "brand_primary_color": "#166534",
+      "brand_logo_url": null,
+      "public_website_url": null,
+      "public_contact_email": null,
       "timezone": "America/Chicago",
       "stripe_connected_account_id": null,
       "waitlist_offer_duration_hours": 48

@@ -18,6 +18,7 @@ import {
   OnboardingRequestSchema,
   ProblemResponseSchema,
   PublicOrganizationSchema,
+  PublicCatalogSchema,
   SelectOrganizationSchema,
   WorkforceInvitationCreateSchema,
   type AccountRecovery,
@@ -39,6 +40,7 @@ import {
   type OnboardingRequestCreate,
   type ProblemResponse,
   type PublicOrganization,
+  type PublicCatalog,
   type SelectOrganization,
   type WorkforceInvitationCreate,
 } from '@camp-registration/contracts';
@@ -206,6 +208,63 @@ export function registerIdentityRoutes(
       if (!service) return unavailable(reply);
       try {
         return await service.getPublicOrganization(request.params.organizationSlug);
+      } catch (error) {
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.get<{ Params: OrganizationSlugParams; Reply: PublicCatalog | ProblemResponse }>(
+    '/v1/public/organizations/:organizationSlug/catalog',
+    {
+      schema: {
+        params: OrganizationSlugParamsSchema,
+        response: { 200: PublicCatalogSchema, ...errorResponses },
+        tags: ['catalog', 'public'],
+      },
+    },
+    async (request, reply) => {
+      if (!service) {
+        reply.header('cache-control', 'no-store');
+        return unavailable(reply);
+      }
+      try {
+        const catalog = await service.getPublicCatalog(request.params.organizationSlug);
+        return reply
+          .header('cache-control', 'public, max-age=60, stale-while-revalidate=300')
+          .send(catalog);
+      } catch (error) {
+        reply.header('cache-control', 'no-store');
+        return sendProblem(reply, error);
+      }
+    },
+  );
+
+  app.get<{ Reply: PublicCatalog | ProblemResponse }>(
+    '/v1/organization/public-catalog-preview',
+    {
+      schema: {
+        response: { 200: PublicCatalogSchema, ...errorResponses },
+        tags: ['catalog', 'settings'],
+      },
+    },
+    async (request, reply) => {
+      if (!service) return unavailable(reply);
+      const context = requireContext(resolveContext, request, reply);
+      if (!context) return;
+      const access = context.session.organizations.find(
+        (item) => item.organization_id === context.session.active_organization_id,
+      );
+      if (
+        !access ||
+        !access.roles.some((role) =>
+          ['camp_staff', 'camp_admin', 'organization_admin'].includes(role),
+        )
+      ) {
+        return reply.code(403).send({ code: 'forbidden', message: 'Staff access is required.' });
+      }
+      try {
+        return await service.getPublicCatalogPreview(access.slug);
       } catch (error) {
         return sendProblem(reply, error);
       }

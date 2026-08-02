@@ -1,10 +1,16 @@
 import { CheckCircle2, Clock3, ShieldCheck, TentTree } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { notFound } from 'next/navigation';
 
 import { AuthChallengeForm } from '../../../../components/auth-challenge-form';
 import { OnboardingRequestForm } from '../../../../components/onboarding-request-form';
-import { getAuthSession, getOnboarding, getPublicOrganization } from '../../../../lib/api';
+import {
+  ApiError,
+  getAuthSession,
+  getOnboarding,
+  getPublicOrganization,
+} from '../../../../lib/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +20,13 @@ export default async function OrganizationJoinPage({
   params: Promise<{ organizationSlug: string }>;
 }) {
   const { organizationSlug } = await params;
-  const organization = await getPublicOrganization(organizationSlug);
+  let organization;
+  try {
+    organization = await getPublicOrganization(organizationSlug);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) notFound();
+    throw error;
+  }
   const session = await getAuthSession();
   const onboarding = session ? await getOnboarding(organizationSlug).catch(() => null) : null;
 

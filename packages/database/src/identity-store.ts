@@ -16,6 +16,28 @@ export interface PublicOrganizationRecord {
   slug: string;
 }
 
+export interface PublicCatalogRecord {
+  organization: {
+    brand_logo_url: string | null;
+    brand_primary_color: string;
+    description: string | null;
+    name: string;
+    public_contact_email: string | null;
+    public_website_url: string | null;
+    self_service_signup_enabled: boolean;
+    slug: string;
+    tagline: string | null;
+  };
+  seasons: Array<{ name: string; year: number }>;
+  programs: Array<{
+    delivery_mode: 'DAY' | 'OVERNIGHT';
+    description: string;
+    id: string;
+    name: string;
+  }>;
+  sessions: Array<Record<string, unknown>>;
+}
+
 export interface OrganizationAccessRecord {
   name: string;
   organization_id: string;
@@ -204,6 +226,70 @@ export class IdentityStore {
     return this.withIdentity((client) => client.query<Row>(text, values));
   }
 
+  private mapPublicCatalogRows(rows: Record<string, unknown>[]): PublicCatalogRecord {
+    const first = rows[0]!;
+    const organization = {
+      brand_logo_url: first.brand_logo_url as string | null,
+      brand_primary_color: first.brand_primary_color as string,
+      description: first.public_description as string | null,
+      name: first.organization_name as string,
+      public_contact_email: first.public_contact_email as string | null,
+      public_website_url: first.public_website_url as string | null,
+      self_service_signup_enabled: first.self_service_signup_enabled as boolean,
+      slug: first.organization_slug as string,
+      tagline: first.public_tagline as string | null,
+    };
+    const programs = new Map<string, PublicCatalogRecord['programs'][number]>();
+    const seasons = new Map<number, PublicCatalogRecord['seasons'][number]>();
+    const sessions = rows
+      .filter((row) => row.session_id !== null)
+      .map((row) => {
+        seasons.set(row.season_year as number, {
+          name: row.season_name as string,
+          year: row.season_year as number,
+        });
+        programs.set(row.program_id as string, {
+          id: row.program_id as string,
+          name: row.program_name as string,
+          description: row.program_description as string,
+          delivery_mode: row.delivery_mode as 'DAY' | 'OVERNIGHT',
+        });
+        return {
+          availability: row.availability,
+          currency: row.currency,
+          deposit_cents: row.deposit_cents,
+          ends_on:
+            row.ends_on instanceof Date ? row.ends_on.toISOString().slice(0, 10) : row.ends_on,
+          id: row.session_id,
+          maximum_age: row.maximum_age,
+          maximum_grade: row.maximum_grade,
+          minimum_age: row.minimum_age,
+          minimum_grade: row.minimum_grade,
+          name: row.session_name,
+          price_cents: row.price_cents,
+          program_id: row.program_id,
+          registration_closes_at: new Date(row.registration_closes_at as string)
+            .toISOString()
+            .replace('.000Z', 'Z'),
+          registration_opens_at: new Date(row.registration_opens_at as string)
+            .toISOString()
+            .replace('.000Z', 'Z'),
+          registration_state: row.registration_state,
+          season_year: row.season_year,
+          starts_on:
+            row.starts_on instanceof Date
+              ? row.starts_on.toISOString().slice(0, 10)
+              : row.starts_on,
+        };
+      });
+    return {
+      organization,
+      programs: [...programs.values()],
+      seasons: [...seasons.values()],
+      sessions,
+    };
+  }
+
   private async withTenant<T>(
     organizationId: string,
     operation: (client: PoolClient) => Promise<T>,
@@ -231,6 +317,105 @@ export class IdentityStore {
       [slug],
     );
     return result.rows[0] ?? null;
+  }
+
+  async getPublicCatalog(slug: string): Promise<PublicCatalogRecord | null> {
+    const result = await this.identityQuery<Record<string, unknown>>(
+      `SELECT * FROM get_public_catalog($1)`,
+      [slug],
+    );
+    const rows = result.rows;
+    if (rows.length === 0) {
+      const exists = await this.identityQuery<{ found: boolean }>(
+        `SELECT EXISTS(SELECT 1 FROM get_public_catalog($1)) AS found`,
+        [slug],
+      );
+      return exists.rows[0]?.found
+        ? { organization: null as never, programs: [], seasons: [], sessions: [] }
+        : null;
+    }
+    const first = rows[0]!;
+    const organization = {
+      brand_logo_url: first.brand_logo_url as string | null,
+      brand_primary_color: first.brand_primary_color as string,
+      description: first.public_description as string | null,
+      name: first.organization_name as string,
+      public_contact_email: first.public_contact_email as string | null,
+      public_website_url: first.public_website_url as string | null,
+      self_service_signup_enabled: first.self_service_signup_enabled as boolean,
+      slug: first.organization_slug as string,
+      tagline: first.public_tagline as string | null,
+    };
+    const programs = new Map<string, PublicCatalogRecord['programs'][number]>();
+    const seasons = new Map<number, PublicCatalogRecord['seasons'][number]>();
+    const sessions = rows
+      .filter((row) => row.session_id !== null)
+      .map((row) => {
+        seasons.set(row.season_year as number, {
+          name: row.season_name as string,
+          year: row.season_year as number,
+        });
+        programs.set(row.program_id as string, {
+          id: row.program_id as string,
+          name: row.program_name as string,
+          description: row.program_description as string,
+          delivery_mode: row.delivery_mode as 'DAY' | 'OVERNIGHT',
+        });
+        return {
+          availability: row.availability,
+          currency: row.currency,
+          deposit_cents: row.deposit_cents,
+          ends_on:
+            row.ends_on instanceof Date ? row.ends_on.toISOString().slice(0, 10) : row.ends_on,
+          id: row.session_id,
+          maximum_age: row.maximum_age,
+          maximum_grade: row.maximum_grade,
+          minimum_age: row.minimum_age,
+          minimum_grade: row.minimum_grade,
+          name: row.session_name,
+          price_cents: row.price_cents,
+          program_id: row.program_id,
+          registration_closes_at: new Date(row.registration_closes_at as string)
+            .toISOString()
+            .replace('.000Z', 'Z'),
+          registration_opens_at: new Date(row.registration_opens_at as string)
+            .toISOString()
+            .replace('.000Z', 'Z'),
+          registration_state: row.registration_state,
+          season_year: row.season_year,
+          starts_on:
+            row.starts_on instanceof Date
+              ? row.starts_on.toISOString().slice(0, 10)
+              : row.starts_on,
+        };
+      });
+    return {
+      organization,
+      programs: [...programs.values()],
+      seasons: [...seasons.values()],
+      sessions,
+    };
+  }
+
+  async getPublicCatalogPreview(slug: string): Promise<PublicCatalogRecord | null> {
+    const client = await this.database.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SELECT set_config('app.identity_service', 'true', true)`);
+      await client.query(`SELECT set_config('app.public_catalog_preview', 'true', true)`);
+      const result = await client.query<Record<string, unknown>>(
+        `SELECT * FROM get_public_catalog($1)`,
+        [slug],
+      );
+      await client.query('COMMIT');
+      if (result.rows.length === 0) return null;
+      return this.mapPublicCatalogRows(result.rows);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async accountOwnsFamily(

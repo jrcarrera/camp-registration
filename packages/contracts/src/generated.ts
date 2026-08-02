@@ -135,6 +135,342 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/public/organizations/{organizationSlug}/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    organizationSlug: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            organization: {
+                                brand_logo_url: string | null;
+                                brand_primary_color: string;
+                                description: string | null;
+                                name: string;
+                                public_contact_email: string | null;
+                                public_website_url: string | null;
+                                self_service_signup_enabled: boolean;
+                                slug: string;
+                                tagline: string | null;
+                            };
+                            programs: {
+                                delivery_mode: "DAY" | "OVERNIGHT";
+                                description: string;
+                                id: string;
+                                name: string;
+                            }[];
+                            seasons: {
+                                name: string;
+                                year: number;
+                            }[];
+                            sessions: {
+                                availability: "OPEN" | "LIMITED" | "WAITLIST" | "FULL";
+                                /** @enum {string} */
+                                currency: "USD";
+                                deposit_cents: number;
+                                ends_on: string;
+                                id: string;
+                                maximum_age: number;
+                                maximum_grade: number;
+                                minimum_age: number;
+                                minimum_grade: number;
+                                name: string;
+                                price_cents: number;
+                                program_id: string;
+                                registration_closes_at: string;
+                                registration_opens_at: string;
+                                registration_state: "NOT_YET_OPEN" | "OPEN" | "CLOSED";
+                                season_year: number;
+                                starts_on: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/organization/public-catalog-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            organization: {
+                                brand_logo_url: string | null;
+                                brand_primary_color: string;
+                                description: string | null;
+                                name: string;
+                                public_contact_email: string | null;
+                                public_website_url: string | null;
+                                self_service_signup_enabled: boolean;
+                                slug: string;
+                                tagline: string | null;
+                            };
+                            programs: {
+                                delivery_mode: "DAY" | "OVERNIGHT";
+                                description: string;
+                                id: string;
+                                name: string;
+                            }[];
+                            seasons: {
+                                name: string;
+                                year: number;
+                            }[];
+                            sessions: {
+                                availability: "OPEN" | "LIMITED" | "WAITLIST" | "FULL";
+                                /** @enum {string} */
+                                currency: "USD";
+                                deposit_cents: number;
+                                ends_on: string;
+                                id: string;
+                                maximum_age: number;
+                                maximum_grade: number;
+                                minimum_age: number;
+                                minimum_grade: number;
+                                name: string;
+                                price_cents: number;
+                                program_id: string;
+                                registration_closes_at: string;
+                                registration_opens_at: string;
+                                registration_state: "NOT_YET_OPEN" | "OPEN" | "CLOSED";
+                                season_year: number;
+                                starts_on: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/challenges": {
         parameters: {
             query?: never;
@@ -3491,6 +3827,13 @@ export interface paths {
                                 slug: string;
                                 name: string;
                                 self_service_signup_enabled: boolean;
+                                public_catalog_enabled: boolean;
+                                public_tagline: string | null;
+                                public_description: string | null;
+                                brand_primary_color: string;
+                                brand_logo_url: string | null;
+                                public_website_url: string | null;
+                                public_contact_email: string | null;
                                 stripe_connected_account_id: string | null;
                                 timezone: string;
                                 waitlist_offer_duration_hours: 24 | 48 | 72 | 168;
@@ -3632,6 +3975,13 @@ export interface paths {
                     "application/json": {
                         stripe_connected_account_id?: string | null;
                         self_service_signup_enabled: boolean;
+                        public_catalog_enabled?: boolean;
+                        public_tagline?: string | null;
+                        public_description?: string | null;
+                        brand_primary_color?: string;
+                        brand_logo_url?: string | null;
+                        public_website_url?: string | null;
+                        public_contact_email?: string | null;
                         waitlist_offer_duration_hours: 24 | 48 | 72 | 168;
                     };
                 };
@@ -3648,6 +3998,13 @@ export interface paths {
                             slug: string;
                             name: string;
                             self_service_signup_enabled: boolean;
+                            public_catalog_enabled: boolean;
+                            public_tagline: string | null;
+                            public_description: string | null;
+                            brand_primary_color: string;
+                            brand_logo_url: string | null;
+                            public_website_url: string | null;
+                            public_contact_email: string | null;
                             stripe_connected_account_id: string | null;
                             timezone: string;
                             waitlist_offer_duration_hours: 24 | 48 | 72 | 168;

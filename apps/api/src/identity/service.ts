@@ -19,6 +19,7 @@ import type {
   OnboardingRequest,
   OnboardingRequestCreate,
   PublicOrganization,
+  PublicCatalog,
   WorkforceInvitationCreate,
 } from '@camp-registration/contracts';
 import {
@@ -161,6 +162,18 @@ export class IdentityService {
       self_service_signup_enabled: organization.self_service_signup_enabled,
       slug: organization.slug,
     };
+  }
+
+  async getPublicCatalog(slug: string): Promise<PublicCatalog> {
+    const catalog = await this.store.getPublicCatalog(slug);
+    if (!catalog) throw new IdentityNotFoundError('Organization not found');
+    return catalog as PublicCatalog;
+  }
+
+  async getPublicCatalogPreview(slug: string): Promise<PublicCatalog> {
+    const catalog = await this.store.getPublicCatalogPreview(slug);
+    if (!catalog) throw new IdentityNotFoundError('Organization not found');
+    return catalog as PublicCatalog;
   }
 
   async startEmailChange(

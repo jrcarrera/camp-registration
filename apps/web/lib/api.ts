@@ -4,6 +4,7 @@ import type {
   MembershipList,
   OnboardingRequest,
   PublicOrganization,
+  PublicCatalog,
   CatalogContext,
   CommunicationsCenter,
   FamilyDetail,
@@ -75,6 +76,14 @@ export async function getAuthSessions(): Promise<AuthSessionList> {
 
 export async function getPublicOrganization(slug: string): Promise<PublicOrganization> {
   return getJson(`/v1/public/organizations/${encodeURIComponent(slug)}`);
+}
+
+export async function getPublicCatalog(slug: string): Promise<PublicCatalog> {
+  return getJson(`/v1/public/organizations/${encodeURIComponent(slug)}/catalog`);
+}
+
+export async function getPublicCatalogPreview(): Promise<PublicCatalog> {
+  return getJson('/v1/organization/public-catalog-preview');
 }
 
 export async function getOnboarding(slug: string): Promise<OnboardingRequest | null> {

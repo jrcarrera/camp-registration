@@ -35,6 +35,13 @@ export interface CatalogContextRecord {
     slug: string;
     name: string;
     self_service_signup_enabled: boolean;
+    public_catalog_enabled: boolean;
+    public_tagline: string | null;
+    public_description: string | null;
+    brand_primary_color: string;
+    brand_logo_url: string | null;
+    public_website_url: string | null;
+    public_contact_email: string | null;
     stripe_connected_account_id: string | null;
     timezone: string;
     waitlist_offer_duration_hours: 24 | 48 | 72 | 168;
@@ -238,6 +245,13 @@ export interface CreateCatalogContext {
 }
 
 export interface UpdateOrganizationSettingsContext extends CreateCatalogContext {
+  brandLogoUrl?: string | null;
+  brandPrimaryColor?: string;
+  publicCatalogEnabled?: boolean;
+  publicContactEmail?: string | null;
+  publicDescription?: string | null;
+  publicTagline?: string | null;
+  publicWebsiteUrl?: string | null;
   selfServiceSignupEnabled: boolean;
   stripeConnectedAccountId?: string | null;
   waitlistOfferDurationHours: 24 | 48 | 72 | 168;
@@ -572,7 +586,7 @@ export class CatalogStore {
   async getContext(organizationId: string): Promise<CatalogContextRecord> {
     return this.withTenant(organizationId, async (client) => {
       const organization = await client.query<CatalogContextRecord['organization']>(
-        `SELECT id, slug, name, self_service_signup_enabled, stripe_connected_account_id, timezone, waitlist_offer_duration_hours
+        `SELECT id, slug, name, self_service_signup_enabled, public_catalog_enabled, public_tagline, public_description, brand_primary_color, brand_logo_url, public_website_url, public_contact_email, stripe_connected_account_id, timezone, waitlist_offer_duration_hours
          FROM organizations
          WHERE id = $1`,
         [organizationId],
@@ -624,7 +638,7 @@ export class CatalogStore {
   ): Promise<CatalogContextRecord['organization']> {
     return this.withTenant(context.organizationId, async (client) => {
       const current = await client.query<CatalogContextRecord['organization']>(
-        `SELECT id, slug, name, self_service_signup_enabled, stripe_connected_account_id, timezone, waitlist_offer_duration_hours
+        `SELECT id, slug, name, self_service_signup_enabled, public_catalog_enabled, public_tagline, public_description, brand_primary_color, brand_logo_url, public_website_url, public_contact_email, stripe_connected_account_id, timezone, waitlist_offer_duration_hours
          FROM organizations
          WHERE id = $1
          FOR UPDATE`,
@@ -638,20 +652,53 @@ export class CatalogStore {
           : context.stripeConnectedAccountId;
       const selfServiceSignupEnabled =
         context.selfServiceSignupEnabled ?? organization.self_service_signup_enabled;
+      const publicCatalogEnabled =
+        context.publicCatalogEnabled ?? organization.public_catalog_enabled;
+      const publicTagline =
+        context.publicTagline === undefined ? organization.public_tagline : context.publicTagline;
+      const publicDescription =
+        context.publicDescription === undefined
+          ? organization.public_description
+          : context.publicDescription;
+      const brandPrimaryColor = context.brandPrimaryColor ?? organization.brand_primary_color;
+      const brandLogoUrl =
+        context.brandLogoUrl === undefined ? organization.brand_logo_url : context.brandLogoUrl;
+      const publicWebsiteUrl =
+        context.publicWebsiteUrl === undefined
+          ? organization.public_website_url
+          : context.publicWebsiteUrl;
+      const publicContactEmail =
+        context.publicContactEmail === undefined
+          ? organization.public_contact_email
+          : context.publicContactEmail;
 
       const updated = await client.query<CatalogContextRecord['organization']>(
         `UPDATE organizations
          SET waitlist_offer_duration_hours = $2,
              stripe_connected_account_id = $3,
              self_service_signup_enabled = $4,
+             public_catalog_enabled = $5,
+             public_tagline = $6,
+             public_description = $7,
+             brand_primary_color = $8,
+             brand_logo_url = $9,
+             public_website_url = $10,
+             public_contact_email = $11,
              updated_at = transaction_timestamp()
          WHERE id = $1
-         RETURNING id, slug, name, self_service_signup_enabled, stripe_connected_account_id, timezone, waitlist_offer_duration_hours`,
+         RETURNING id, slug, name, self_service_signup_enabled, public_catalog_enabled, public_tagline, public_description, brand_primary_color, brand_logo_url, public_website_url, public_contact_email, stripe_connected_account_id, timezone, waitlist_offer_duration_hours`,
         [
           context.organizationId,
           context.waitlistOfferDurationHours,
           stripeConnectedAccountId,
           selfServiceSignupEnabled,
+          publicCatalogEnabled,
+          publicTagline,
+          publicDescription,
+          brandPrimaryColor,
+          brandLogoUrl,
+          publicWebsiteUrl,
+          publicContactEmail,
         ],
       );
       await client.query(
@@ -669,6 +716,38 @@ export class CatalogStore {
               organization.stripe_connected_account_id !== stripeConnectedAccountId,
             self_service_signup_enabled: selfServiceSignupEnabled,
             waitlist_offer_duration_hours: context.waitlistOfferDurationHours,
+          }),
+        ],
+      );
+      await client.query(
+        `INSERT INTO audit_events (organization_id, actor_id, action, target_type, target_id, outcome, request_id, details)
+         VALUES ($1, $2, 'organization.public_catalog_updated', 'organization', $1, 'success', $3, $4::jsonb)`,
+        [
+          context.organizationId,
+          context.actorId,
+          context.requestId,
+          JSON.stringify({
+            changed_fields: [
+              'public_catalog_enabled',
+              'public_tagline',
+              'public_description',
+              'brand_primary_color',
+              'brand_logo_url',
+              'public_website_url',
+              'public_contact_email',
+            ].filter((field) => {
+              const map: Record<string, unknown> = {
+                public_catalog_enabled: publicCatalogEnabled,
+                public_tagline: publicTagline,
+                public_description: publicDescription,
+                brand_primary_color: brandPrimaryColor,
+                brand_logo_url: brandLogoUrl,
+                public_website_url: publicWebsiteUrl,
+                public_contact_email: publicContactEmail,
+              };
+              return map[field] !== organization[field as keyof typeof organization];
+            }),
+            enabled: publicCatalogEnabled,
           }),
         ],
       );

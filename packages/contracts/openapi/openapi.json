@@ -245,6 +245,1053 @@
         }
       }
     },
+    "/v1/public/organizations/{organizationSlug}/catalog": {
+      "get": {
+        "tags": [
+          "catalog",
+          "public"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "organizationSlug",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "organization",
+                    "programs",
+                    "seasons",
+                    "sessions"
+                  ],
+                  "properties": {
+                    "organization": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "brand_logo_url",
+                        "brand_primary_color",
+                        "description",
+                        "name",
+                        "public_contact_email",
+                        "public_website_url",
+                        "self_service_signup_enabled",
+                        "slug",
+                        "tagline"
+                      ],
+                      "properties": {
+                        "brand_logo_url": {
+                          "anyOf": [
+                            {
+                              "format": "uri",
+                              "maxLength": 2048,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "brand_primary_color": {
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
+                        },
+                        "description": {
+                          "anyOf": [
+                            {
+                              "minLength": 1,
+                              "maxLength": 1500,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "name": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "public_contact_email": {
+                          "anyOf": [
+                            {
+                              "format": "email",
+                              "maxLength": 320,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "public_website_url": {
+                          "anyOf": [
+                            {
+                              "format": "uri",
+                              "maxLength": 2048,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "self_service_signup_enabled": {
+                          "type": "boolean"
+                        },
+                        "slug": {
+                          "minLength": 1,
+                          "maxLength": 160,
+                          "type": "string"
+                        },
+                        "tagline": {
+                          "anyOf": [
+                            {
+                              "minLength": 1,
+                              "maxLength": 120,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "programs": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "delivery_mode",
+                          "description",
+                          "id",
+                          "name"
+                        ],
+                        "properties": {
+                          "delivery_mode": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "DAY"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "OVERNIGHT"
+                                ]
+                              }
+                            ]
+                          },
+                          "description": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "name": {
+                            "minLength": 1,
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "seasons": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "name",
+                          "year"
+                        ],
+                        "properties": {
+                          "name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "year": {
+                            "minimum": 2000,
+                            "maximum": 2200,
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "sessions": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "availability",
+                          "currency",
+                          "deposit_cents",
+                          "ends_on",
+                          "id",
+                          "maximum_age",
+                          "maximum_grade",
+                          "minimum_age",
+                          "minimum_grade",
+                          "name",
+                          "price_cents",
+                          "program_id",
+                          "registration_closes_at",
+                          "registration_opens_at",
+                          "registration_state",
+                          "season_year",
+                          "starts_on"
+                        ],
+                        "properties": {
+                          "availability": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "OPEN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "LIMITED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLIST"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "FULL"
+                                ]
+                              }
+                            ]
+                          },
+                          "currency": {
+                            "type": "string",
+                            "enum": [
+                              "USD"
+                            ]
+                          },
+                          "deposit_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "ends_on": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "type": "string"
+                          },
+                          "id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "maximum_age": {
+                            "minimum": 0,
+                            "maximum": 120,
+                            "type": "integer"
+                          },
+                          "maximum_grade": {
+                            "minimum": 0,
+                            "maximum": 12,
+                            "type": "integer"
+                          },
+                          "minimum_age": {
+                            "minimum": 0,
+                            "maximum": 120,
+                            "type": "integer"
+                          },
+                          "minimum_grade": {
+                            "minimum": 0,
+                            "maximum": 12,
+                            "type": "integer"
+                          },
+                          "name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "price_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "program_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "registration_closes_at": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                            "type": "string"
+                          },
+                          "registration_opens_at": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                            "type": "string"
+                          },
+                          "registration_state": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NOT_YET_OPEN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "OPEN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CLOSED"
+                                ]
+                              }
+                            ]
+                          },
+                          "season_year": {
+                            "minimum": 2000,
+                            "maximum": 2200,
+                            "type": "integer"
+                          },
+                          "starts_on": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organization/public-catalog-preview": {
+      "get": {
+        "tags": [
+          "catalog",
+          "settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "organization",
+                    "programs",
+                    "seasons",
+                    "sessions"
+                  ],
+                  "properties": {
+                    "organization": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "brand_logo_url",
+                        "brand_primary_color",
+                        "description",
+                        "name",
+                        "public_contact_email",
+                        "public_website_url",
+                        "self_service_signup_enabled",
+                        "slug",
+                        "tagline"
+                      ],
+                      "properties": {
+                        "brand_logo_url": {
+                          "anyOf": [
+                            {
+                              "format": "uri",
+                              "maxLength": 2048,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "brand_primary_color": {
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
+                        },
+                        "description": {
+                          "anyOf": [
+                            {
+                              "minLength": 1,
+                              "maxLength": 1500,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "name": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "public_contact_email": {
+                          "anyOf": [
+                            {
+                              "format": "email",
+                              "maxLength": 320,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "public_website_url": {
+                          "anyOf": [
+                            {
+                              "format": "uri",
+                              "maxLength": 2048,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "self_service_signup_enabled": {
+                          "type": "boolean"
+                        },
+                        "slug": {
+                          "minLength": 1,
+                          "maxLength": 160,
+                          "type": "string"
+                        },
+                        "tagline": {
+                          "anyOf": [
+                            {
+                              "minLength": 1,
+                              "maxLength": 120,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "programs": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "delivery_mode",
+                          "description",
+                          "id",
+                          "name"
+                        ],
+                        "properties": {
+                          "delivery_mode": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "DAY"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "OVERNIGHT"
+                                ]
+                              }
+                            ]
+                          },
+                          "description": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "name": {
+                            "minLength": 1,
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "seasons": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "name",
+                          "year"
+                        ],
+                        "properties": {
+                          "name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "year": {
+                            "minimum": 2000,
+                            "maximum": 2200,
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "sessions": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "availability",
+                          "currency",
+                          "deposit_cents",
+                          "ends_on",
+                          "id",
+                          "maximum_age",
+                          "maximum_grade",
+                          "minimum_age",
+                          "minimum_grade",
+                          "name",
+                          "price_cents",
+                          "program_id",
+                          "registration_closes_at",
+                          "registration_opens_at",
+                          "registration_state",
+                          "season_year",
+                          "starts_on"
+                        ],
+                        "properties": {
+                          "availability": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "OPEN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "LIMITED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "WAITLIST"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "FULL"
+                                ]
+                              }
+                            ]
+                          },
+                          "currency": {
+                            "type": "string",
+                            "enum": [
+                              "USD"
+                            ]
+                          },
+                          "deposit_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "ends_on": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "type": "string"
+                          },
+                          "id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "maximum_age": {
+                            "minimum": 0,
+                            "maximum": 120,
+                            "type": "integer"
+                          },
+                          "maximum_grade": {
+                            "minimum": 0,
+                            "maximum": 12,
+                            "type": "integer"
+                          },
+                          "minimum_age": {
+                            "minimum": 0,
+                            "maximum": 120,
+                            "type": "integer"
+                          },
+                          "minimum_grade": {
+                            "minimum": 0,
+                            "maximum": 12,
+                            "type": "integer"
+                          },
+                          "name": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "price_cents": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "program_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "registration_closes_at": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                            "type": "string"
+                          },
+                          "registration_opens_at": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?Z$",
+                            "type": "string"
+                          },
+                          "registration_state": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NOT_YET_OPEN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "OPEN"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CLOSED"
+                                ]
+                              }
+                            ]
+                          },
+                          "season_year": {
+                            "minimum": 2000,
+                            "maximum": 2200,
+                            "type": "integer"
+                          },
+                          "starts_on": {
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/auth/challenges": {
       "post": {
         "tags": [
@@ -8276,6 +9323,13 @@
                         "slug",
                         "name",
                         "self_service_signup_enabled",
+                        "public_catalog_enabled",
+                        "public_tagline",
+                        "public_description",
+                        "brand_primary_color",
+                        "brand_logo_url",
+                        "public_website_url",
+                        "public_contact_email",
                         "stripe_connected_account_id",
                         "timezone",
                         "waitlist_offer_duration_hours"
@@ -8296,6 +9350,73 @@
                         },
                         "self_service_signup_enabled": {
                           "type": "boolean"
+                        },
+                        "public_catalog_enabled": {
+                          "type": "boolean"
+                        },
+                        "public_tagline": {
+                          "anyOf": [
+                            {
+                              "minLength": 1,
+                              "maxLength": 120,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "public_description": {
+                          "anyOf": [
+                            {
+                              "minLength": 1,
+                              "maxLength": 1500,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "brand_primary_color": {
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
+                        },
+                        "brand_logo_url": {
+                          "anyOf": [
+                            {
+                              "format": "uri",
+                              "maxLength": 2048,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "public_website_url": {
+                          "anyOf": [
+                            {
+                              "format": "uri",
+                              "maxLength": 2048,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "public_contact_email": {
+                          "anyOf": [
+                            {
+                              "format": "email",
+                              "maxLength": 320,
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "stripe_connected_account_id": {
                           "anyOf": [
@@ -8686,6 +9807,73 @@
                   "self_service_signup_enabled": {
                     "type": "boolean"
                   },
+                  "public_catalog_enabled": {
+                    "type": "boolean"
+                  },
+                  "public_tagline": {
+                    "anyOf": [
+                      {
+                        "minLength": 1,
+                        "maxLength": 120,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "public_description": {
+                    "anyOf": [
+                      {
+                        "minLength": 1,
+                        "maxLength": 1500,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "brand_primary_color": {
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "type": "string"
+                  },
+                  "brand_logo_url": {
+                    "anyOf": [
+                      {
+                        "format": "uri",
+                        "maxLength": 2048,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "public_website_url": {
+                    "anyOf": [
+                      {
+                        "format": "uri",
+                        "maxLength": 2048,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "public_contact_email": {
+                    "anyOf": [
+                      {
+                        "format": "email",
+                        "maxLength": 320,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "waitlist_offer_duration_hours": {
                     "anyOf": [
                       {
@@ -8732,6 +9920,13 @@
                     "slug",
                     "name",
                     "self_service_signup_enabled",
+                    "public_catalog_enabled",
+                    "public_tagline",
+                    "public_description",
+                    "brand_primary_color",
+                    "brand_logo_url",
+                    "public_website_url",
+                    "public_contact_email",
                     "stripe_connected_account_id",
                     "timezone",
                     "waitlist_offer_duration_hours"
@@ -8752,6 +9947,73 @@
                     },
                     "self_service_signup_enabled": {
                       "type": "boolean"
+                    },
+                    "public_catalog_enabled": {
+                      "type": "boolean"
+                    },
+                    "public_tagline": {
+                      "anyOf": [
+                        {
+                          "minLength": 1,
+                          "maxLength": 120,
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "public_description": {
+                      "anyOf": [
+                        {
+                          "minLength": 1,
+                          "maxLength": 1500,
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "brand_primary_color": {
+                      "pattern": "^#[0-9A-Fa-f]{6}$",
+                      "type": "string"
+                    },
+                    "brand_logo_url": {
+                      "anyOf": [
+                        {
+                          "format": "uri",
+                          "maxLength": 2048,
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "public_website_url": {
+                      "anyOf": [
+                        {
+                          "format": "uri",
+                          "maxLength": 2048,
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "public_contact_email": {
+                      "anyOf": [
+                        {
+                          "format": "email",
+                          "maxLength": 320,
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "stripe_connected_account_id": {
                       "anyOf": [

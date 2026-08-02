@@ -150,6 +150,28 @@ function validateSeason(season: SeasonCreate): void {
   }
 }
 
+function validatePublicUrl(
+  value: string | null | undefined,
+  field: string,
+  httpsOnly = false,
+): void {
+  if (!value) return;
+  try {
+    const url = new URL(value);
+    if (
+      (httpsOnly && url.protocol !== 'https:') ||
+      (!httpsOnly && !['http:', 'https:'].includes(url.protocol))
+    ) {
+      throw new Error('scheme');
+    }
+  } catch {
+    throw new CatalogValidationError(
+      { [field]: httpsOnly ? 'Enter an HTTPS URL.' : 'Enter an HTTP or HTTPS URL.' },
+      'Public catalog details are invalid',
+    );
+  }
+}
+
 function rolloverCode(sourceCode: string, sourceYear: number, targetYear: number): string {
   const sourceYearText = String(sourceYear);
   const targetYearText = String(targetYear);
@@ -209,12 +231,35 @@ export class CatalogService implements CatalogServiceApi {
     requestId: string,
   ): Promise<OrganizationFixture> {
     this.authorize(editRoles);
+    validatePublicUrl(settings.brand_logo_url, 'brand_logo_url', true);
+    validatePublicUrl(settings.public_website_url, 'public_website_url');
     return this.store.updateOrganizationSettings({
       actorId: this.identity.subject,
       organizationId: this.organizationId,
       requestId,
       ...(Object.prototype.hasOwnProperty.call(settings, 'stripe_connected_account_id')
         ? { stripeConnectedAccountId: settings.stripe_connected_account_id ?? null }
+        : {}),
+      ...(Object.prototype.hasOwnProperty.call(settings, 'public_catalog_enabled')
+        ? { publicCatalogEnabled: settings.public_catalog_enabled }
+        : {}),
+      ...(Object.prototype.hasOwnProperty.call(settings, 'public_tagline')
+        ? { publicTagline: settings.public_tagline?.trim() || null }
+        : {}),
+      ...(Object.prototype.hasOwnProperty.call(settings, 'public_description')
+        ? { publicDescription: settings.public_description?.trim() || null }
+        : {}),
+      ...(Object.prototype.hasOwnProperty.call(settings, 'brand_primary_color')
+        ? { brandPrimaryColor: settings.brand_primary_color }
+        : {}),
+      ...(Object.prototype.hasOwnProperty.call(settings, 'brand_logo_url')
+        ? { brandLogoUrl: settings.brand_logo_url?.trim() || null }
+        : {}),
+      ...(Object.prototype.hasOwnProperty.call(settings, 'public_website_url')
+        ? { publicWebsiteUrl: settings.public_website_url?.trim() || null }
+        : {}),
+      ...(Object.prototype.hasOwnProperty.call(settings, 'public_contact_email')
+        ? { publicContactEmail: settings.public_contact_email?.trim().toLowerCase() || null }
         : {}),
       selfServiceSignupEnabled: settings.self_service_signup_enabled,
       waitlistOfferDurationHours: settings.waitlist_offer_duration_hours,

@@ -11,7 +11,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     pathname === '/sign-in' ||
     pathname === '/recover-account' ||
     pathname === '/accept-invite' ||
-    (pathname.startsWith('/o/') && pathname.endsWith('/join'));
+    pathname.startsWith('/o/');
   if (authenticationPage) {
     return <main className="authWorkspace">{children}</main>;
   }
