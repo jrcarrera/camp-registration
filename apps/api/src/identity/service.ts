@@ -170,8 +170,8 @@ export class IdentityService {
     return catalog as PublicCatalog;
   }
 
-  async getPublicCatalogPreview(slug: string): Promise<PublicCatalog> {
-    const catalog = await this.store.getPublicCatalogPreview(slug);
+  async getPublicCatalogPreview(organizationId: string, slug: string): Promise<PublicCatalog> {
+    const catalog = await this.store.getPublicCatalogPreview(organizationId, slug);
     if (!catalog) throw new IdentityNotFoundError('Organization not found');
     return catalog as PublicCatalog;
   }

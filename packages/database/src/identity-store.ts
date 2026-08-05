@@ -397,25 +397,18 @@ export class IdentityStore {
     };
   }
 
-  async getPublicCatalogPreview(slug: string): Promise<PublicCatalogRecord | null> {
-    const client = await this.database.pool.connect();
-    try {
-      await client.query('BEGIN');
-      await client.query(`SELECT set_config('app.identity_service', 'true', true)`);
-      await client.query(`SELECT set_config('app.public_catalog_preview', 'true', true)`);
+  async getPublicCatalogPreview(
+    organizationId: string,
+    slug: string,
+  ): Promise<PublicCatalogRecord | null> {
+    return this.withTenant(organizationId, async (client) => {
       const result = await client.query<Record<string, unknown>>(
-        `SELECT * FROM get_public_catalog($1)`,
-        [slug],
+        `SELECT * FROM get_public_catalog_preview($1, $2)`,
+        [organizationId, slug],
       );
-      await client.query('COMMIT');
       if (result.rows.length === 0) return null;
       return this.mapPublicCatalogRows(result.rows);
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
   }
 
   async accountOwnsFamily(

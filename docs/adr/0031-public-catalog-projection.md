@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed pending database and browser verification.
+Accepted 2026-08-01.
 
 ## Decision
 
@@ -26,11 +26,15 @@ existing `camp_admin` and `organization_admin` convention and add a redacted
 `organization.public_catalog_updated` audit event containing only changed
 field names and the enabled flag.
 
+Disabled-catalog preview uses a separate security-invoker function under the
+active tenant RLS context. It does not use a caller-settable database setting to
+bypass the public publication switch.
+
 ## Consequences
 
 The authenticated household cart remains the only registration command path;
 public calls-to-action only link to sign-in or the existing family-account
 request flow. There is no general GET rate limiter in the current API process;
 this remains a production edge/WAF concern rather than a misleading in-memory
-limiter. Public preview for disabled catalogs requires a separately authorized
-read path before this ADR can be accepted.
+limiter. Public preview for disabled catalogs is separately staff-authorized
+with verified MFA and uses `Cache-Control: private, no-store`.

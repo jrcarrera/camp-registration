@@ -27,6 +27,7 @@ export function PublicCatalogView({
 }) {
   const [query, setQuery] = useState('');
   const [availability, setAvailability] = useState('');
+  const [season, setSeason] = useState('');
   const [delivery, setDelivery] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -40,6 +41,7 @@ export function PublicCatalogView({
         const text = `${session.name} ${program?.name ?? ''}`.toLowerCase();
         return (
           (!query || text.includes(query.toLowerCase())) &&
+          (!season || String(session.season_year) === season) &&
           (!availability || session.availability === availability) &&
           (!delivery || program?.delivery_mode === delivery) &&
           (!maxPrice || session.price_cents <= Number(maxPrice) * 100) &&
@@ -49,11 +51,23 @@ export function PublicCatalogView({
             (session.minimum_grade <= Number(grade) && session.maximum_grade >= Number(grade)))
         );
       }),
-    [availability, delivery, maxPrice, programs, query, catalog.sessions],
+    [
+      age,
+      availability,
+      catalog.sessions,
+      dateFrom,
+      delivery,
+      grade,
+      maxPrice,
+      programs,
+      query,
+      season,
+    ],
   );
   const clear = () => {
     setQuery('');
     setAvailability('');
+    setSeason('');
     setDelivery('');
     setMaxPrice('');
     setDateFrom('');
@@ -115,6 +129,17 @@ export function PublicCatalogView({
         <label className="formField">
           <span>Search sessions</span>
           <input onChange={(event) => setQuery(event.target.value)} value={query} />
+        </label>
+        <label className="formField">
+          <span>Season</span>
+          <select onChange={(event) => setSeason(event.target.value)} value={season}>
+            <option value="">All seasons</option>
+            {catalog.seasons.map((item) => (
+              <option key={item.year} value={String(item.year)}>
+                {item.name} ({item.year})
+              </option>
+            ))}
+          </select>
         </label>
         <label className="formField">
           <span>Availability</span>

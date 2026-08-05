@@ -249,6 +249,7 @@ export function registerIdentityRoutes(
       },
     },
     async (request, reply) => {
+      reply.header('cache-control', 'private, no-store');
       if (!service) return unavailable(reply);
       const context = requireContext(resolveContext, request, reply);
       if (!context) return;
@@ -257,14 +258,18 @@ export function registerIdentityRoutes(
       );
       if (
         !access ||
+        !context.session.mfa_verified ||
         !access.roles.some((role) =>
           ['camp_staff', 'camp_admin', 'organization_admin'].includes(role),
         )
       ) {
-        return reply.code(403).send({ code: 'forbidden', message: 'Staff access is required.' });
+        return reply.code(403).send({
+          code: 'forbidden',
+          message: 'Staff access with MFA is required.',
+        });
       }
       try {
-        return await service.getPublicCatalogPreview(access.slug);
+        return await service.getPublicCatalogPreview(access.organization_id, access.slug);
       } catch (error) {
         return sendProblem(reply, error);
       }

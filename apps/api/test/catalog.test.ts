@@ -512,6 +512,27 @@ describe('catalog service validation', () => {
     expect(store.updateSession).not.toHaveBeenCalled();
   });
 
+  it('requires MFA before an administrator changes organization settings', async () => {
+    const store = { updateOrganizationSettings: vi.fn() } as unknown as CatalogStore;
+    const service = new CatalogService(
+      store,
+      { ...localIdentity, mfaVerified: false },
+      organizationId,
+    );
+
+    await expect(
+      service.updateOrganizationSettings(
+        {
+          public_catalog_enabled: true,
+          self_service_signup_enabled: true,
+          waitlist_offer_duration_hours: 48,
+        },
+        'settings-mfa-denied-test',
+      ),
+    ).rejects.toMatchObject({ message: 'Organization settings require administrator MFA' });
+    expect(store.updateOrganizationSettings).not.toHaveBeenCalled();
+  });
+
   it('rejects invalid program defaults before persistence', async () => {
     const store = {
       updateProgram: vi.fn(),

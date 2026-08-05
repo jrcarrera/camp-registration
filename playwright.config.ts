@@ -11,7 +11,7 @@ export default defineConfig({
   // registration scenarios cannot compete for the same household or settings.
   workers: 1,
   use: {
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3000',
     trace: 'on-first-retry',
   },
   projects: [

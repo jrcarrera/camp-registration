@@ -231,6 +231,9 @@ export class CatalogService implements CatalogServiceApi {
     requestId: string,
   ): Promise<OrganizationFixture> {
     this.authorize(editRoles);
+    if (!this.identity.mfaVerified) {
+      throw new CatalogAuthorizationError('Organization settings require administrator MFA');
+    }
     validatePublicUrl(settings.brand_logo_url, 'brand_logo_url', true);
     validatePublicUrl(settings.public_website_url, 'public_website_url');
     return this.store.updateOrganizationSettings({

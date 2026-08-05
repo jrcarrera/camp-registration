@@ -29,12 +29,23 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [catalogEnabled, setCatalogEnabled] = useState(organization.public_catalog_enabled);
+  const [savedCatalogEnabled, setSavedCatalogEnabled] = useState(
+    organization.public_catalog_enabled,
+  );
   const [tagline, setTagline] = useState(organization.public_tagline ?? '');
+  const [savedTagline, setSavedTagline] = useState(organization.public_tagline ?? '');
   const [description, setDescription] = useState(organization.public_description ?? '');
+  const [savedDescription, setSavedDescription] = useState(organization.public_description ?? '');
   const [color, setColor] = useState(organization.brand_primary_color);
+  const [savedColor, setSavedColor] = useState(organization.brand_primary_color);
   const [logoUrl, setLogoUrl] = useState(organization.brand_logo_url ?? '');
+  const [savedLogoUrl, setSavedLogoUrl] = useState(organization.brand_logo_url ?? '');
   const [websiteUrl, setWebsiteUrl] = useState(organization.public_website_url ?? '');
+  const [savedWebsiteUrl, setSavedWebsiteUrl] = useState(organization.public_website_url ?? '');
   const [contactEmail, setContactEmail] = useState(organization.public_contact_email ?? '');
+  const [savedContactEmail, setSavedContactEmail] = useState(
+    organization.public_contact_email ?? '',
+  );
 
   async function save() {
     setSaving(true);
@@ -69,12 +80,19 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
       setSignupEnabled(updated.self_service_signup_enabled);
       setSavedSignupEnabled(updated.self_service_signup_enabled);
       setCatalogEnabled(updated.public_catalog_enabled);
+      setSavedCatalogEnabled(updated.public_catalog_enabled);
       setTagline(updated.public_tagline ?? '');
+      setSavedTagline(updated.public_tagline ?? '');
       setDescription(updated.public_description ?? '');
+      setSavedDescription(updated.public_description ?? '');
       setColor(updated.brand_primary_color);
+      setSavedColor(updated.brand_primary_color);
       setLogoUrl(updated.brand_logo_url ?? '');
+      setSavedLogoUrl(updated.brand_logo_url ?? '');
       setWebsiteUrl(updated.public_website_url ?? '');
+      setSavedWebsiteUrl(updated.public_website_url ?? '');
       setContactEmail(updated.public_contact_email ?? '');
+      setSavedContactEmail(updated.public_contact_email ?? '');
       setMessage('Organization settings saved.');
     } catch (caught) {
       setError(
@@ -266,7 +284,14 @@ export function OrganizationSettingsForm({ organization }: { organization: Organ
               saving ||
               (durationHours === savedDurationHours &&
                 stripeAccountId === savedStripeAccountId &&
-                signupEnabled === savedSignupEnabled)
+                signupEnabled === savedSignupEnabled &&
+                catalogEnabled === savedCatalogEnabled &&
+                tagline === savedTagline &&
+                description === savedDescription &&
+                color === savedColor &&
+                logoUrl === savedLogoUrl &&
+                websiteUrl === savedWebsiteUrl &&
+                contactEmail === savedContactEmail)
             }
             onClick={() => void save()}
             type="button"

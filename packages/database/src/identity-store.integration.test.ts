@@ -66,6 +66,52 @@ describe('identity store', () => {
     expect(sessions.rows).toEqual([]);
   });
 
+  it('returns only the enabled tenant public-catalog projection through its narrow function', async () => {
+    const admin = new Pool({ connectionString: migrationUrl });
+    await admin.query(
+      `UPDATE organizations
+       SET public_catalog_enabled = true,
+           public_tagline = 'A fictional public camp catalog',
+           public_description = 'Public presentation text only.',
+           public_contact_email = 'catalog@example.test'
+       WHERE id = $1`,
+      [organizationId],
+    );
+
+    const catalog = await store.getPublicCatalog('test-camp');
+    const preview = await store.getPublicCatalogPreview(organizationId, 'test-camp');
+    const crossTenantPreview = await store.getPublicCatalogPreview(
+      'd193b5ee-818c-43e0-969d-26ea651ac38c',
+      'test-camp',
+    );
+    const missing = await store.getPublicCatalog('missing-camp');
+    const privileges = await admin.query<{
+      camp_app_can_execute: boolean;
+      public_can_execute: boolean;
+    }>(
+      `SELECT
+         has_function_privilege('camp_app', 'get_public_catalog(text)', 'EXECUTE') AS camp_app_can_execute,
+         has_function_privilege('public', 'get_public_catalog(text)', 'EXECUTE') AS public_can_execute`,
+    );
+    await admin.end();
+
+    expect(missing).toBeNull();
+    expect(preview?.organization.slug).toBe('test-camp');
+    expect(crossTenantPreview).toBeNull();
+    expect(catalog).toMatchObject({
+      organization: {
+        name: 'Test Camp',
+        public_contact_email: 'catalog@example.test',
+        slug: 'test-camp',
+        tagline: 'A fictional public camp catalog',
+      },
+    });
+    expect(catalog?.sessions.length).toBeGreaterThan(0);
+    expect(catalog?.sessions[0]).not.toHaveProperty('organization_id');
+    expect(catalog?.sessions[0]).not.toHaveProperty('registered_count');
+    expect(privileges.rows).toEqual([{ camp_app_can_execute: true, public_can_execute: false }]);
+  });
+
   it('accepts a single-use email-matched family invitation', async () => {
     const account = await store.upsertProviderAccount({
       accountId: 'invite-account',

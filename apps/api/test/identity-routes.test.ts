@@ -1,4 +1,5 @@
-import type { AuthSession } from '@camp-registration/contracts';
+import type { AuthSession, PublicCatalog } from '@camp-registration/contracts';
+import { IdentityNotFoundError } from '@camp-registration/database';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildApp } from '../src/app.js';
@@ -23,6 +24,23 @@ const session: AuthSession = {
   ],
   platform_role: null,
   requires_mfa_setup: false,
+};
+
+const publicCatalog: PublicCatalog = {
+  organization: {
+    brand_logo_url: null,
+    brand_primary_color: '#166534',
+    description: 'A fictional public camp catalog.',
+    name: 'Test Camp',
+    public_contact_email: 'camp@example.test',
+    public_website_url: 'https://example.test',
+    self_service_signup_enabled: true,
+    slug: 'test-camp',
+    tagline: 'A summer outside',
+  },
+  programs: [],
+  seasons: [],
+  sessions: [],
 };
 
 function fakeIdentityService(): IdentityService {
@@ -85,5 +103,95 @@ describe('identity routes', () => {
     expect(response.headers['set-cookie']).toContain('camp_session=opaque-cookie-token');
     expect(response.headers['set-cookie']).toContain('HttpOnly');
     expect(response.headers['set-cookie']).toContain('SameSite=Lax');
+  });
+
+  it('serves a dedicated cached public catalog and does not cache a missing catalog', async () => {
+    const service = {
+      ...fakeIdentityService(),
+      getPublicCatalog: vi.fn().mockResolvedValue(publicCatalog),
+    } as unknown as IdentityService;
+    const app = await buildApp({ identityService: service });
+    applications.push(app);
+
+    const success = await app.inject({
+      method: 'GET',
+      url: '/v1/public/organizations/test-camp/catalog',
+    });
+    expect(success.statusCode).toBe(200);
+    expect(success.headers['cache-control']).toBe('public, max-age=60, stale-while-revalidate=300');
+    expect(success.json()).toEqual(publicCatalog);
+
+    (
+      service as unknown as { getPublicCatalog: ReturnType<typeof vi.fn> }
+    ).getPublicCatalog.mockRejectedValueOnce(new IdentityNotFoundError('Organization not found'));
+    const missing = await app.inject({
+      method: 'GET',
+      url: '/v1/public/organizations/missing/catalog',
+    });
+    expect(missing.statusCode).toBe(404);
+    expect(missing.headers['cache-control']).toBe('no-store');
+  });
+
+  it('uses private no-store for authenticated catalog preview responses', async () => {
+    const service = {
+      ...fakeIdentityService(),
+      getPublicCatalogPreview: vi.fn().mockResolvedValue(publicCatalog),
+      resolveRequest: vi.fn().mockResolvedValue({
+        requestIdentity: {
+          email: 'admin@example.test',
+          emailVerified: true,
+          memberships: [{ campIds: [], organizationId, roles: ['camp_admin'] }],
+          mfaVerified: true,
+          subject: 'account-1',
+        },
+        session: {
+          ...session,
+          mfa_verified: true,
+          organizations: [{ ...session.organizations[0]!, roles: ['camp_admin'] }],
+        },
+      }),
+    } as unknown as IdentityService;
+    const app = await buildApp({ identityService: service });
+    applications.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/v1/organization/public-catalog-preview',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['cache-control']).toBe('private, no-store');
+    expect(response.json()).toEqual(publicCatalog);
+  });
+
+  it('denies an unpublished catalog preview without MFA', async () => {
+    const getPublicCatalogPreview = vi.fn().mockResolvedValue(publicCatalog);
+    const service = {
+      ...fakeIdentityService(),
+      getPublicCatalogPreview,
+      resolveRequest: vi.fn().mockResolvedValue({
+        requestIdentity: {
+          email: 'staff@example.test',
+          emailVerified: true,
+          memberships: [{ campIds: [], organizationId, roles: ['camp_staff'] }],
+          mfaVerified: false,
+          subject: 'account-2',
+        },
+        session: {
+          ...session,
+          mfa_verified: false,
+          organizations: [{ ...session.organizations[0]!, roles: ['camp_staff'] }],
+        },
+      }),
+    } as unknown as IdentityService;
+    const app = await buildApp({ identityService: service });
+    applications.push(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/v1/organization/public-catalog-preview',
+    });
+    expect(response.statusCode).toBe(403);
+    expect(response.headers['cache-control']).toBe('private, no-store');
+    expect(getPublicCatalogPreview).not.toHaveBeenCalled();
   });
 });

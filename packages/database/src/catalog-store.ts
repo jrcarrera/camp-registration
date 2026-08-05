@@ -719,38 +719,38 @@ export class CatalogStore {
           }),
         ],
       );
-      await client.query(
-        `INSERT INTO audit_events (organization_id, actor_id, action, target_type, target_id, outcome, request_id, details)
-         VALUES ($1, $2, 'organization.public_catalog_updated', 'organization', $1, 'success', $3, $4::jsonb)`,
-        [
-          context.organizationId,
-          context.actorId,
-          context.requestId,
-          JSON.stringify({
-            changed_fields: [
-              'public_catalog_enabled',
-              'public_tagline',
-              'public_description',
-              'brand_primary_color',
-              'brand_logo_url',
-              'public_website_url',
-              'public_contact_email',
-            ].filter((field) => {
-              const map: Record<string, unknown> = {
-                public_catalog_enabled: publicCatalogEnabled,
-                public_tagline: publicTagline,
-                public_description: publicDescription,
-                brand_primary_color: brandPrimaryColor,
-                brand_logo_url: brandLogoUrl,
-                public_website_url: publicWebsiteUrl,
-                public_contact_email: publicContactEmail,
-              };
-              return map[field] !== organization[field as keyof typeof organization];
-            }),
-            enabled: publicCatalogEnabled,
-          }),
-        ],
-      );
+      const catalogChangedFields = [
+        'public_catalog_enabled',
+        'public_tagline',
+        'public_description',
+        'brand_primary_color',
+        'brand_logo_url',
+        'public_website_url',
+        'public_contact_email',
+      ].filter((field) => {
+        const values: Record<string, unknown> = {
+          public_catalog_enabled: publicCatalogEnabled,
+          public_tagline: publicTagline,
+          public_description: publicDescription,
+          brand_primary_color: brandPrimaryColor,
+          brand_logo_url: brandLogoUrl,
+          public_website_url: publicWebsiteUrl,
+          public_contact_email: publicContactEmail,
+        };
+        return values[field] !== organization[field as keyof typeof organization];
+      });
+      if (catalogChangedFields.length > 0) {
+        await client.query(
+          `INSERT INTO audit_events (organization_id, actor_id, action, target_type, target_id, outcome, request_id, details)
+           VALUES ($1, $2, 'organization.public_catalog_updated', 'organization', $1, 'success', $3, $4::jsonb)`,
+          [
+            context.organizationId,
+            context.actorId,
+            context.requestId,
+            JSON.stringify({ changed_fields: catalogChangedFields, enabled: publicCatalogEnabled }),
+          ],
+        );
+      }
       return updated.rows[0]!;
     });
   }

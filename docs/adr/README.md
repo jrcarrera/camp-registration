@@ -36,3 +36,4 @@ clarifications and links to superseding decisions.
 | [0028](0028-daily-attendance-and-bulk-roll-call.md)            | Accepted | Daily attendance and bulk roll call   |
 | [0029](0029-encrypted-incident-and-injury-log.md)              | Accepted | Encrypted incident and injury log     |
 | [0030](0030-encrypted-medication-administration-record.md)     | Accepted | Medication administration record      |
+| [0031](0031-public-catalog-projection.md)                      | Accepted | Public catalog projection             |
