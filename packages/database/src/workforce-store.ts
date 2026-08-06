@@ -165,8 +165,8 @@ export class WorkforceStore {
         workforce_type: WorkforceType;
       }>(
         `SELECT p.*, count(a.id)::integer AS assignment_count,
-          COALESCE(array_agg(DISTINCT s.name) FILTER (WHERE a.status='CONFIRMED' AND current_date BETWEEN a.starts_on AND a.ends_on), '{}') AS current_session_names,
-          COALESCE(array_agg(DISTINCT s.name) FILTER (WHERE a.status IN ('PLANNED','CONFIRMED') AND a.starts_on > current_date), '{}') AS next_session_names
+          COALESCE((array_agg(DISTINCT s.name) FILTER (WHERE a.status='CONFIRMED' AND current_date BETWEEN a.starts_on AND a.ends_on))[1:20], '{}') AS current_session_names,
+          COALESCE((array_agg(DISTINCT s.name) FILTER (WHERE a.status IN ('PLANNED','CONFIRMED') AND a.starts_on > current_date))[1:20], '{}') AS next_session_names
          FROM workforce_profiles p
          LEFT JOIN workforce_session_assignments a ON a.organization_id=p.organization_id AND a.workforce_profile_id=p.id
          LEFT JOIN sessions s ON s.organization_id=a.organization_id AND s.id=a.session_id
@@ -205,14 +205,16 @@ export class WorkforceStore {
               assignment.starts_on <= today &&
               assignment.ends_on >= today,
           )
-          .map((assignment) => assignment.session_name),
+          .map((assignment) => assignment.session_name)
+          .slice(0, 20),
         next_session_names: assignments
           .filter(
             (assignment) =>
               (assignment.status === 'PLANNED' || assignment.status === 'CONFIRMED') &&
               assignment.starts_on > today,
           )
-          .map((assignment) => assignment.session_name),
+          .map((assignment) => assignment.session_name)
+          .slice(0, 20),
       };
     });
   }
@@ -472,7 +474,7 @@ export class WorkforceStore {
           starts_on: Date | string;
         }
       >(
-        `SELECT concat_ws(' ',COALESCE(p.preferred_name,p.first_name),p.last_name) AS display_name,p.workforce_type,a.position_name,a.starts_on,a.ends_on,a.status FROM workforce_session_assignments a JOIN workforce_profiles p ON p.organization_id=a.organization_id AND p.id=a.workforce_profile_id WHERE a.organization_id=$1 AND a.session_id=$2 AND a.status='CONFIRMED' AND current_date BETWEEN a.starts_on AND a.ends_on ORDER BY lower(p.last_name),lower(p.first_name),a.id`,
+        `SELECT concat_ws(' ',COALESCE(p.preferred_name,p.first_name),p.last_name) AS display_name,p.workforce_type,a.position_name,a.starts_on,a.ends_on,a.status FROM workforce_session_assignments a JOIN workforce_profiles p ON p.organization_id=a.organization_id AND p.id=a.workforce_profile_id WHERE a.organization_id=$1 AND a.session_id=$2 AND a.status='CONFIRMED' AND current_date BETWEEN a.starts_on AND a.ends_on ORDER BY lower(p.last_name),lower(p.first_name),a.id LIMIT 500`,
         [organizationId, sessionId],
       );
       return {
@@ -548,7 +550,7 @@ export class WorkforceStore {
         updated_at: Date | string;
       }
     >(
-      `SELECT a.id,a.session_id,s.name AS session_name,s.starts_on AS session_starts_on,s.ends_on AS session_ends_on,a.position_name,a.starts_on,a.ends_on,a.status,a.version,a.created_at,a.updated_at FROM workforce_session_assignments a JOIN sessions s ON s.organization_id=a.organization_id AND s.id=a.session_id WHERE a.organization_id=$1 AND a.workforce_profile_id=$2 ORDER BY a.starts_on DESC,a.id`,
+      `SELECT a.id,a.session_id,s.name AS session_name,s.starts_on AS session_starts_on,s.ends_on AS session_ends_on,a.position_name,a.starts_on,a.ends_on,a.status,a.version,a.created_at,a.updated_at FROM workforce_session_assignments a JOIN sessions s ON s.organization_id=a.organization_id AND s.id=a.session_id WHERE a.organization_id=$1 AND a.workforce_profile_id=$2 ORDER BY a.starts_on DESC,a.id LIMIT 500`,
       [organizationId, profileId],
     );
     return result.rows.map((row) => ({

@@ -15,7 +15,16 @@ export const WorkforceAssignmentStatusSchema = Type.Union([
 ]);
 
 const NameSchema = Type.String({ minLength: 1, maxLength: 100 });
-const EmailSchema = Type.String({ minLength: 3, maxLength: 320, pattern: '^\\S+@\\S+\\.\\S+$' });
+// Profile parts are each limited to 100 characters, but the public display name
+// combines a preferred/first name, a space, and a last name. Sessions use the
+// catalog's 160-character name limit.
+const DisplayNameSchema = Type.String({ minLength: 1, maxLength: 201 });
+const SessionNameSchema = Type.String({ minLength: 1, maxLength: 160 });
+const EmailSchema = Type.String({
+  minLength: 3,
+  maxLength: 320,
+  pattern: '^\\s*\\S+@\\S+\\.\\S+\\s*$',
+});
 const PhoneSchema = Type.String({ minLength: 1, maxLength: 50 });
 const PositionSchema = Type.String({ minLength: 1, maxLength: 100 });
 const VersionSchema = Type.Integer({ minimum: 1 });
@@ -28,7 +37,7 @@ export const WorkforceAssignmentSchema = Type.Object(
     position_name: PositionSchema,
     session_ends_on: LocalDateSchema,
     session_id: UuidSchema,
-    session_name: NameSchema,
+    session_name: SessionNameSchema,
     session_starts_on: LocalDateSchema,
     starts_on: LocalDateSchema,
     status: WorkforceAssignmentStatusSchema,
@@ -41,12 +50,12 @@ export const WorkforceAssignmentSchema = Type.Object(
 export const WorkforceProfileSummarySchema = Type.Object(
   {
     assignment_count: Type.Integer({ minimum: 0 }),
-    current_session_names: Type.Array(NameSchema, { maxItems: 20 }),
-    display_name: NameSchema,
+    current_session_names: Type.Array(SessionNameSchema, { maxItems: 20 }),
+    display_name: DisplayNameSchema,
     first_name: NameSchema,
     id: UuidSchema,
     last_name: NameSchema,
-    next_session_names: Type.Array(NameSchema, { maxItems: 20 }),
+    next_session_names: Type.Array(SessionNameSchema, { maxItems: 20 }),
     preferred_name: Type.Union([NameSchema, Type.Null()]),
     status: WorkforceProfileStatusSchema,
     version: VersionSchema,
@@ -60,13 +69,13 @@ export const WorkforceProfileDetailSchema = Type.Object(
     account_linked: Type.Boolean(),
     assignment_count: Type.Integer({ minimum: 0 }),
     assignments: Type.Array(WorkforceAssignmentSchema, { maxItems: 500 }),
-    current_session_names: Type.Array(NameSchema, { maxItems: 20 }),
-    display_name: NameSchema,
+    current_session_names: Type.Array(SessionNameSchema, { maxItems: 20 }),
+    display_name: DisplayNameSchema,
     email: EmailSchema,
     first_name: NameSchema,
     id: UuidSchema,
     last_name: NameSchema,
-    next_session_names: Type.Array(NameSchema, { maxItems: 20 }),
+    next_session_names: Type.Array(SessionNameSchema, { maxItems: 20 }),
     phone: Type.Union([PhoneSchema, Type.Null()]),
     preferred_name: Type.Union([NameSchema, Type.Null()]),
     status: WorkforceProfileStatusSchema,
@@ -155,7 +164,7 @@ export const WorkforceListResponseSchema = Type.Object(
   {
     page: Type.Integer({ minimum: 1 }),
     page_size: Type.Integer({ minimum: 1, maximum: 200 }),
-    profiles: Type.Array(WorkforceProfileSummarySchema),
+    profiles: Type.Array(WorkforceProfileSummarySchema, { maxItems: 200 }),
     total: Type.Integer({ minimum: 0 }),
   },
   { additionalProperties: false, $id: 'WorkforceListResponse' },
@@ -165,7 +174,7 @@ export const SessionWorkforceRosterSchema = Type.Object(
     assignments: Type.Array(
       Type.Object(
         {
-          display_name: NameSchema,
+          display_name: DisplayNameSchema,
           ends_on: LocalDateSchema,
           position_name: PositionSchema,
           starts_on: LocalDateSchema,
@@ -174,10 +183,11 @@ export const SessionWorkforceRosterSchema = Type.Object(
         },
         { additionalProperties: false },
       ),
+      { maxItems: 500 },
     ),
     ends_on: LocalDateSchema,
     session_id: UuidSchema,
-    session_name: NameSchema,
+    session_name: SessionNameSchema,
     starts_on: LocalDateSchema,
   },
   { additionalProperties: false, $id: 'SessionWorkforceRoster' },

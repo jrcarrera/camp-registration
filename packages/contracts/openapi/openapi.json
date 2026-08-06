@@ -68219,6 +68219,7 @@
                       "type": "integer"
                     },
                     "profiles": {
+                      "maxItems": 200,
                       "type": "array",
                       "items": {
                         "additionalProperties": false,
@@ -68246,13 +68247,13 @@
                             "type": "array",
                             "items": {
                               "minLength": 1,
-                              "maxLength": 100,
+                              "maxLength": 160,
                               "type": "string"
                             }
                           },
                           "display_name": {
                             "minLength": 1,
-                            "maxLength": 100,
+                            "maxLength": 201,
                             "type": "string"
                           },
                           "first_name": {
@@ -68274,7 +68275,7 @@
                             "type": "array",
                             "items": {
                               "minLength": 1,
-                              "maxLength": 100,
+                              "maxLength": 160,
                               "type": "string"
                             }
                           },
@@ -68461,7 +68462,7 @@
                   "email": {
                     "minLength": 3,
                     "maxLength": 320,
-                    "pattern": "^\\S+@\\S+\\.\\S+$",
+                    "pattern": "^\\s*\\S+@\\S+\\.\\S+\\s*$",
                     "type": "string"
                   },
                   "first_name": {
@@ -68622,7 +68623,7 @@
                           },
                           "session_name": {
                             "minLength": 1,
-                            "maxLength": 100,
+                            "maxLength": 160,
                             "type": "string"
                           },
                           "session_starts_on": {
@@ -68671,19 +68672,19 @@
                       "type": "array",
                       "items": {
                         "minLength": 1,
-                        "maxLength": 100,
+                        "maxLength": 160,
                         "type": "string"
                       }
                     },
                     "display_name": {
                       "minLength": 1,
-                      "maxLength": 100,
+                      "maxLength": 201,
                       "type": "string"
                     },
                     "email": {
                       "minLength": 3,
                       "maxLength": 320,
-                      "pattern": "^\\S+@\\S+\\.\\S+$",
+                      "pattern": "^\\s*\\S+@\\S+\\.\\S+\\s*$",
                       "type": "string"
                     },
                     "first_name": {
@@ -68705,7 +68706,7 @@
                       "type": "array",
                       "items": {
                         "minLength": 1,
-                        "maxLength": 100,
+                        "maxLength": 160,
                         "type": "string"
                       }
                     },
@@ -69004,7 +69005,7 @@
                           },
                           "session_name": {
                             "minLength": 1,
-                            "maxLength": 100,
+                            "maxLength": 160,
                             "type": "string"
                           },
                           "session_starts_on": {
@@ -69053,19 +69054,19 @@
                       "type": "array",
                       "items": {
                         "minLength": 1,
-                        "maxLength": 100,
+                        "maxLength": 160,
                         "type": "string"
                       }
                     },
                     "display_name": {
                       "minLength": 1,
-                      "maxLength": 100,
+                      "maxLength": 201,
                       "type": "string"
                     },
                     "email": {
                       "minLength": 3,
                       "maxLength": 320,
-                      "pattern": "^\\S+@\\S+\\.\\S+$",
+                      "pattern": "^\\s*\\S+@\\S+\\.\\S+\\s*$",
                       "type": "string"
                     },
                     "first_name": {
@@ -69087,7 +69088,7 @@
                       "type": "array",
                       "items": {
                         "minLength": 1,
-                        "maxLength": 100,
+                        "maxLength": 160,
                         "type": "string"
                       }
                     },
@@ -69280,7 +69281,7 @@
                   "email": {
                     "minLength": 3,
                     "maxLength": 320,
-                    "pattern": "^\\S+@\\S+\\.\\S+$",
+                    "pattern": "^\\s*\\S+@\\S+\\.\\S+\\s*$",
                     "type": "string"
                   },
                   "first_name": {
@@ -69456,7 +69457,7 @@
                           },
                           "session_name": {
                             "minLength": 1,
-                            "maxLength": 100,
+                            "maxLength": 160,
                             "type": "string"
                           },
                           "session_starts_on": {
@@ -69505,19 +69506,19 @@
                       "type": "array",
                       "items": {
                         "minLength": 1,
-                        "maxLength": 100,
+                        "maxLength": 160,
                         "type": "string"
                       }
                     },
                     "display_name": {
                       "minLength": 1,
-                      "maxLength": 100,
+                      "maxLength": 201,
                       "type": "string"
                     },
                     "email": {
                       "minLength": 3,
                       "maxLength": 320,
-                      "pattern": "^\\S+@\\S+\\.\\S+$",
+                      "pattern": "^\\s*\\S+@\\S+\\.\\S+\\s*$",
                       "type": "string"
                     },
                     "first_name": {
@@ -69539,7 +69540,7 @@
                       "type": "array",
                       "items": {
                         "minLength": 1,
-                        "maxLength": 100,
+                        "maxLength": 160,
                         "type": "string"
                       }
                     },
@@ -69889,7 +69890,7 @@
                           },
                           "session_name": {
                             "minLength": 1,
-                            "maxLength": 100,
+                            "maxLength": 160,
                             "type": "string"
                           },
                           "session_starts_on": {
@@ -69938,19 +69939,19 @@
                       "type": "array",
                       "items": {
                         "minLength": 1,
-                        "maxLength": 100,
+                        "maxLength": 160,
                         "type": "string"
                       }
                     },
                     "display_name": {
                       "minLength": 1,
-                      "maxLength": 100,
+                      "maxLength": 201,
                       "type": "string"
                     },
                     "email": {
                       "minLength": 3,
                       "maxLength": 320,
-                      "pattern": "^\\S+@\\S+\\.\\S+$",
+                      "pattern": "^\\s*\\S+@\\S+\\.\\S+\\s*$",
                       "type": "string"
                     },
                     "first_name": {
@@ -69972,7 +69973,7 @@
                       "type": "array",
                       "items": {
                         "minLength": 1,
-                        "maxLength": 100,
+                        "maxLength": 160,
                         "type": "string"
                       }
                     },
@@ -70361,7 +70362,7 @@
                           },
                           "session_name": {
                             "minLength": 1,
-                            "maxLength": 100,
+                            "maxLength": 160,
                             "type": "string"
                           },
                           "session_starts_on": {
@@ -70410,19 +70411,19 @@
                       "type": "array",
                       "items": {
                         "minLength": 1,
-                        "maxLength": 100,
+                        "maxLength": 160,
                         "type": "string"
                       }
                     },
                     "display_name": {
                       "minLength": 1,
-                      "maxLength": 100,
+                      "maxLength": 201,
                       "type": "string"
                     },
                     "email": {
                       "minLength": 3,
                       "maxLength": 320,
-                      "pattern": "^\\S+@\\S+\\.\\S+$",
+                      "pattern": "^\\s*\\S+@\\S+\\.\\S+\\s*$",
                       "type": "string"
                     },
                     "first_name": {
@@ -70444,7 +70445,7 @@
                       "type": "array",
                       "items": {
                         "minLength": 1,
-                        "maxLength": 100,
+                        "maxLength": 160,
                         "type": "string"
                       }
                     },
@@ -70847,7 +70848,7 @@
                           },
                           "session_name": {
                             "minLength": 1,
-                            "maxLength": 100,
+                            "maxLength": 160,
                             "type": "string"
                           },
                           "session_starts_on": {
@@ -70896,19 +70897,19 @@
                       "type": "array",
                       "items": {
                         "minLength": 1,
-                        "maxLength": 100,
+                        "maxLength": 160,
                         "type": "string"
                       }
                     },
                     "display_name": {
                       "minLength": 1,
-                      "maxLength": 100,
+                      "maxLength": 201,
                       "type": "string"
                     },
                     "email": {
                       "minLength": 3,
                       "maxLength": 320,
-                      "pattern": "^\\S+@\\S+\\.\\S+$",
+                      "pattern": "^\\s*\\S+@\\S+\\.\\S+\\s*$",
                       "type": "string"
                     },
                     "first_name": {
@@ -70930,7 +70931,7 @@
                       "type": "array",
                       "items": {
                         "minLength": 1,
-                        "maxLength": 100,
+                        "maxLength": 160,
                         "type": "string"
                       }
                     },
@@ -71196,6 +71197,7 @@
                   ],
                   "properties": {
                     "assignments": {
+                      "maxItems": 500,
                       "type": "array",
                       "items": {
                         "additionalProperties": false,
@@ -71211,7 +71213,7 @@
                         "properties": {
                           "display_name": {
                             "minLength": 1,
-                            "maxLength": 100,
+                            "maxLength": 201,
                             "type": "string"
                           },
                           "ends_on": {
@@ -71278,7 +71280,7 @@
                     },
                     "session_name": {
                       "minLength": 1,
-                      "maxLength": 100,
+                      "maxLength": 160,
                       "type": "string"
                     },
                     "starts_on": {

@@ -1,16 +1,18 @@
 'use client';
 import type { SessionSummary, SessionWorkforceRoster } from '@camp-registration/contracts';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 export function WorkforceSessionRoster({ sessions }: { sessions: SessionSummary[] }) {
   const [roster, setRoster] = useState<SessionWorkforceRoster | null>(null),
     [message, setMessage] = useState(
       'Choose a session to view its current confirmed workforce roster.',
     ),
-    [loading, setLoading] = useState(false);
+    [loading, setLoading] = useState(false),
+    [error, setError] = useState(false);
   const requestNumber = useRef(0);
   const load = async (id: string) => {
     const current = ++requestNumber.current;
     setRoster(null);
+    setError(false);
     if (!id) {
       setMessage('Choose a session to view its current confirmed workforce roster.');
       return;
@@ -22,18 +24,24 @@ export function WorkforceSessionRoster({ sessions }: { sessions: SessionSummary[
       if (current !== requestNumber.current) return;
       if (!response.ok) {
         setMessage((await response.json()).message);
+        setError(true);
         return;
       }
       setRoster(await response.json());
     } catch {
-      if (current === requestNumber.current)
+      if (current === requestNumber.current) {
+        setError(true);
         setMessage('The workforce roster could not be loaded.');
+      }
     } finally {
       if (current === requestNumber.current) setLoading(false);
     }
   };
+  useEffect(() => {
+    if (sessions[0]) void load(sessions[0].id);
+  }, [sessions]);
   return (
-    <div className="workspace workforceRoster">
+    <div className="workspace workforceRoster" aria-busy={loading}>
       <header>
         <p className="eyebrow">Daily operations</p>
         <h1>Session workforce roster</h1>
@@ -44,8 +52,8 @@ export function WorkforceSessionRoster({ sessions }: { sessions: SessionSummary[
       </header>
       <label>
         Session
-        <select onChange={(e) => void load(e.target.value)} defaultValue="">
-          <option value="">Choose a session</option>
+        <select onChange={(e) => void load(e.target.value)} defaultValue={sessions[0]?.id ?? ''}>
+          {!sessions.length && <option value="">No sessions available</option>}
           {sessions.map((s) => (
             <option value={s.id} key={s.id}>
               {s.name}
@@ -53,7 +61,7 @@ export function WorkforceSessionRoster({ sessions }: { sessions: SessionSummary[
           ))}
         </select>
       </label>
-      {message && <p role={loading ? 'status' : 'alert'}>{message}</p>}
+      {message && <p role={error ? 'alert' : 'status'}>{message}</p>}
       {roster && (
         <section>
           <h2>{roster.session_name}</h2>
@@ -61,6 +69,7 @@ export function WorkforceSessionRoster({ sessions }: { sessions: SessionSummary[
             <p>No current confirmed workforce assignments.</p>
           ) : (
             <table>
+              <caption>Current confirmed assignments</caption>
               <thead>
                 <tr>
                   <th>Name</th>
@@ -71,8 +80,8 @@ export function WorkforceSessionRoster({ sessions }: { sessions: SessionSummary[
                 </tr>
               </thead>
               <tbody>
-                {roster.assignments.map((a) => (
-                  <tr key={`${a.display_name}:${a.position_name}:${a.starts_on}`}>
+                {roster.assignments.map((a, index) => (
+                  <tr key={`${a.display_name}:${a.position_name}:${a.starts_on}:${index}`}>
                     <td data-label="Name">{a.display_name}</td>
                     <td data-label="Type">{a.workforce_type.toLowerCase()}</td>
                     <td data-label="Position">{a.position_name}</td>

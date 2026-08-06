@@ -6483,6 +6483,8 @@ tbody tr + tr td {
 .workforceRoster {
   display: grid;
   gap: 1.25rem;
+  max-width: 100%;
+  width: 100%;
 }
 .workforceSummary,
 .workforceGrid {

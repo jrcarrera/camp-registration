@@ -1,6 +1,7 @@
 'use client';
 
 import type {
+  SeasonFixture,
   SessionSummary,
   WorkforceListResponse,
   WorkforceProfileDetail,
@@ -39,16 +40,24 @@ const isProblem = (value: unknown): value is Problem =>
 
 export function WorkforceAdministrationWorkspace({
   initial,
+  seasons,
   sessions,
 }: {
   initial: WorkforceListResponse;
+  seasons: SeasonFixture[];
   sessions: SessionSummary[];
 }) {
   const [data, setData] = useState(initial),
     [query, setQuery] = useState(''),
     [statusFilter, setStatusFilter] = useState(''),
     [typeFilter, setTypeFilter] = useState(''),
+    [seasonFilter, setSeasonFilter] = useState(''),
+    [sessionFilter, setSessionFilter] = useState(''),
     [selected, setSelected] = useState<WorkforceProfileDetail | null>(null),
+    [editingAssignment, setEditingAssignment] = useState<
+      WorkforceProfileDetail['assignments'][number] | null
+    >(null),
+    [assignmentSessionId, setAssignmentSessionId] = useState(''),
     [form, setForm] = useState({ ...blank }),
     [notice, setNotice] = useState<string | null>(null),
     [saving, setSaving] = useState(false);
@@ -60,6 +69,8 @@ export function WorkforceAdministrationWorkspace({
     if (query.trim()) parameters.set('search', query.trim());
     if (statusFilter) parameters.set('status', statusFilter);
     if (typeFilter) parameters.set('workforce_type', typeFilter);
+    if (seasonFilter) parameters.set('season_id', seasonFilter);
+    if (sessionFilter) parameters.set('session_id', sessionFilter);
     const result = await request<WorkforceListResponse>(`v1/workforce?${parameters}`);
     if (!isProblem(result)) setData(result);
   };
@@ -99,22 +110,27 @@ export function WorkforceAdministrationWorkspace({
     setSelected(result);
     setNotice('The existing active organization membership was linked.');
   };
-  const addAssignment = async (e: React.FormEvent<HTMLFormElement>) => {
+  const saveAssignment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selected) return;
     const formData = new FormData(e.currentTarget);
     setSaving(true);
+    const input = {
+      session_id: formData.get('session_id'),
+      position_name: formData.get('position_name'),
+      starts_on: formData.get('starts_on'),
+      ends_on: formData.get('ends_on'),
+      status: formData.get('status'),
+    };
     const result = await request<WorkforceProfileDetail>(
-      `v1/workforce/${selected.id}/assignments`,
+      editingAssignment
+        ? `v1/workforce/${selected.id}/assignments/${editingAssignment.id}`
+        : `v1/workforce/${selected.id}/assignments`,
       {
-        method: 'POST',
-        body: JSON.stringify({
-          session_id: formData.get('session_id'),
-          position_name: formData.get('position_name'),
-          starts_on: formData.get('starts_on'),
-          ends_on: formData.get('ends_on'),
-          status: formData.get('status'),
-        }),
+        method: editingAssignment ? 'PATCH' : 'POST',
+        body: JSON.stringify(
+          editingAssignment ? { ...input, version: editingAssignment.version } : input,
+        ),
       },
     );
     setSaving(false);
@@ -123,7 +139,9 @@ export function WorkforceAdministrationWorkspace({
       return;
     }
     setSelected(result);
-    setNotice('Session assignment saved.');
+    setEditingAssignment(null);
+    setAssignmentSessionId('');
+    setNotice(editingAssignment ? 'Session assignment updated.' : 'Session assignment saved.');
     await refresh();
   };
   const updateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -148,7 +166,7 @@ export function WorkforceAdministrationWorkspace({
     if (isProblem(result)) {
       setNotice(
         result.code === 'workforce_version_conflict'
-          ? 'This profile changed elsewhere. Your edits are still in the form; review and try again.'
+          ? 'This profile changed elsewhere. Your edits are still in the form; reload current data before trying again.'
           : result.message,
       );
       return;
@@ -187,6 +205,17 @@ export function WorkforceAdministrationWorkspace({
     setNotice('Assignment cancelled; the history is retained.');
     await refresh();
   };
+  const reloadCurrentProfile = async () => {
+    if (!selected) return;
+    const value = await request<WorkforceProfileDetail>(`v1/workforce/${selected.id}`);
+    if (isProblem(value)) setNotice(value.message);
+    else {
+      setSelected(value);
+      setEditingAssignment(null);
+      setNotice('Current profile data was reloaded. Review and reapply any intended changes.');
+    }
+  };
+  const selectedAssignmentSession = sessions.find((session) => session.id === assignmentSessionId);
   const activeStaff = data.profiles.filter(
       (p) => p.status === 'ACTIVE' && p.workforce_type === 'STAFF',
     ).length,
@@ -200,26 +229,32 @@ export function WorkforceAdministrationWorkspace({
         <h1>Workforce</h1>
         <p>
           Operational roster status is separate from application access. Manage access and
-          invitations in <Link href="/settings/access">Access administration</Link>.
+          invitations in <Link href="/settings/access">Access administration</Link>. Camp staff can
+          use the contact-free <Link href="/workforce/roster">session workforce roster</Link>.
         </p>
       </header>
       {notice && (
-        <p role="status" className="notice">
+        <div className="notice" role="status">
           {notice}
-        </p>
+          {notice.includes('reload') || notice.includes('Reload') ? (
+            <button type="button" onClick={() => void reloadCurrentProfile()}>
+              Reload current profile
+            </button>
+          ) : null}
+        </div>
       )}
       <div className="workforceSummary">
         <p>
-          <strong>{activeStaff}</strong> active staff
+          <strong>{activeStaff}</strong> active staff on this page
         </p>
         <p>
-          <strong>{activeVolunteers}</strong> active volunteers
+          <strong>{activeVolunteers}</strong> active volunteers on this page
         </p>
         <p>
           <strong>
             {data.profiles.filter((p) => p.status === 'ACTIVE' && p.assignment_count === 0).length}
           </strong>{' '}
-          unassigned
+          unassigned on this page
         </p>
       </div>
       <section className="workforceGrid">
@@ -295,6 +330,30 @@ export function WorkforceAdministrationWorkspace({
                 <option value="">All types</option>
                 <option value="STAFF">Staff</option>
                 <option value="VOLUNTEER">Volunteer</option>
+              </select>
+            </label>
+            <label>
+              Season
+              <select value={seasonFilter} onChange={(e) => setSeasonFilter(e.target.value)}>
+                <option value="">All seasons</option>
+                {seasons.map((season) => (
+                  <option value={season.id} key={season.id}>
+                    {season.name} ({season.year})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Session
+              <select value={sessionFilter} onChange={(e) => setSessionFilter(e.target.value)}>
+                <option value="">All sessions</option>
+                {sessions
+                  .filter((session) => !seasonFilter || session.season_id === seasonFilter)
+                  .map((session) => (
+                    <option value={session.id} key={session.id}>
+                      {session.name}
+                    </option>
+                  ))}
               </select>
             </label>
             <button type="submit">Apply filters</button>
@@ -410,21 +469,41 @@ export function WorkforceAdministrationWorkspace({
                 {assignment.session_name}: {assignment.position_name} · {assignment.starts_on}–
                 {assignment.ends_on} · {assignment.status.toLowerCase()}
                 {assignment.status !== 'CANCELLED' && (
-                  <button
-                    type="button"
-                    onClick={() => void cancelAssignment(assignment)}
-                    disabled={saving}
-                  >
-                    Cancel assignment
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingAssignment(assignment);
+                        setAssignmentSessionId(assignment.session_id);
+                      }}
+                      disabled={saving}
+                      aria-label={`Edit ${assignment.position_name} assignment for ${assignment.session_name}`}
+                    >
+                      Edit assignment
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void cancelAssignment(assignment)}
+                      disabled={saving}
+                      aria-label={`Cancel ${assignment.position_name} assignment for ${assignment.session_name}`}
+                    >
+                      Cancel assignment
+                    </button>
+                  </>
                 )}
               </li>
             ))}
           </ul>
-          <form onSubmit={addAssignment}>
+          <form key={editingAssignment?.id ?? 'new'} onSubmit={saveAssignment}>
+            <h4>{editingAssignment ? 'Edit assignment' : 'Add assignment'}</h4>
             <label>
               Session
-              <select name="session_id" required>
+              <select
+                name="session_id"
+                required
+                defaultValue={editingAssignment?.session_id ?? ''}
+                onChange={(event) => setAssignmentSessionId(event.target.value)}
+              >
                 <option value="">Choose a session</option>
                 {sessions.map((session) => (
                   <option value={session.id} key={session.id}>
@@ -435,27 +514,58 @@ export function WorkforceAdministrationWorkspace({
             </label>
             <label>
               Position
-              <input name="position_name" required maxLength={100} />
+              <input
+                name="position_name"
+                required
+                maxLength={100}
+                defaultValue={editingAssignment?.position_name ?? ''}
+              />
             </label>
             <label>
               Starts
-              <input name="starts_on" type="date" required />
+              <input
+                name="starts_on"
+                type="date"
+                required
+                min={selectedAssignmentSession?.starts_on}
+                max={selectedAssignmentSession?.ends_on}
+                defaultValue={editingAssignment?.starts_on ?? ''}
+              />
             </label>
             <label>
               Ends
-              <input name="ends_on" type="date" required />
+              <input
+                name="ends_on"
+                type="date"
+                required
+                min={selectedAssignmentSession?.starts_on}
+                max={selectedAssignmentSession?.ends_on}
+                defaultValue={editingAssignment?.ends_on ?? ''}
+              />
             </label>
             <label>
               Status
-              <select name="status">
+              <select name="status" defaultValue={editingAssignment?.status ?? 'PLANNED'}>
                 <option value="PLANNED">Planned</option>
                 <option value="CONFIRMED">Confirmed</option>
                 <option value="CANCELLED">Cancelled</option>
               </select>
             </label>
             <button className="buttonPrimary" disabled={saving}>
-              Add assignment
+              {editingAssignment ? 'Save assignment' : 'Add assignment'}
             </button>
+            {editingAssignment ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingAssignment(null);
+                  setAssignmentSessionId('');
+                }}
+                disabled={saving}
+              >
+                Cancel editing
+              </button>
+            ) : null}
           </form>
         </section>
       )}
