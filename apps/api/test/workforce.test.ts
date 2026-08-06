@@ -57,6 +57,7 @@ function service(): WorkforceServiceApi {
           account_linked: undefined as never,
         },
       ],
+      summary: { active_staff: 1, active_volunteers: 0, unassigned_active: 1 },
       total: 1,
     })),
     updateAssignment: vi.fn(async () => detail),
@@ -83,6 +84,14 @@ describe('workforce routes', () => {
         workforce_type: 'STAFF',
       },
     });
+    const invalidProfileId = await app.inject({
+      method: 'GET',
+      url: '/v1/workforce/not-a-uuid',
+    });
+    const invalidRosterId = await app.inject({
+      method: 'GET',
+      url: '/v1/sessions/not-a-uuid/workforce-roster',
+    });
     expect(list.statusCode).toBe(200);
     expect(list.headers['cache-control']).toBe('private, no-store');
     expect(rosterResponse.statusCode).toBe(200);
@@ -90,6 +99,13 @@ describe('workforce routes', () => {
     expect(rosterResponse.json().assignments[0]).not.toHaveProperty('email');
     expect(invalid.statusCode).toBe(400);
     expect(invalid.headers['cache-control']).toBe('private, no-store');
+    expect(invalid.json()).toMatchObject({ code: 'invalid_workforce' });
+    expect(invalidProfileId.statusCode).toBe(400);
+    expect(invalidProfileId.headers['cache-control']).toBe('private, no-store');
+    expect(invalidProfileId.json()).toMatchObject({ code: 'invalid_workforce' });
+    expect(invalidRosterId.statusCode).toBe(400);
+    expect(invalidRosterId.headers['cache-control']).toBe('private, no-store');
+    expect(invalidRosterId.json()).toMatchObject({ code: 'invalid_workforce' });
     await app.close();
   });
 });

@@ -23,7 +23,11 @@ function identity(
 function store() {
   return {
     get: vi.fn(async () => null),
-    list: vi.fn(async () => ({ profiles: [], total: 0 })),
+    list: vi.fn(async () => ({
+      profiles: [],
+      summary: { active_staff: 0, active_volunteers: 0, unassigned_active: 0 },
+      total: 0,
+    })),
     recordAudit: vi.fn(async () => undefined),
     roster: vi.fn(async () => ({
       assignments: [

@@ -28,6 +28,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
+import type { AuthSession } from '@camp-registration/contracts';
 
 interface NavigationItem {
   exact?: boolean;
@@ -69,7 +72,47 @@ const portalNavigation: NavigationItem[] = [
 export function ShellSidebar() {
   const pathname = usePathname();
   const isPortal = pathname.startsWith('/portal');
-  const navigation = isPortal ? portalNavigation : adminNavigation;
+  const [workforceAccess, setWorkforceAccess] = useState<{
+    admin: boolean;
+    roster: boolean;
+  }>();
+  useEffect(() => {
+    let active = true;
+    void fetch('/api/v1/auth/session')
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json()) as AuthSession;
+      })
+      .then((session) => {
+        if (!active) return;
+        const organization = session?.organizations.find(
+          (candidate) => candidate.organization_id === session.active_organization_id,
+        );
+        const roles = organization?.roles ?? [];
+        setWorkforceAccess({
+          admin:
+            Boolean(session?.mfa_verified) &&
+            roles.some((role) => role === 'camp_admin' || role === 'organization_admin'),
+          roster: roles.some(
+            (role) =>
+              role === 'camp_staff' || role === 'camp_admin' || role === 'organization_admin',
+          ),
+        });
+      })
+      .catch(() => {
+        if (active) setWorkforceAccess({ admin: false, roster: false });
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  const navigation = isPortal
+    ? portalNavigation
+    : adminNavigation.filter(
+        (item) =>
+          (item.href !== '/workforce' || workforceAccess?.admin) &&
+          (item.href !== '/workforce/roster' || workforceAccess?.roster),
+      );
 
   return (
     <aside className={`sidebar${isPortal ? ' sidebarPortal' : ''}`}>

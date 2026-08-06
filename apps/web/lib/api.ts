@@ -28,6 +28,7 @@ import type {
   SessionAttendanceSummary,
   SessionDetail,
   SessionListResponse,
+  SessionWorkforceRoster,
   SessionHousing,
   WaitlistOperationsStatus,
   WorkforceListResponse,
@@ -181,6 +182,12 @@ export async function getMedicationAdministration(): Promise<MedicationAdministr
 
 export async function getWorkforce(): Promise<WorkforceListResponse> {
   return getJson('/v1/workforce');
+}
+
+export async function getSessionWorkforceRoster(
+  sessionId: string,
+): Promise<SessionWorkforceRoster> {
+  return getJson(`/v1/sessions/${encodeURIComponent(sessionId)}/workforce-roster`);
 }
 
 export async function getParentHealthRecords(

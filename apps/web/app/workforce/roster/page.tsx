@@ -1,14 +1,17 @@
 import { AlertCircle } from 'lucide-react';
 
 import { WorkforceSessionRoster } from '../../../components/workforce-session-roster';
-import { getSessions } from '../../../lib/api';
+import { getSessionWorkforceRoster, getSessions } from '../../../lib/api';
 
 export const dynamic = 'force-dynamic';
 
 export default async function WorkforceRosterPage() {
   try {
     const sessions = await getSessions();
-    return <WorkforceSessionRoster sessions={sessions.sessions} />;
+    const initialRoster = sessions.sessions[0]
+      ? await getSessionWorkforceRoster(sessions.sessions[0].id)
+      : null;
+    return <WorkforceSessionRoster initialRoster={initialRoster} sessions={sessions.sessions} />;
   } catch {
     return (
       <div className="notice noticeError" role="alert">

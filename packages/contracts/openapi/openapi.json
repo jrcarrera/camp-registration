@@ -68206,6 +68206,7 @@
                     "page",
                     "page_size",
                     "profiles",
+                    "summary",
                     "total"
                   ],
                   "properties": {
@@ -68333,6 +68334,29 @@
                               }
                             ]
                           }
+                        }
+                      }
+                    },
+                    "summary": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "active_staff",
+                        "active_volunteers",
+                        "unassigned_active"
+                      ],
+                      "properties": {
+                        "active_staff": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "active_volunteers": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "unassigned_active": {
+                          "minimum": 0,
+                          "type": "integer"
                         }
                       }
                     },
@@ -69157,6 +69181,37 @@
                           ]
                         }
                       ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
                   }
                 }
@@ -71286,6 +71341,37 @@
                     "starts_on": {
                       "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                       "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "message": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "field_errors": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
                   }
                 }

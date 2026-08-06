@@ -165,6 +165,14 @@ export const WorkforceListResponseSchema = Type.Object(
     page: Type.Integer({ minimum: 1 }),
     page_size: Type.Integer({ minimum: 1, maximum: 200 }),
     profiles: Type.Array(WorkforceProfileSummarySchema, { maxItems: 200 }),
+    summary: Type.Object(
+      {
+        active_staff: Type.Integer({ minimum: 0 }),
+        active_volunteers: Type.Integer({ minimum: 0 }),
+        unassigned_active: Type.Integer({ minimum: 0 }),
+      },
+      { additionalProperties: false },
+    ),
     total: Type.Integer({ minimum: 0 }),
   },
   { additionalProperties: false, $id: 'WorkforceListResponse' },

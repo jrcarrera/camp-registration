@@ -60,12 +60,29 @@ export interface WorkforceRosterRecord {
 }
 export class WorkforceConflictError extends Error {}
 export class WorkforceNotFoundError extends Error {}
-export class WorkforceValidationError extends Error {}
+export class WorkforceValidationError extends Error {
+  constructor(
+    message: string,
+    readonly code = 'invalid_workforce',
+  ) {
+    super(message);
+  }
+}
 
 const date = (value: Date | string): string =>
   value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
 const timestamp = (value: Date | string): string =>
   value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+const isLocalDate = (value: string): boolean => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const parsed = new Date(Date.UTC(year!, month! - 1, day!));
+  return (
+    parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month! - 1 &&
+    parsed.getUTCDate() === day
+  );
+};
 
 export class WorkforceStore {
   constructor(private readonly database: DatabaseClient) {}
@@ -120,7 +137,11 @@ export class WorkforceStore {
       status?: WorkforceProfileStatus;
       workforceType?: WorkforceType;
     },
-  ): Promise<{ profiles: WorkforceProfileRecord[]; total: number }> {
+  ): Promise<{
+    profiles: WorkforceProfileRecord[];
+    summary: { active_staff: number; active_volunteers: number; unassigned_active: number };
+    total: number;
+  }> {
     return this.withTenant(organizationId, async (client) => {
       const values: unknown[] = [organizationId];
       const filter: string[] = ['p.organization_id = $1'];
@@ -148,6 +169,22 @@ export class WorkforceStore {
         `SELECT count(*)::integer AS total FROM workforce_profiles p WHERE ${where}`,
         values,
       );
+      const summary = await client.query<{
+        active_staff: number;
+        active_volunteers: number;
+        unassigned_active: number;
+      }>(
+        `SELECT
+           count(*) FILTER (WHERE p.status='ACTIVE' AND p.workforce_type='STAFF')::integer AS active_staff,
+           count(*) FILTER (WHERE p.status='ACTIVE' AND p.workforce_type='VOLUNTEER')::integer AS active_volunteers,
+           count(*) FILTER (WHERE p.status='ACTIVE' AND NOT EXISTS (
+             SELECT 1 FROM workforce_session_assignments a
+             WHERE a.organization_id=p.organization_id AND a.workforce_profile_id=p.id
+               AND a.status IN ('PLANNED','CONFIRMED')
+           ))::integer AS unassigned_active
+         FROM workforce_profiles p WHERE p.organization_id=$1`,
+        [organizationId],
+      );
       const pageValues = [...values, query.pageSize, (query.page - 1) * query.pageSize];
       const result = await client.query<{
         account_id: string | null;
@@ -165,8 +202,8 @@ export class WorkforceStore {
         workforce_type: WorkforceType;
       }>(
         `SELECT p.*, count(a.id)::integer AS assignment_count,
-          COALESCE((array_agg(DISTINCT s.name) FILTER (WHERE a.status='CONFIRMED' AND current_date BETWEEN a.starts_on AND a.ends_on))[1:20], '{}') AS current_session_names,
-          COALESCE((array_agg(DISTINCT s.name) FILTER (WHERE a.status IN ('PLANNED','CONFIRMED') AND a.starts_on > current_date))[1:20], '{}') AS next_session_names
+          COALESCE((array_agg(DISTINCT s.name ORDER BY s.name) FILTER (WHERE a.status='CONFIRMED' AND current_date BETWEEN a.starts_on AND a.ends_on))[1:20], '{}') AS current_session_names,
+          COALESCE((array_agg(DISTINCT s.name ORDER BY s.name) FILTER (WHERE a.status IN ('PLANNED','CONFIRMED') AND a.starts_on > current_date))[1:20], '{}') AS next_session_names
          FROM workforce_profiles p
          LEFT JOIN workforce_session_assignments a ON a.organization_id=p.organization_id AND a.workforce_profile_id=p.id
          LEFT JOIN sessions s ON s.organization_id=a.organization_id AND s.id=a.session_id
@@ -178,6 +215,11 @@ export class WorkforceStore {
       );
       return {
         profiles: result.rows.map((row) => this.profile(row)),
+        summary: summary.rows[0] ?? {
+          active_staff: 0,
+          active_volunteers: 0,
+          unassigned_active: 0,
+        },
         total: count.rows[0]?.total ?? 0,
       };
     });
@@ -331,6 +373,7 @@ export class WorkforceStore {
       if (account.rows.length !== 1)
         throw new WorkforceValidationError(
           'No active organization membership matches this profile email',
+          'workforce_account_link_invalid',
         );
       const accountId = account.rows[0]!.id;
       try {
@@ -592,6 +635,12 @@ export class WorkforceStore {
     if (profile.status === 'INACTIVE' && status !== 'CANCELLED')
       throw new WorkforceValidationError(
         'Inactive workforce profiles cannot receive planned or confirmed assignments',
+        'workforce_inactive_profile',
+      );
+    if (!isLocalDate(startsOn) || !isLocalDate(endsOn))
+      throw new WorkforceValidationError(
+        'Assignment dates must be valid calendar dates',
+        'workforce_assignment_date_invalid',
       );
     const session = await client.query<{ ends_on: Date | string; starts_on: Date | string }>(
       `SELECT starts_on,ends_on FROM sessions WHERE organization_id=$1 AND id=$2`,
@@ -600,12 +649,14 @@ export class WorkforceStore {
     if (!session.rows[0])
       throw new WorkforceValidationError(
         'The selected session is not available in this organization',
+        'workforce_session_invalid',
       );
     const begins = date(session.rows[0].starts_on),
       ends = date(session.rows[0].ends_on);
     if (startsOn > endsOn || startsOn < begins || endsOn > ends)
       throw new WorkforceValidationError(
         'Assignment dates must fall within the selected session dates',
+        'workforce_assignment_date_invalid',
       );
   }
   private async audit(

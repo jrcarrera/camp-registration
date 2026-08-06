@@ -1,8 +1,14 @@
 'use client';
 import type { SessionSummary, SessionWorkforceRoster } from '@camp-registration/contracts';
 import { useEffect, useRef, useState } from 'react';
-export function WorkforceSessionRoster({ sessions }: { sessions: SessionSummary[] }) {
-  const [roster, setRoster] = useState<SessionWorkforceRoster | null>(null),
+export function WorkforceSessionRoster({
+  initialRoster,
+  sessions,
+}: {
+  initialRoster?: SessionWorkforceRoster | null;
+  sessions: SessionSummary[];
+}) {
+  const [roster, setRoster] = useState<SessionWorkforceRoster | null>(initialRoster ?? null),
     [message, setMessage] = useState(
       'Choose a session to view its current confirmed workforce roster.',
     ),
@@ -38,8 +44,8 @@ export function WorkforceSessionRoster({ sessions }: { sessions: SessionSummary[
     }
   };
   useEffect(() => {
-    if (sessions[0]) void load(sessions[0].id);
-  }, [sessions]);
+    if (sessions[0] && !initialRoster) void load(sessions[0].id);
+  }, [initialRoster, sessions]);
   return (
     <div className="workspace workforceRoster" aria-busy={loading}>
       <header>

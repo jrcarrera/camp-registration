@@ -21644,6 +21644,11 @@ export interface paths {
                                 version: number;
                                 workforce_type: "STAFF" | "VOLUNTEER";
                             }[];
+                            summary: {
+                                active_staff: number;
+                                active_volunteers: number;
+                                unassigned_active: number;
+                            };
                             total: number;
                         };
                     };
@@ -21876,6 +21881,21 @@ export interface paths {
                             status: "PLANNED" | "ACTIVE" | "INACTIVE";
                             version: number;
                             workforce_type: "STAFF" | "VOLUNTEER";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
                         };
                     };
                 };
@@ -22560,6 +22580,21 @@ export interface paths {
                             session_id: string;
                             session_name: string;
                             starts_on: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
                         };
                     };
                 };

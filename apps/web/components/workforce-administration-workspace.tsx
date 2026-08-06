@@ -8,7 +8,7 @@ import type {
   WorkforceProfileSummary,
 } from '@camp-registration/contracts';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Problem = { code: string; message: string };
 const blank: {
@@ -29,11 +29,23 @@ const blank: {
   workforce_type: 'STAFF',
 };
 async function request<T>(path: string, init?: RequestInit): Promise<T | Problem> {
-  const response = await fetch(`/api/${path}`, {
-    ...init,
-    headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) },
-  });
-  return response.ok ? (response.json() as Promise<T>) : (response.json() as Promise<Problem>);
+  try {
+    const response = await fetch(`/api/${path}`, {
+      ...init,
+      headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) },
+    });
+    return response.ok
+      ? (response.json() as Promise<T>)
+      : ((await response.json().catch(() => ({
+          code: 'workforce_request_failed',
+          message: 'The workforce request could not be completed.',
+        }))) as Problem);
+  } catch {
+    return {
+      code: 'workforce_network_error',
+      message: 'The workforce service could not be reached.',
+    };
+  }
 }
 const isProblem = (value: unknown): value is Problem =>
   typeof value === 'object' && value !== null && 'code' in value;
@@ -60,8 +72,14 @@ export function WorkforceAdministrationWorkspace({
     [assignmentSessionId, setAssignmentSessionId] = useState(''),
     [form, setForm] = useState({ ...blank }),
     [notice, setNotice] = useState<string | null>(null),
-    [saving, setSaving] = useState(false);
+    [saving, setSaving] = useState(false),
+    [loadingList, setLoadingList] = useState(false);
+  const detailHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (selected) detailHeading.current?.focus();
+  }, [selected?.id]);
   const refresh = async (page = data.page) => {
+    setLoadingList(true);
     const parameters = new URLSearchParams({
       page: String(page),
       page_size: String(data.page_size),
@@ -72,7 +90,9 @@ export function WorkforceAdministrationWorkspace({
     if (seasonFilter) parameters.set('season_id', seasonFilter);
     if (sessionFilter) parameters.set('session_id', sessionFilter);
     const result = await request<WorkforceListResponse>(`v1/workforce?${parameters}`);
-    if (!isProblem(result)) setData(result);
+    if (isProblem(result)) setNotice(result.message);
+    else setData(result);
+    setLoadingList(false);
   };
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,17 +231,10 @@ export function WorkforceAdministrationWorkspace({
     if (isProblem(value)) setNotice(value.message);
     else {
       setSelected(value);
-      setEditingAssignment(null);
       setNotice('Current profile data was reloaded. Review and reapply any intended changes.');
     }
   };
   const selectedAssignmentSession = sessions.find((session) => session.id === assignmentSessionId);
-  const activeStaff = data.profiles.filter(
-      (p) => p.status === 'ACTIVE' && p.workforce_type === 'STAFF',
-    ).length,
-    activeVolunteers = data.profiles.filter(
-      (p) => p.status === 'ACTIVE' && p.workforce_type === 'VOLUNTEER',
-    ).length;
   return (
     <div className="workspace workforceWorkspace">
       <header>
@@ -245,16 +258,14 @@ export function WorkforceAdministrationWorkspace({
       )}
       <div className="workforceSummary">
         <p>
-          <strong>{activeStaff}</strong> active staff on this page
+          <strong>{data.summary.active_staff}</strong> active staff
         </p>
         <p>
-          <strong>{activeVolunteers}</strong> active volunteers on this page
+          <strong>{data.summary.active_volunteers}</strong> active volunteers
         </p>
         <p>
-          <strong>
-            {data.profiles.filter((p) => p.status === 'ACTIVE' && p.assignment_count === 0).length}
-          </strong>{' '}
-          unassigned on this page
+          <strong>{data.summary.unassigned_active}</strong> active profiles without a planned or
+          confirmed assignment
         </p>
       </div>
       <section className="workforceGrid">
@@ -299,7 +310,7 @@ export function WorkforceAdministrationWorkspace({
             {saving ? 'Saving…' : 'Create profile'}
           </button>
         </form>
-        <section>
+        <section aria-busy={loadingList}>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -358,7 +369,7 @@ export function WorkforceAdministrationWorkspace({
             </label>
             <button type="submit">Apply filters</button>
           </form>
-          <h2>Profiles</h2>
+          <h2>Profiles {loadingList ? '(loading)' : ''}</h2>
           {data.profiles.length === 0 ? (
             <p>No workforce profiles match this view.</p>
           ) : (
@@ -408,7 +419,9 @@ export function WorkforceAdministrationWorkspace({
       </section>
       {selected && (
         <section className="workforceDetail" aria-live="polite">
-          <h2>{selected.display_name}</h2>
+          <h2 ref={detailHeading} tabIndex={-1}>
+            {selected.display_name}
+          </h2>
           <p>
             {selected.email}
             {selected.phone ? ` · ${selected.phone}` : ''}

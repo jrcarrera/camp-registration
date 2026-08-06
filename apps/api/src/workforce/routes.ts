@@ -59,7 +59,9 @@ function problem(reply: FastifyReply, error: unknown) {
           : 'workforce_version_conflict';
     return reply.code(409).send({ code, message: error.message });
   }
-  if (error instanceof WorkforceValidationError || error instanceof WorkforceInputError)
+  if (error instanceof WorkforceValidationError)
+    return reply.code(400).send({ code: error.code, message: error.message });
+  if (error instanceof WorkforceInputError)
     return reply.code(400).send({ code: 'invalid_workforce', message: error.message });
   throw error;
 }
@@ -79,7 +81,9 @@ export function registerWorkforceRoutes(app: FastifyInstance, source: Source): v
     schema: object,
     handler: (service: WorkforceServiceApi, request: FastifyRequest) => Promise<unknown>,
   ) =>
-    app[method](url, { schema }, async (request, reply) => {
+    app[method](url, { attachValidation: true, schema }, async (request, reply) => {
+      if (request.validationError)
+        return problem(reply, new WorkforceInputError('Workforce request is invalid'));
       const service = resolve(source, request);
       if (!service) return unavailable(reply);
       try {
@@ -128,6 +132,7 @@ export function registerWorkforceRoutes(app: FastifyInstance, source: Source): v
       params: WorkforceProfileParamsSchema,
       response: {
         200: WorkforceProfileDetailSchema,
+        400: ProblemResponseSchema,
         403: ProblemResponseSchema,
         404: ProblemResponseSchema,
         503: ProblemResponseSchema,
@@ -235,10 +240,12 @@ export function registerWorkforceRoutes(app: FastifyInstance, source: Source): v
   app.get(
     '/v1/sessions/:sessionId/workforce-roster',
     {
+      attachValidation: true,
       schema: {
         params: SessionParamsSchema,
         response: {
           200: SessionWorkforceRosterSchema,
+          400: ProblemResponseSchema,
           403: ProblemResponseSchema,
           404: ProblemResponseSchema,
           503: ProblemResponseSchema,
@@ -247,6 +254,8 @@ export function registerWorkforceRoutes(app: FastifyInstance, source: Source): v
       },
     },
     async (request, reply) => {
+      if (request.validationError)
+        return problem(reply, new WorkforceInputError('Workforce request is invalid'));
       const service = resolve(source, request);
       if (!service) return unavailable(reply);
       try {

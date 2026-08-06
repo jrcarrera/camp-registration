@@ -141,6 +141,7 @@ export class WorkforceService implements WorkforceServiceApi {
         version: profile.version,
         workforce_type: profile.workforce_type,
       })),
+      summary: result.summary,
       total: result.total,
     };
   }
