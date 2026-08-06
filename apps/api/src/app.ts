@@ -24,6 +24,7 @@ import {
   PricingStore,
   ReportingStore,
   WaitlistOperationsStore,
+  WorkforceStore,
   type DatabaseClient,
 } from '@camp-registration/database';
 import Fastify, {
@@ -72,6 +73,8 @@ import { registerReportsRoutes } from './reports/routes.js';
 import { ReportsService, type ReportsServiceApi } from './reports/service.js';
 import { registerIdentityRoutes } from './identity/routes.js';
 import type { IdentityRequestContext, IdentityService } from './identity/service.js';
+import { registerWorkforceRoutes } from './workforce/routes.js';
+import { WorkforceService, type WorkforceServiceApi } from './workforce/service.js';
 
 export interface BuildAppOptions {
   catalogService?: CatalogServiceApi;
@@ -94,6 +97,7 @@ export interface BuildAppOptions {
   paymentService?: PaymentServiceApi;
   pricingService?: PricingServiceApi;
   reportsService?: ReportsServiceApi;
+  workforceService?: WorkforceServiceApi;
   requestContext?: (request: FastifyRequest) => RequestServiceContext | undefined;
 }
 
@@ -466,6 +470,19 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       ? new PaymentWebhookService(paymentStore, options.paymentProvider)
       : undefined;
   registerPaymentRoutes(app, paymentService, paymentWebhookService);
+
+  const workforceStore = options.database ? new WorkforceStore(options.database) : undefined;
+  const workforceService =
+    options.workforceService ??
+    (workforceStore
+      ? (request: FastifyRequest) => {
+          const context = resolveRequestContext(request);
+          return context
+            ? new WorkforceService(workforceStore, context.identity, context.organizationId)
+            : undefined;
+        }
+      : undefined);
+  registerWorkforceRoutes(app, workforceService);
 
   app.get<{ Reply: HealthResponse }>(
     '/health',

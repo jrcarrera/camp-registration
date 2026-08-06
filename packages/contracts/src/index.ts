@@ -15,3 +15,4 @@ export * from './payments.js';
 export * from './pricing.js';
 export * from './public-catalog.js';
 export * from './reports.js';
+export * from './workforce.js';

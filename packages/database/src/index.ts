@@ -16,3 +16,4 @@ export * from './pricing-store.js';
 export * from './reporting-store.js';
 export * from './seed.js';
 export * from './waitlist-operations-store.js';
+export * from './workforce-store.js';

@@ -56,6 +56,8 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     }
     revalidatePath('/seasons');
     revalidatePath('/programs');
+    revalidatePath('/workforce');
+    revalidatePath('/workforce/roster');
   }
 
   const responseHeaders = new Headers({

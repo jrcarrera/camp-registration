@@ -30,6 +30,7 @@ import type {
   SessionListResponse,
   SessionHousing,
   WaitlistOperationsStatus,
+  WorkforceListResponse,
 } from '@camp-registration/contracts';
 import { cookies } from 'next/headers';
 
@@ -176,6 +177,10 @@ export async function getHealthIncidents(): Promise<HealthIncidentCenter> {
 
 export async function getMedicationAdministration(): Promise<MedicationAdministrationCenter> {
   return getJson('/v1/medication-administration');
+}
+
+export async function getWorkforce(): Promise<WorkforceListResponse> {
+  return getJson('/v1/workforce');
 }
 
 export async function getParentHealthRecords(

@@ -21598,6 +21598,1026 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/workforce": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    page_size?: number;
+                    search?: string;
+                    season_id?: string;
+                    session_id?: string;
+                    status?: "PLANNED" | "ACTIVE" | "INACTIVE";
+                    workforce_type?: "STAFF" | "VOLUNTEER";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            page: number;
+                            page_size: number;
+                            profiles: {
+                                assignment_count: number;
+                                current_session_names: string[];
+                                display_name: string;
+                                first_name: string;
+                                id: string;
+                                last_name: string;
+                                next_session_names: string[];
+                                preferred_name: string | null;
+                                status: "PLANNED" | "ACTIVE" | "INACTIVE";
+                                version: number;
+                                workforce_type: "STAFF" | "VOLUNTEER";
+                            }[];
+                            total: number;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        email: string;
+                        first_name: string;
+                        last_name: string;
+                        phone?: string | null;
+                        preferred_name?: string | null;
+                        status: "PLANNED" | "ACTIVE" | "INACTIVE";
+                        workforce_type: "STAFF" | "VOLUNTEER";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_linked: boolean;
+                            assignment_count: number;
+                            assignments: {
+                                created_at: string;
+                                ends_on: string;
+                                id: string;
+                                position_name: string;
+                                session_ends_on: string;
+                                session_id: string;
+                                session_name: string;
+                                session_starts_on: string;
+                                starts_on: string;
+                                status: "PLANNED" | "CONFIRMED" | "CANCELLED";
+                                updated_at: string;
+                                version: number;
+                            }[];
+                            current_session_names: string[];
+                            display_name: string;
+                            email: string;
+                            first_name: string;
+                            id: string;
+                            last_name: string;
+                            next_session_names: string[];
+                            phone: string | null;
+                            preferred_name: string | null;
+                            status: "PLANNED" | "ACTIVE" | "INACTIVE";
+                            version: number;
+                            workforce_type: "STAFF" | "VOLUNTEER";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/workforce/{profileId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_linked: boolean;
+                            assignment_count: number;
+                            assignments: {
+                                created_at: string;
+                                ends_on: string;
+                                id: string;
+                                position_name: string;
+                                session_ends_on: string;
+                                session_id: string;
+                                session_name: string;
+                                session_starts_on: string;
+                                starts_on: string;
+                                status: "PLANNED" | "CONFIRMED" | "CANCELLED";
+                                updated_at: string;
+                                version: number;
+                            }[];
+                            current_session_names: string[];
+                            display_name: string;
+                            email: string;
+                            first_name: string;
+                            id: string;
+                            last_name: string;
+                            next_session_names: string[];
+                            phone: string | null;
+                            preferred_name: string | null;
+                            status: "PLANNED" | "ACTIVE" | "INACTIVE";
+                            version: number;
+                            workforce_type: "STAFF" | "VOLUNTEER";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        email: string;
+                        first_name: string;
+                        last_name: string;
+                        phone?: string | null;
+                        preferred_name?: string | null;
+                        status: "PLANNED" | "ACTIVE" | "INACTIVE";
+                        version: number;
+                        workforce_type: "STAFF" | "VOLUNTEER";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_linked: boolean;
+                            assignment_count: number;
+                            assignments: {
+                                created_at: string;
+                                ends_on: string;
+                                id: string;
+                                position_name: string;
+                                session_ends_on: string;
+                                session_id: string;
+                                session_name: string;
+                                session_starts_on: string;
+                                starts_on: string;
+                                status: "PLANNED" | "CONFIRMED" | "CANCELLED";
+                                updated_at: string;
+                                version: number;
+                            }[];
+                            current_session_names: string[];
+                            display_name: string;
+                            email: string;
+                            first_name: string;
+                            id: string;
+                            last_name: string;
+                            next_session_names: string[];
+                            phone: string | null;
+                            preferred_name: string | null;
+                            status: "PLANNED" | "ACTIVE" | "INACTIVE";
+                            version: number;
+                            workforce_type: "STAFF" | "VOLUNTEER";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/v1/workforce/{profileId}/account-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_linked: boolean;
+                            assignment_count: number;
+                            assignments: {
+                                created_at: string;
+                                ends_on: string;
+                                id: string;
+                                position_name: string;
+                                session_ends_on: string;
+                                session_id: string;
+                                session_name: string;
+                                session_starts_on: string;
+                                starts_on: string;
+                                status: "PLANNED" | "CONFIRMED" | "CANCELLED";
+                                updated_at: string;
+                                version: number;
+                            }[];
+                            current_session_names: string[];
+                            display_name: string;
+                            email: string;
+                            first_name: string;
+                            id: string;
+                            last_name: string;
+                            next_session_names: string[];
+                            phone: string | null;
+                            preferred_name: string | null;
+                            status: "PLANNED" | "ACTIVE" | "INACTIVE";
+                            version: number;
+                            workforce_type: "STAFF" | "VOLUNTEER";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/workforce/{profileId}/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        ends_on: string;
+                        position_name: string;
+                        session_id: string;
+                        starts_on: string;
+                        status: "PLANNED" | "CONFIRMED" | "CANCELLED";
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_linked: boolean;
+                            assignment_count: number;
+                            assignments: {
+                                created_at: string;
+                                ends_on: string;
+                                id: string;
+                                position_name: string;
+                                session_ends_on: string;
+                                session_id: string;
+                                session_name: string;
+                                session_starts_on: string;
+                                starts_on: string;
+                                status: "PLANNED" | "CONFIRMED" | "CANCELLED";
+                                updated_at: string;
+                                version: number;
+                            }[];
+                            current_session_names: string[];
+                            display_name: string;
+                            email: string;
+                            first_name: string;
+                            id: string;
+                            last_name: string;
+                            next_session_names: string[];
+                            phone: string | null;
+                            preferred_name: string | null;
+                            status: "PLANNED" | "ACTIVE" | "INACTIVE";
+                            version: number;
+                            workforce_type: "STAFF" | "VOLUNTEER";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/workforce/{profileId}/assignments/{assignmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    assignmentId: string;
+                    profileId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        ends_on: string;
+                        position_name: string;
+                        session_id: string;
+                        starts_on: string;
+                        status: "PLANNED" | "CONFIRMED" | "CANCELLED";
+                        version: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            account_linked: boolean;
+                            assignment_count: number;
+                            assignments: {
+                                created_at: string;
+                                ends_on: string;
+                                id: string;
+                                position_name: string;
+                                session_ends_on: string;
+                                session_id: string;
+                                session_name: string;
+                                session_starts_on: string;
+                                starts_on: string;
+                                status: "PLANNED" | "CONFIRMED" | "CANCELLED";
+                                updated_at: string;
+                                version: number;
+                            }[];
+                            current_session_names: string[];
+                            display_name: string;
+                            email: string;
+                            first_name: string;
+                            id: string;
+                            last_name: string;
+                            next_session_names: string[];
+                            phone: string | null;
+                            preferred_name: string | null;
+                            status: "PLANNED" | "ACTIVE" | "INACTIVE";
+                            version: number;
+                            workforce_type: "STAFF" | "VOLUNTEER";
+                        };
+                    };
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/v1/sessions/{sessionId}/workforce-roster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    sessionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            assignments: {
+                                display_name: string;
+                                ends_on: string;
+                                position_name: string;
+                                starts_on: string;
+                                status: "PLANNED" | "CONFIRMED" | "CANCELLED";
+                                workforce_type: "STAFF" | "VOLUNTEER";
+                            }[];
+                            ends_on: string;
+                            session_id: string;
+                            session_name: string;
+                            starts_on: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Default Response */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            field_errors?: {
+                                [key: string]: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
