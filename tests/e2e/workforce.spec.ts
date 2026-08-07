@@ -62,6 +62,9 @@ test('manages an operational profile and assignment without exposing staff roste
   await expect(
     page.getByRole('heading', { level: 1, name: 'Session workforce roster' }),
   ).toBeVisible();
+  await expect(
+    page.getByText('Choose a session to view its current confirmed workforce roster.'),
+  ).toHaveCount(0);
   await page.setViewportSize({ height: 844, width: 320 });
   await expect(page.getByLabel('Session')).toBeVisible();
   const layout = await page.evaluate(() => ({

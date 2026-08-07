@@ -212,8 +212,9 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   registerIdentityRoutes(app, options.identityService, (request) => {
     const sessionContext = identityContexts.get(request);
     if (sessionContext) return sessionContext;
+    const localSessionRead = request.method === 'GET' && request.url === '/v1/auth/session';
     if (
-      request.url.startsWith('/v1/auth/') ||
+      (!localSessionRead && request.url.startsWith('/v1/auth/')) ||
       request.url.startsWith('/v1/public/organizations/')
     ) {
       return undefined;

@@ -78,6 +78,28 @@ describe('identity routes', () => {
     expect(response.json()).toMatchObject({ code: 'authentication_required' });
   });
 
+  it('serves the synthesized local-auth session without allowing local auth on other routes', async () => {
+    const getSession = vi.fn().mockResolvedValue(session);
+    const app = await buildApp({
+      identityService: { ...fakeIdentityService(), getSession } as unknown as IdentityService,
+      requestContext: () => ({
+        identity: {
+          email: 'admin@example.test',
+          emailVerified: true,
+          memberships: [{ campIds: [], organizationId, roles: ['camp_admin'] }],
+          mfaVerified: true,
+          subject: 'local-admin',
+        },
+        organizationId,
+      }),
+    });
+    applications.push(app);
+
+    const response = await app.inject({ method: 'GET', url: '/v1/auth/session' });
+    expect(response.statusCode).toBe(200);
+    expect(getSession).toHaveBeenCalledOnce();
+  });
+
   it('rejects a cross-origin state-changing authentication request', async () => {
     const app = await buildApp({ identityService: fakeIdentityService() });
     applications.push(app);

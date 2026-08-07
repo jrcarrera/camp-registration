@@ -5263,6 +5263,11 @@ tbody tr + tr td {
     display: block;
   }
 
+  .workspace {
+    box-sizing: border-box;
+    width: 100%;
+  }
+
   .settingsHeaderIcon {
     display: none;
   }
@@ -6484,6 +6489,14 @@ tbody tr + tr td {
   display: grid;
   gap: 1.25rem;
   max-width: 100%;
+  width: 100%;
+}
+.workforceRoster > * {
+  min-width: 0;
+}
+.workforceRoster select {
+  max-width: 100%;
+  min-width: 0;
   width: 100%;
 }
 .workforceSummary,

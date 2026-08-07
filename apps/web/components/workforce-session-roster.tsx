@@ -10,7 +10,7 @@ export function WorkforceSessionRoster({
 }) {
   const [roster, setRoster] = useState<SessionWorkforceRoster | null>(initialRoster ?? null),
     [message, setMessage] = useState(
-      'Choose a session to view its current confirmed workforce roster.',
+      initialRoster ? '' : 'Choose a session to view its current confirmed workforce roster.',
     ),
     [loading, setLoading] = useState(false),
     [error, setError] = useState(false);
